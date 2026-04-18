@@ -72,7 +72,7 @@ Skipping orientation → duplicate pages, missed cross-refs, schema drift.
 Use `scripts/scaffold.py`:
 
 ```bash
-python3 /home/sil/llm-wiki-pm/scripts/scaffold.py "$WIKI" "PM — Katalon"
+python3 /home/sil/llm-wiki-pm/skills/llm-wiki-pm/scripts/scaffold.py "$WIKI" "PM — Katalon"
 ```
 
 Ask user to confirm domain scope. Customize `SCHEMA.md` tag taxonomy for their
@@ -195,7 +195,7 @@ Use `scripts/lint.py` — writes report to `wiki/queries/lint-YYYY-MM-DD.md`
 with severity tiers. Offers concrete fixes. Logs unconditionally.
 
 ```bash
-python3 /home/sil/llm-wiki-pm/scripts/lint.py "$WIKI"
+python3 /home/sil/llm-wiki-pm/skills/llm-wiki-pm/scripts/lint.py "$WIKI"
 ```
 
 Checks:

@@ -1,17 +1,101 @@
 # llm-wiki-pm
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/anh-chu/llm-wiki-pm)](https://github.com/anh-chu/llm-wiki-pm/releases)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-skill-orange)](https://docs.claude.com/en/docs/claude-code/skills)
+[![Stars](https://img.shields.io/github/stars/anh-chu/llm-wiki-pm?style=social)](https://github.com/anh-chu/llm-wiki-pm/stargazers)
 
-Personal PM knowledge base skill for Claude Code. Karpathy LLM Wiki pattern,
-tuned for product management work: competitive intel, customer notes, strategy,
-roadmap, AI market.
+> A Claude Code skill that turns your PM work into a persistent, compounding
+> knowledge base. Ingest meetings, analyst reports, and strategy docs.
+> Query across months of context. Let the agent handle the bookkeeping.
 
-Base: Karpathy-style LLM Wiki pattern.
-Cherry-picks from [kfchou/wiki-skills](https://github.com/kfchou/wiki-skills):
-- Separate `update` discipline with diffs + source citation + stale-claim sweep
-- Tiered lint report (🔴🟡🔵) written back to wiki as dated page
-- `overview.md` evolving synthesis as single entry point
+Based on [Andrej Karpathy's LLM Wiki pattern](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f),
+tuned for product management: competitive intel, customer notes, strategy,
+roadmap, AI market tracking.
 
-Not cherry-picked (yet): lewislulu's Obsidian audit plugin + web viewer
-(useful for team review, overkill for solo).
+## Why
+
+Most PM work today spreads across Slack threads, meeting transcripts, analyst
+PDFs, and one-off notes. RAG tools like NotebookLM retrieve from raw sources
+each query, so knowledge never compounds. Personal wikis fail because the
+bookkeeping overhead outgrows the value.
+
+This skill gives you the middle path: you curate sources, the agent maintains
+an interlinked markdown wiki that stays current. Every ingest touches 5-15
+pages. Every query cites specific wiki entries. The wiki compounds.
+
+## What you get
+
+- **Three-layer architecture**: immutable `raw/` sources, agent-owned wiki
+  pages, and `SCHEMA.md` governing structure
+- **Ingest / query / update / lint / archive** flows with discipline guardrails
+- **Supersession** with auto-redirect of inbound links
+- **Crystallize** pattern: transcripts become structured decision digests
+- **Privacy-first**: pre-ingest filter + `private:` frontmatter flag
+- **qmd search**: BM25 + vector + LLM rerank over your whole wiki
+- **Obsidian-compatible**: works as a vault out of the box
+- **Next.js embed path** for platform deployments
+
+## Install
+
+### Option A: Claude Code plugin (recommended)
+
+```bash
+claude plugin marketplace add anh-chu/llm-wiki-pm
+claude plugin install llm-wiki-pm@anh-chu/llm-wiki-pm
+```
+
+### Option B: Symlink from a clone
+
+```bash
+git clone https://github.com/anh-chu/llm-wiki-pm ~/llm-wiki-pm
+mkdir -p ~/.claude/skills
+ln -s ~/llm-wiki-pm/skills/llm-wiki-pm ~/.claude/skills/llm-wiki-pm
+```
+
+### Then: bootstrap your first wiki
+
+```bash
+python3 ~/llm-wiki-pm/skills/llm-wiki-pm/scripts/scaffold.py ~/pm-wiki "My PM Domain"
+echo 'export WIKI_PATH=$HOME/pm-wiki' >> ~/.bashrc && source ~/.bashrc
+# Restart Claude Code, then say:
+#   "Ingest this analyst report: <paste url>"
+```
+
+Full setup — including qmd search and mobile Obsidian sync — in
+[GETTING_STARTED.md](GETTING_STARTED.md).
+
+## How it compares
+
+| | llm-wiki-pm | [kfchou/wiki-skills](https://github.com/kfchou/wiki-skills) | [lewislulu/llm-wiki-skill](https://github.com/lewislulu/llm-wiki-skill) | [lucasastorian/llmwiki](https://github.com/lucasastorian/llmwiki) | NotebookLM |
+|---|---|---|---|---|---|
+| **Shape** | Single skill | 5 skills | Skill + plugin + server | Full web app | SaaS |
+| **Storage** | Plain markdown | Plain markdown | Plain markdown | Supabase + S3 | Cloud |
+| **Search** | qmd (BM25+vector+rerank) + backlinks | grep + index | grep + index | PGroonga | Proprietary |
+| **Update discipline** | Diffs + supersession fields + auto-link rewrite | Diffs + source cite | Human-in-loop audit | None explicit | N/A |
+| **Privacy** | Pre-ingest filter + `private:` flag | None | None | User-scoped | SaaS ToS |
+| **Transcript support** | `crystallize` flow (decisions + actions) | Generic ingest | Generic ingest | Generic ingest | Source-only |
+| **Install target** | Claude Code | Claude Code | OpenClaw / Codex | Self-host web | SaaS |
+| **Ops burden** | None (local files) | None | Obsidian plugin + Node server | Supabase + S3 + OCR | Zero |
+| **Scales to 1000+ pages** | Yes (qmd) | Degrades | Degrades | Yes | Yes |
+| **PM-tuned taxonomy** | Yes (competitive, customer, strategy, roadmap, ai) | No | No | No | No |
+
+For a deeper breakdown of which Karpathy and Rohit v2 ideas this implements,
+see the [design notes](#design-notes) below.
+
+## Target users
+
+Good fit if you:
+
+- Work as a PM, analyst, researcher, or founder with lots of meetings and reports
+- Want a local-first, markdown-based knowledge base that you own
+- Use Claude Code as your primary agent
+- Are comfortable on a terminal (you'll run `scaffold.py` and `lint.py`)
+
+Not a fit if you:
+
+- Want a zero-terminal SaaS → use NotebookLM
+- Need team collaboration out of the box → use Notion or a shared Obsidian vault
+- Don't use Claude Code → port the SKILL.md to your agent of choice
 
 ## Layout
 
@@ -53,7 +137,7 @@ Two scenarios documented in detail in [GETTING_STARTED.md](GETTING_STARTED.md):
 ### 1. Bootstrap a wiki
 
 ```bash
-python3 /home/sil/llm-wiki-pm/scripts/scaffold.py ~/pm-wiki "Katalon PM"
+python3 /home/sil/llm-wiki-pm/skills/llm-wiki-pm/scripts/scaffold.py ~/pm-wiki "Katalon PM"
 export WIKI_PATH=~/pm-wiki
 # add to ~/.bashrc or ~/.zshrc for persistence
 ```
@@ -96,13 +180,13 @@ Open `~/pm-wiki/SCHEMA.md`. Adjust:
 Option A — user-level (available in every project):
 ```bash
 mkdir -p ~/.claude/skills
-ln -s /home/sil/llm-wiki-pm ~/.claude/skills/llm-wiki-pm
+ln -s /home/sil/llm-wiki-pm/skills/llm-wiki-pm ~/.claude/skills/llm-wiki-pm
 ```
 
 Option B — project-level (per-repo):
 ```bash
 mkdir -p .claude/skills
-ln -s /home/sil/llm-wiki-pm .claude/skills/llm-wiki-pm
+ln -s /home/sil/llm-wiki-pm/skills/llm-wiki-pm .claude/skills/llm-wiki-pm
 ```
 
 Restart Claude Code. Verify with `/skills` — `llm-wiki-pm` should appear.
@@ -121,7 +205,7 @@ takeaways, creates/updates pages, logs.
 ### 5. Run lint periodically
 
 ```bash
-python3 /home/sil/llm-wiki-pm/scripts/lint.py ~/pm-wiki
+python3 /home/sil/llm-wiki-pm/skills/llm-wiki-pm/scripts/lint.py ~/pm-wiki
 # opens queries/lint-YYYY-MM-DD.md
 ```
 
@@ -153,4 +237,60 @@ state.
 
 ## License
 
-MIT. Adapted from Karpathy's LLM Wiki pattern and kfchou/wiki-skills.
+MIT.
+
+## Credits
+
+Built on prior art from:
+
+- **[Andrej Karpathy — LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)**
+  — the original pattern: stop re-deriving, start compiling. Three-layer
+  architecture, Memex lineage, and the insight that LLMs are the first
+  librarians who don't get bored of bookkeeping.
+- **[Rohit G — LLM Wiki v2](https://gist.github.com/rohitg00/2067ab416f7bbe447c1977edaaa681e2)**
+  — lifecycle concepts (supersession, privacy, crystallization, self-healing
+  lint). We cherry-picked the four highest-ROI v2 ideas for PM work.
+- **[kfchou/wiki-skills](https://github.com/kfchou/wiki-skills)** — update
+  discipline with diffs and stale-claim sweep, tiered lint reports, evolving
+  `overview.md` synthesis.
+- **[lewislulu/llm-wiki-skill](https://github.com/lewislulu/llm-wiki-skill)**
+  — audit/feedback loop design (inspiration for future team-mode support).
+- **[tobi/qmd](https://github.com/tobi/qmd)** — on-device hybrid search engine
+  that makes this skill scale past a few hundred pages.
+
+## Design notes
+
+How this skill maps to Karpathy's original gist and Rohit's v2 extensions:
+
+### Karpathy core (10/10)
+
+- Three-layer architecture (raw sources, agent-owned wiki, schema)
+- LLM owns the wiki; human curates sources
+- Ingest / query / lint operations
+- `index.md` content catalog + `log.md` chronological record
+- File good answers back as pages (`queries/` dir)
+- Obsidian compatibility (Graph, Dataview, frontmatter)
+- Schema as key configuration, co-evolved
+- Ingests touch 10-15 pages routinely
+- Optional CLI search via [qmd](references/qmd-search.md)
+- Multi-format outputs: [Marp, matplotlib, CSV, Mermaid, Canvas](references/output-formats.md)
+
+### v2 cherry-picks (7/16)
+
+Implemented:
+
+- Explicit supersession with `supersedes:` / `superseded_by:` fields + auto-redirect
+- Privacy filter (pre-ingest checklist + `private:` frontmatter flag)
+- Self-healing lint (`--auto-fix` for safe repairs)
+- Crystallization (transcript → decision digest)
+- Schema as the real product
+- Contradiction handling with frontmatter flag
+- Backlink tracing (`scripts/backlinks.py` for structural refs)
+
+Intentionally skipped for solo PM use (overkill):
+
+- Confidence decay curves
+- Consolidation tiers (working/episodic/semantic/procedural memory)
+- Typed knowledge graph with relationship types
+- Multi-agent mesh sync
+- Quality scoring pipeline

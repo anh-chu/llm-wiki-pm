@@ -1,0 +1,37 @@
+cff-version: 1.2.0
+title: "llm-wiki-pm: PM knowledge base skill for Claude Code"
+message: "If you use this skill or adapt its patterns, please cite it."
+type: software
+authors:
+  - family-names: Chu
+    given-names: Anh
+    email: anhdchu@gmail.com
+    affiliation: Katalon
+repository-code: "https://github.com/anh-chu/llm-wiki-pm"
+url: "https://github.com/anh-chu/llm-wiki-pm"
+license: MIT
+version: 1.0.0
+date-released: 2026-04-18
+keywords:
+  - claude-code
+  - agent-skills
+  - knowledge-base
+  - llm-wiki
+  - product-management
+  - obsidian
+  - karpathy
+references:
+  - type: generic
+    title: "LLM Wiki"
+    authors:
+      - family-names: Karpathy
+        given-names: Andrej
+    url: "https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f"
+    year: 2026
+  - type: generic
+    title: "LLM Wiki v2: extending Karpathy's LLM Wiki pattern with lessons from building agentmemory"
+    authors:
+      - family-names: G
+        given-names: Rohit
+    url: "https://gist.github.com/rohitg00/2067ab416f7bbe447c1977edaaa681e2"
+    year: 2026

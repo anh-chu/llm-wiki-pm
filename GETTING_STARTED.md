@@ -27,7 +27,7 @@ User-level (available in every project):
 
 ```bash
 mkdir -p ~/.claude/skills
-ln -s ~/llm-wiki-pm ~/.claude/skills/llm-wiki-pm
+ln -s ~/llm-wiki-pm/skills/llm-wiki-pm ~/.claude/skills/llm-wiki-pm
 ```
 
 Restart Claude Code. Run `/skills` — `llm-wiki-pm` should appear.
@@ -35,7 +35,7 @@ Restart Claude Code. Run `/skills` — `llm-wiki-pm` should appear.
 ### 3. Bootstrap your wiki
 
 ```bash
-python3 ~/llm-wiki-pm/scripts/scaffold.py ~/pm-wiki "Katalon PM"
+python3 ~/llm-wiki-pm/skills/llm-wiki-pm/scripts/scaffold.py ~/pm-wiki "Katalon PM"
 # replace "Katalon PM" with your own domain name
 
 # Set the env var so the skill knows where your wiki lives
@@ -138,7 +138,7 @@ Then install Obsidian on your phone, pair with the synced vault.
 
 - **Daily-ish**: ingest meeting transcripts and articles as they arrive
 - **Weekly**: quick `qmd update && qmd embed` if you don't have the watcher
-- **Bi-weekly**: `python3 ~/llm-wiki-pm/scripts/lint.py $WIKI_PATH --auto-fix`
+- **Bi-weekly**: `python3 ~/llm-wiki-pm/skills/llm-wiki-pm/scripts/lint.py $WIKI_PATH --auto-fix`
 - **Monthly**: skim the overview.md, refresh if synthesis has drifted
 - **Quarterly**: review SCHEMA.md tag taxonomy, archive dead pages
 
@@ -200,7 +200,7 @@ Call `scaffold.py` from your app, or replicate its logic directly.
 import subprocess
 from pathlib import Path
 
-SKILL_ROOT = Path("/opt/yourapp/llm-wiki-pm")
+SKILL_ROOT = Path("/opt/yourapp/llm-wiki-pm/skills/llm-wiki-pm")
 
 def provision_wiki(user_id: str, domain: str) -> Path:
     wiki_path = Path(f"/var/lib/yourapp/wikis/{user_id}")
@@ -220,7 +220,7 @@ import shutil
 from datetime import date
 from pathlib import Path
 
-SKILL_ROOT = Path("/opt/yourapp/llm-wiki-pm")
+SKILL_ROOT = Path("/opt/yourapp/llm-wiki-pm/skills/llm-wiki-pm")
 TEMPLATES = SKILL_ROOT / "templates"
 
 SUBDIRS = [
@@ -268,7 +268,7 @@ def scaffold(wiki_path: Path, domain: str, user_id: str | None = None) -> None:
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
 
-const SKILL_ROOT = "/opt/yourapp/llm-wiki-pm";
+const SKILL_ROOT = "/opt/yourapp/llm-wiki-pm/skills/llm-wiki-pm";
 const TEMPLATES = join(SKILL_ROOT, "templates");
 const SUBDIRS = [
   "raw/articles", "raw/papers", "raw/transcripts",
