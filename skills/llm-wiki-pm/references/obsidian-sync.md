@@ -87,8 +87,8 @@ Prevention: don't edit on mobile while Claude Code is running an ingest. Stagger
 
 ## What to sync
 
-- Everything in `$WIKI_PATH/` — the scaffolded wiki dir
-- Raw sources included — you might want to re-read them on mobile
+- Everything in `$WIKI_PATH/`, the scaffolded wiki dir
+- Raw sources included, you might want to re-read them on mobile
 
 What NOT to sync (separate path):
 - Claude Code workspace directories
@@ -99,21 +99,21 @@ What NOT to sync (separate path):
 
 Recommended plugins/settings once synced:
 
-- **Dataview** — query frontmatter. Useful:
+- **Dataview**: query frontmatter. Useful:
   ```dataview
   TABLE updated, tags
   FROM "entities"
   WHERE contains(tags, "company") AND contains(tags, "competitive")
   SORT updated DESC
   ```
-- **Graph View** — visualize link density. Helps spot orphans visually.
-- **Templater** — for quick new-page scaffolding from mobile (if you jot from phone).
+- **Graph View**: visualize link density. Helps spot orphans visually.
+- **Templater**: for quick new-page scaffolding from mobile (if you jot from phone).
 - **Attachment folder**: set to `raw/assets/` so screenshots land there.
 
 ## Troubleshooting
 
-- **Sync stuck** — `ob sync` manually to see error
-- **Auth expired** — `ob login` again
-- **Mobile not pulling** — check Obsidian Sync status in app settings
-- **Ingests not appearing on mobile** — confirm systemd service is running
+- **Sync stuck**: `ob sync` manually to see error
+- **Auth expired**: `ob login` again
+- **Mobile not pulling**: check Obsidian Sync status in app settings
+- **Ingests not appearing on mobile**: confirm systemd service is running
   and WorkingDirectory points to the actual wiki path

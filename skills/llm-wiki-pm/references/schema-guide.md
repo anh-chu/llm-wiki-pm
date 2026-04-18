@@ -20,7 +20,7 @@ Workflow when you want a new tag:
 3. Now use the tag.
 
 Why: freeform tags decay. After 6 months you have `ai`, `AI`, `ai-tools`,
-`aitools`, `artificialintelligence` — all slightly different, all unsearchable.
+`aitools`, `artificialintelligence`, all slightly different, all unsearchable.
 Enforced taxonomy prevents this.
 
 ## Page threshold tuning
@@ -56,5 +56,5 @@ If scope shifts (e.g., TruePlatform becomes the whole company focus):
 1. Update `## Domain` in SCHEMA.md
 2. Run lint to identify now-out-of-scope pages
 3. Archive or re-tag as needed
-4. Update tag taxonomy — prune dead categories
+4. Update tag taxonomy, prune dead categories
 5. Refresh `overview.md`

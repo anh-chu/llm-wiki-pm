@@ -44,8 +44,8 @@ private: true      # default true for 1:1s, customer calls, internal meetings
 _1-2 sentences: what happened, when, who was involved_
 
 ## Decisions
-- **<decision>** — rationale, owner, date confirmed
-- …
+- **<decision>**: rationale, owner, date confirmed
+- ...
 
 ## Action Items
 | Owner | Action | Due | Status |
@@ -70,7 +70,7 @@ _1-2 sentences: what happened, when, who was involved_
 
 After ingesting a transcript into `raw/transcripts/`:
 
-① **Read the transcript with intent** — not just "what's in here", but:
+① **Read the transcript with intent**: not just "what's in here", but:
    - What decisions were made or confirmed?
    - What action items emerged? Who owns them?
    - What patterns repeat from past meetings?
@@ -112,9 +112,9 @@ Monthly strategy 1:1 with Vu Lam, 45 min. Topics: TruePlatform launch slip,
 Kai pricing signals from customer alpha, Q3 headcount.
 
 ## Decisions
-- **TruePlatform GA pushed to June 15** — enterprise migration risk,
+- **TruePlatform GA pushed to June 15**: enterprise migration risk,
   confirmed by Vu, communicated to customer-alpha next week
-- **Kai pricing stays usage-based for pilot** — revisit at 10-customer mark
+- **Kai pricing stays usage-based for pilot**: revisit at 10-customer mark
 
 ## Action Items
 | Anh | Write customer-alpha comms | 2026-04-22 | pending |
@@ -122,8 +122,8 @@ Kai pricing signals from customer alpha, Q3 headcount.
 | Vu | Approve SE headcount req | 2026-05-01 | pending |
 
 ## Open Questions
-- Kai seat-based vs usage-based at scale — need data team modeling
-- TruePlatform pricing parity with Studio — decision by May
+- Kai seat-based vs usage-based at scale, need data team modeling
+- TruePlatform pricing parity with Studio, decision by May
 
 ## Lessons
 - Migration risk undercounted when customer runs N+1 versions in parallel
@@ -138,10 +138,10 @@ Kai pricing signals from customer alpha, Q3 headcount.
 ```
 
 Then update:
-- `entities/vu-lam.md` — add 2026-04 1:1 as source, bump `updated`
-- `concepts/trueplatform-launch.md` — note GA slip decision
-- `concepts/kai-pricing.md` — reinforce usage-based pilot decision
-- `overview.md` — if launch slip shifts quarter-view
+- `entities/vu-lam.md`, add 2026-04 1:1 as source, bump `updated`
+- `concepts/trueplatform-launch.md`, note GA slip decision
+- `concepts/kai-pricing.md`, reinforce usage-based pilot decision
+- `overview.md`, if launch slip shifts quarter-view
 
 ## Crystallize vs Regular Ingest
 

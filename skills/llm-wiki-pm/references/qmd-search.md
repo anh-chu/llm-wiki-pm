@@ -40,11 +40,11 @@ bun install -g @tobilu/qmd
 ## Wire to the wiki
 
 ```bash
-# collections — index wiki layer + raw sources separately
+# collections, index wiki layer + raw sources separately
 qmd collection add "$WIKI_PATH" --name wiki
 qmd collection add "$WIKI_PATH/raw" --name raw
 
-# context — helps the reranker pick the right results
+# context, helps the reranker pick the right results
 qmd context add qmd://wiki "Agent-authored PM knowledge base: entities, concepts, comparisons, queries"
 qmd context add qmd://raw  "Immutable source documents: analyst reports, transcripts, internal docs"
 
@@ -69,9 +69,9 @@ For continuous sync consider a systemd timer or file-watch hook (see
 The agent calls `query`, `get`, `multi_get` tools directly. No CLI gymnastics.
 
 Preferred search tool order for the agent:
-1. **`query` (qmd hybrid)** — default for any "what do we know about X" question
-2. **`get` / `multi_get`** — when you know the path or a pattern
-3. **`grep`** — last resort, only for exact token match (e.g. a specific
+1. **`query` (qmd hybrid)**: default for any "what do we know about X" question
+2. **`get` / `multi_get`**: when you know the path or a pattern
+3. **`grep`**: last resort, only for exact token match (e.g. a specific
    dollar figure or codename) that semantic search might miss
 
 ### From shell
@@ -83,7 +83,7 @@ qmd search "tricentis pricing" -c wiki
 # Semantic / natural language
 qmd vsearch "how are competitors positioning around AI"
 
-# Best quality — hybrid + LLM rerank
+# Best quality, hybrid + LLM rerank
 qmd query "what did we decide about enterprise migration in Q2"
 
 # Scoped to raw sources only
@@ -96,7 +96,7 @@ qmd query "trueplatform launch" --all --files --min-score 0.4
 
 ### Collection strategies
 
-Two collections (`wiki`, `raw`) is the default. Search `wiki` first — it's
+Two collections (`wiki`, `raw`) is the default. Search `wiki` first, it's
 already synthesized. Fall through to `raw` only when wiki is thin on the
 topic or when you need a direct quote.
 
@@ -115,7 +115,7 @@ Lets the agent scope `-c queries` when asked "what have we decided about X".
 
 qmd doesn't filter on frontmatter. Two options:
 
-**Option A — separate private collection:**
+**Option A, separate private collection:**
 
 ```bash
 # Move private pages to a separate dir or tag them with a path prefix
@@ -125,7 +125,7 @@ qmd collection add "$WIKI_PATH/_private" --name private
 Then omit `-c private` from default searches. Explicit opt-in for sensitive
 queries.
 
-**Option B — post-filter in the agent:**
+**Option B, post-filter in the agent:**
 
 After qmd returns results, the agent greps for `private: true` in each hit's
 frontmatter. Skip when exporting or when the request came from a shared context.
@@ -140,7 +140,7 @@ For mixed-sensitivity wikis, Option A is cleaner.
 
 ### Background daemon (Claude Code, HTTP MCP)
 
-Keeps models in VRAM across requests — faster than stdio reload per query:
+Keeps models in VRAM across requests, faster than stdio reload per query:
 
 ```bash
 qmd mcp --http --daemon
@@ -194,7 +194,7 @@ The agent should prefer qmd over grep whenever available:
 3. Fall back to grep + `index.md` only if qmd unavailable.
 
 At dozens of meetings per week, skipping qmd means the wiki's value decays
-fast — the agent won't find things you filed three months ago.
+fast, the agent won't find things you filed three months ago.
 
 ## Troubleshooting
 

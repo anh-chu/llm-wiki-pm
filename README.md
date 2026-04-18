@@ -61,7 +61,7 @@ echo 'export WIKI_PATH=$HOME/pm-wiki' >> ~/.bashrc && source ~/.bashrc
 #   "Ingest this analyst report: <paste url>"
 ```
 
-Full setup — including qmd search and mobile Obsidian sync — in
+Full setup, including qmd search and mobile Obsidian sync, in
 [GETTING_STARTED.md](GETTING_STARTED.md).
 
 ## How it compares
@@ -128,8 +128,8 @@ llm-wiki-pm/
 
 Two scenarios documented in detail in [GETTING_STARTED.md](GETTING_STARTED.md):
 
-1. **Human user with Claude Code** — ~15 min from zero to first ingest
-2. **Application-orchestrated scaffold** — programmatic wiki provisioning
+1. **Human user with Claude Code**: ~15 min from zero to first ingest
+2. **Application-orchestrated scaffold**: programmatic wiki provisioning
    for platform/multi-tenant deployments
 
 ## Quick Start
@@ -177,19 +177,19 @@ Open `~/pm-wiki/SCHEMA.md`. Adjust:
 
 ### 3. Install as Claude Code skill
 
-Option A — user-level (available in every project):
+Option A, user-level (available in every project):
 ```bash
 mkdir -p ~/.claude/skills
 ln -s /home/sil/llm-wiki-pm/skills/llm-wiki-pm ~/.claude/skills/llm-wiki-pm
 ```
 
-Option B — project-level (per-repo):
+Option B, project-level (per-repo):
 ```bash
 mkdir -p .claude/skills
 ln -s /home/sil/llm-wiki-pm/skills/llm-wiki-pm .claude/skills/llm-wiki-pm
 ```
 
-Restart Claude Code. Verify with `/skills` — `llm-wiki-pm` should appear.
+Restart Claude Code. Verify with `/skills`, `llm-wiki-pm` should appear.
 The skill auto-activates on ingest/query/update/lint phrasing (see SKILL.md
 "When This Skill Activates").
 
@@ -215,16 +215,16 @@ See `references/obsidian-sync.md` for obsidian-headless + systemd setup.
 
 ## Workflow Patterns
 
-**Weekly competitive digest** — ingest 3-5 analyst links in one session.
+**Weekly competitive digest**: ingest 3-5 analyst links in one session.
 Batch updates, one log entry, refresh overview.md.
 
-**Pre-meeting prep** — query "what do we know about <customer>?" → Claude
+**Pre-meeting prep**: query "what do we know about <customer>?" → Claude
 reads `entities/<customer>.md` + recent log → offer to file post-meeting update.
 
-**Monthly 1:1 follow-up** — ingest transcript → extract decisions/themes →
+**Monthly 1:1 follow-up**: ingest transcript → extract decisions/themes →
 update relevant concept pages → link from person page.
 
-**Quarterly review** — lint, triage, rotate log, refresh overview, prune
+**Quarterly review**: lint, triage, rotate log, refresh overview, prune
 tag taxonomy.
 
 ## Scope
@@ -243,19 +243,19 @@ MIT.
 
 Built on prior art from:
 
-- **[Andrej Karpathy — LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)**
-  — the original pattern: stop re-deriving, start compiling. Three-layer
+- **[Andrej Karpathy, LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)**
+ , the original pattern: stop re-deriving, start compiling. Three-layer
   architecture, Memex lineage, and the insight that LLMs are the first
   librarians who don't get bored of bookkeeping.
-- **[Rohit G — LLM Wiki v2](https://gist.github.com/rohitg00/2067ab416f7bbe447c1977edaaa681e2)**
-  — lifecycle concepts (supersession, privacy, crystallization, self-healing
+- **[Rohit G, LLM Wiki v2](https://gist.github.com/rohitg00/2067ab416f7bbe447c1977edaaa681e2)**
+ , lifecycle concepts (supersession, privacy, crystallization, self-healing
   lint). We cherry-picked the four highest-ROI v2 ideas for PM work.
-- **[kfchou/wiki-skills](https://github.com/kfchou/wiki-skills)** — update
+- **[kfchou/wiki-skills](https://github.com/kfchou/wiki-skills)**: update
   discipline with diffs and stale-claim sweep, tiered lint reports, evolving
   `overview.md` synthesis.
 - **[lewislulu/llm-wiki-skill](https://github.com/lewislulu/llm-wiki-skill)**
-  — audit/feedback loop design (inspiration for future team-mode support).
-- **[tobi/qmd](https://github.com/tobi/qmd)** — on-device hybrid search engine
+ , audit/feedback loop design (inspiration for future team-mode support).
+- **[tobi/qmd](https://github.com/tobi/qmd)**: on-device hybrid search engine
   that makes this skill scale past a few hundred pages.
 
 ## Design notes

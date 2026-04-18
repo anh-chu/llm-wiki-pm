@@ -6,15 +6,15 @@ term. Treat privacy as a first-class concern, not an afterthought.
 
 ## Two Levers
 
-1. **Filter on ingest** — what never makes it into `raw/` can't leak
-2. **`private: true` frontmatter** — what's in the wiki but excluded from exports
+1. **Filter on ingest**: what never makes it into `raw/` can't leak
+2. **`private: true` frontmatter**: what's in the wiki but excluded from exports
 
 ## Pre-Ingest Checklist
 
 Before saving any source to `raw/`:
 
-- [ ] Strip API keys, tokens, passwords, credentials — always
-- [ ] Strip customer employee emails/phones unless publicly known — usually
+- [ ] Strip API keys, tokens, passwords, credentials, always
+- [ ] Strip customer employee emails/phones unless publicly known, usually
 - [ ] Redact specific deal dollar amounts if unnecessary for the point
 - [ ] Remove or pseudonymize quotes attributed to named individuals if sensitive
 - [ ] Check for accidental paste of internal Slack messages with unintended context

@@ -1,6 +1,6 @@
 ---
 name: llm-wiki-pm
-description: Persistent PM knowledge base — competitive intel, customer notes, strategy, roadmap, AI market. Markdown wiki with entities, concepts, comparisons. Ingest sources, query, update with diffs, lint with tiered reports.
+description: Persistent PM knowledge base, competitive intel, customer notes, strategy, roadmap, AI market. Markdown wiki with entities, concepts, comparisons. Ingest sources, query, update with diffs, lint with tiered reports.
 ---
 
 # LLM Wiki PM
@@ -34,7 +34,7 @@ Set `WIKI_PATH` in your shell rc (`~/.bashrc`, `~/.zshrc`). Default: `$HOME/llm-
 wiki/
 ├── SCHEMA.md              # Conventions, domain config, tag taxonomy
 ├── index.md               # Sectioned content catalog
-├── overview.md            # Evolving synthesis — single entry point
+├── overview.md            # Evolving synthesis, single entry point
 ├── log.md                 # Append-only action log (rotate at 500)
 ├── raw/                   # Layer 1: Immutable sources
 │   ├── articles/          # Analyst reports, press, blog clippings
@@ -49,18 +49,18 @@ wiki/
 └── _archive/              # Superseded content
 ```
 
-**Layer 1 raw/** — immutable. Agent reads, never modifies.
-**Layer 2 wiki pages** — agent-owned. Created, updated, cross-referenced.
-**Layer 3 SCHEMA.md** — governs structure and taxonomy.
+**Layer 1 raw/**: immutable. Agent reads, never modifies.
+**Layer 2 wiki pages**: agent-owned. Created, updated, cross-referenced.
+**Layer 3 SCHEMA.md**: governs structure and taxonomy.
 
 ## CRITICAL: Orient Every Session
 
 Before any ingest/query/update/lint, **always**:
 
-① Read `SCHEMA.md` — domain, conventions, tag taxonomy
-② Read `index.md` — what pages exist
-③ Read last 20-30 lines of `log.md` — recent activity
-④ Read `overview.md` — current synthesis state
+① Read `SCHEMA.md`, domain, conventions, tag taxonomy
+② Read `index.md`, what pages exist
+③ Read last 20-30 lines of `log.md`, recent activity
+④ Read `overview.md`, current synthesis state
 ⑤ For 100+ page wikis: `grep -r "topic" $WIKI --include="*.md"` before creating
 
 Skipping orientation → duplicate pages, missed cross-refs, schema drift.
@@ -72,7 +72,7 @@ Skipping orientation → duplicate pages, missed cross-refs, schema drift.
 Use `scripts/scaffold.py`:
 
 ```bash
-python3 /home/sil/llm-wiki-pm/skills/llm-wiki-pm/scripts/scaffold.py "$WIKI" "PM — Katalon"
+python3 /home/sil/llm-wiki-pm/skills/llm-wiki-pm/scripts/scaffold.py "$WIKI" "PM, Katalon"
 ```
 
 Ask user to confirm domain scope. Customize `SCHEMA.md` tag taxonomy for their
@@ -93,7 +93,7 @@ domain (see `templates/SCHEMA.md` for PM-tuned defaults).
    What matters for the PM domain? Which entities/concepts does this touch?
    (Skip in automated/batch contexts.)
 
-③ **Check existing pages** — `grep -r` for every entity/concept mentioned.
+③ **Check existing pages**: `grep -r` for every entity/concept mentioned.
    Read existing pages before deciding create vs update.
 
 ④ **Apply Page Thresholds** (from SCHEMA.md):
@@ -103,7 +103,7 @@ domain (see `templates/SCHEMA.md` for PM-tuned defaults).
 
 ⑤ **Write/update pages:**
    - Required frontmatter (title, created, updated, type, tags, sources)
-   - Tags MUST come from SCHEMA.md taxonomy — add new tags there first
+   - Tags MUST come from SCHEMA.md taxonomy, add new tags there first
    - Minimum 2 outbound `[[wikilinks]]` per page
    - Contradictions → note both positions with dates + sources, add
      `contradictions: [page-name]` to frontmatter, flag in log
@@ -111,10 +111,10 @@ domain (see `templates/SCHEMA.md` for PM-tuned defaults).
      old one, set `supersedes: [old-slug]` on new page, `superseded_by: new-slug`
      on old page. Archive the old page. `lint --auto-fix` rewrites inbound links.
 
-⑥ **Backlink audit** — after creating a page, scan related pages and add
+⑥ **Backlink audit**: after creating a page, scan related pages and add
    inbound `[[links]]` so the new page isn't an orphan.
 
-⑦ **Update `overview.md`** — if the source shifts the domain synthesis, edit
+⑦ **Update `overview.md`**: if the source shifts the domain synthesis, edit
    the overview. Keep it under 200 lines. Link heavily.
 
 ⑧ **Update navigation:**
@@ -123,9 +123,9 @@ domain (see `templates/SCHEMA.md` for PM-tuned defaults).
    - Append to `log.md`: `## [YYYY-MM-DD] ingest | <source title>` with list
      of every file created/updated
 
-⑨ **Report to user** — list every file touched. One source → 5-15 pages is
+⑨ **Report to user**: list every file touched. One source → 5-15 pages is
    normal. Confirm before mass-updating (10+ pages).
-①① **Crystallize (for transcripts and research chains)** — when ingesting a
+①① **Crystallize (for transcripts and research chains)**: when ingesting a
    meeting transcript, 1:1 notes, or a multi-source research thread, also
    produce a distilled digest page under `queries/`:
    ```markdown
@@ -157,7 +157,7 @@ domain (see `templates/SCHEMA.md` for PM-tuned defaults).
    - File under `queries/<slug>/README.md` → substantial syntheses
    - Add artifacts (Marp deck / matplotlib chart / CSV / Mermaid) if the
      audience or question warrants it. See `references/output-formats.md`.
-⑦ **File valuable answers back** — substantial comparisons, deep dives,
+⑦ **File valuable answers back**: substantial comparisons, deep dives,
    novel synthesis. Skip trivial lookups.
 ⑧ Append to `log.md`: `## [YYYY-MM-DD] query | <question> (filed: yes/no)`
 ⑨ After filing a new page: `qmd update && qmd embed` (or rely on systemd
@@ -168,20 +168,20 @@ domain (see `templates/SCHEMA.md` for PM-tuned defaults).
 Separate discipline from ingest. Triggered when new info conflicts with or
 refines existing content.
 
-① **Identify all affected pages** — three-way search:
+① **Identify all affected pages**: three-way search:
    - `scripts/backlinks.py $WIKI <slug>` for structural backlinks (pages
      linking to the entity being revised)
    - `qmd query` for semantic variants (paraphrases of the stale claim)
    - `grep -r` for exact token match (dollar figures, codenames)
    Don't update one page and leave 3 others with the stale version.
 
-② **Show diff BEFORE writing** — present old text, new text, reason. Confirm
+② **Show diff BEFORE writing**: present old text, new text, reason. Confirm
    with user for any claim touching 5+ pages or changing stated strategy.
 
-③ **Cite source** — every update must include the raw source that justifies
+③ **Cite source**: every update must include the raw source that justifies
    the change in the page body and in the log entry.
 
-④ **Stale-claim sweep** — after update, re-search (qmd query + grep for
+④ **Stale-claim sweep**: after update, re-search (qmd query + grep for
    exact variants) across the wiki. Fix all instances in the same pass.
 
 ⑤ **Bump `updated:` date** on every page touched.
@@ -191,7 +191,7 @@ refines existing content.
 
 ### 5. Lint (tiered report)
 
-Use `scripts/lint.py` — writes report to `wiki/queries/lint-YYYY-MM-DD.md`
+Use `scripts/lint.py`, writes report to `wiki/queries/lint-YYYY-MM-DD.md`
 with severity tiers. Offers concrete fixes. Logs unconditionally.
 
 ```bash
@@ -275,47 +275,47 @@ systemctl --user enable --now obsidian-pm-sync
 sudo loginctl enable-linger $USER
 ```
 
-Now Claude Code writes on laptop, Obsidian mobile reads within seconds —
+Now Claude Code writes on laptop, Obsidian mobile reads within seconds ,
 handy for pre-meeting glance.
 
 ## Pitfalls
 
-- **Orient first** — SCHEMA + index + log + overview before any operation.
-- **Never touch `raw/`** — sources immutable. Corrections live in wiki pages.
-- **Update != ingest** — use the Update flow for revising existing claims.
+- **Orient first**: SCHEMA + index + log + overview before any operation.
+- **Never touch `raw/`**: sources immutable. Corrections live in wiki pages.
+- **Update != ingest**: use the Update flow for revising existing claims.
   Show diffs. Sweep stale variants. Don't silently overwrite.
-- **Thresholds prevent bloat** — analyst reports name-drop 30 companies per
+- **Thresholds prevent bloat**: analyst reports name-drop 30 companies per
   article. One mention ≠ entity page.
-- **Tag taxonomy** — add tags to SCHEMA.md first, then use. No freeform.
-- **Contradictions explicit** — both claims, dates, sources, frontmatter flag.
-- **Cross-references mandatory** — min 2 outbound `[[links]]` per page.
-- **Confirm mass updates** — 10+ pages touched → get user sign-off first.
-- **Rotate log** — at 500 entries, rename `log-YYYY.md`, start fresh.
-- **Human tone** — PM-facing content. No AI tells. No em-dashes. Natural voice.
-- **Privacy by default** — customer names, deal sizes, 1:1 content = `private: true`.
+- **Tag taxonomy**: add tags to SCHEMA.md first, then use. No freeform.
+- **Contradictions explicit**: both claims, dates, sources, frontmatter flag.
+- **Cross-references mandatory**: min 2 outbound `[[links]]` per page.
+- **Confirm mass updates**: 10+ pages touched → get user sign-off first.
+- **Rotate log**: at 500 entries, rename `log-YYYY.md`, start fresh.
+- **Human tone**: PM-facing content. No AI tells. No em-dashes. Natural voice.
+- **Privacy by default**: customer names, deal sizes, 1:1 content = `private: true`.
   When in doubt, mark private. Exports/shares respect the flag.
-- **Supersede, don't silently rewrite** — materially replacing a page needs
+- **Supersede, don't silently rewrite**: materially replacing a page needs
   explicit `supersedes:` / `superseded_by:` fields. Old page archived, not deleted.
-- **Use qmd first** — grep misses semantic matches. At dozens of meetings/week
+- **Use qmd first**: grep misses semantic matches. At dozens of meetings/week
   the wiki grows fast; grep + index alone will silently degrade quality.
 
 ## References
 
-- `references/schema-guide.md` — customizing SCHEMA.md for your domain
-- `references/update-guide.md` — diff discipline, stale-claim sweep patterns
-- `references/lint-guide.md` — interpreting tiered reports
-- `references/obsidian-sync.md` — headless sync deep dive
-- `references/privacy-guide.md` — pre-ingest filter + `private:` flag
-- `references/crystallize-guide.md` — transcript → decision digest pattern
-- `references/qmd-search.md` — primary search engine setup and use
-- `references/output-formats.md` — Marp, matplotlib, CSV, Mermaid, Canvas
-- `references/nextjs-integration.md` — embed graph + page viewer in a Next.js app
+- `references/schema-guide.md`, customizing SCHEMA.md for your domain
+- `references/update-guide.md`, diff discipline, stale-claim sweep patterns
+- `references/lint-guide.md`, interpreting tiered reports
+- `references/obsidian-sync.md`, headless sync deep dive
+- `references/privacy-guide.md`, pre-ingest filter + `private:` flag
+- `references/crystallize-guide.md`, transcript → decision digest pattern
+- `references/qmd-search.md`, primary search engine setup and use
+- `references/output-formats.md`, Marp, matplotlib, CSV, Mermaid, Canvas
+- `references/nextjs-integration.md`, embed graph + page viewer in a Next.js app
 
 ## Scripts
 
-- `scripts/scaffold.py <path> <domain>` — bootstrap new wiki
-- `scripts/lint.py <path>` — tiered health report
-- `scripts/backlinks.py <path> <slug>` — show pages linking to a slug.
+- `scripts/scaffold.py <path> <domain>`, bootstrap new wiki
+- `scripts/lint.py <path>`, tiered health report
+- `scripts/backlinks.py <path> <slug>`, show pages linking to a slug.
   Use `--context` for line-level matches, `--json` for agent consumption.
-- `scripts/lint.py <path> --auto-fix` — repair safe issues (supersession
+- `scripts/lint.py <path> --auto-fix`, repair safe issues (supersession
   link redirects, index backfill)

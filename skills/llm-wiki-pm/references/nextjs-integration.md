@@ -517,11 +517,11 @@ Client then fetches subgraphs on demand as user navigates.
 
 Critical for Scenario 2:
 
-1. **Filter at `buildGraph`** — private nodes + edges to/from them are
+1. **Filter at `buildGraph`**: private nodes + edges to/from them are
    removed before the JSON ever leaves the server
-2. **Never trust query params** — compute `includePrivate` from auth,
+2. **Never trust query params**: compute `includePrivate` from auth,
    not from client input
-3. **Sanitize error messages** — "page not found" regardless of whether
+3. **Sanitize error messages**: "page not found" regardless of whether
    the page exists but is private, or doesn't exist at all
 
 ## Real-time updates
@@ -585,18 +585,18 @@ useEffect(() => {
 }, [filter]);
 ```
 
-Pass `highlightedIds` to the graph — nodes not in the set render at low
+Pass `highlightedIds` to the graph, nodes not in the set render at low
 opacity, nodes in the set pulse or glow. User searches → graph highlights
 matching subgraph.
 
 ## Full MVP Checklist
 
-- [ ] `lib/wiki-graph.ts` — parser, backlinks, privacy filter
-- [ ] `app/api/wikis/[id]/graph/route.ts` — graph JSON endpoint
-- [ ] `app/api/wikis/[id]/pages/[slug]/route.ts` — page + backlinks
-- [ ] `components/WikiGraph.tsx` — force-graph component
-- [ ] `components/PageDetail.tsx` — side panel with markdown + backlinks
-- [ ] `app/wikis/[id]/page.tsx` — split-pane layout
+- [ ] `lib/wiki-graph.ts`, parser, backlinks, privacy filter
+- [ ] `app/api/wikis/[id]/graph/route.ts`, graph JSON endpoint
+- [ ] `app/api/wikis/[id]/pages/[slug]/route.ts`, page + backlinks
+- [ ] `components/WikiGraph.tsx`, force-graph component
+- [ ] `components/PageDetail.tsx`, side panel with markdown + backlinks
+- [ ] `app/wikis/[id]/page.tsx`, split-pane layout
 - [ ] Wikilink preprocessing (Option A or B above)
 - [ ] Auth wiring (your existing system)
 - [ ] Cache layer if > 500 pages or > 10 users
@@ -605,6 +605,6 @@ matching subgraph.
 
 Karpathy's own example of this pattern visualized lives in community projects
 like [Quartz](https://github.com/jackyzha0/quartz). Good code to read even
-if you don't use it directly — see their `quartz/components/Graph.tsx` for
+if you don't use it directly, see their `quartz/components/Graph.tsx` for
 how they handle force-graph config, and `quartz/plugins/transformers/links.ts`
 for their wikilink parser. Similar shape to what's above, MIT licensed.

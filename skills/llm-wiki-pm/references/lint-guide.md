@@ -5,40 +5,40 @@ Lint runs programmatically via `scripts/lint.py` and writes a tiered report to
 
 ## Severity Tiers
 
-### 🔴 Errors — fix before next session
+### 🔴 Errors, fix before next session
 
-- **Broken `[[wikilinks]]`** — target page doesn't exist. Either create the
+- **Broken `[[wikilinks]]`**: target page doesn't exist. Either create the
   target, fix the link, or remove it.
-- **Missing frontmatter fields** — required: title, created, updated, type,
+- **Missing frontmatter fields**: required: title, created, updated, type,
   tags, sources. Non-negotiable.
-- **Tags not in SCHEMA.md taxonomy** — add to taxonomy first, or change the
+- **Tags not in SCHEMA.md taxonomy**: add to taxonomy first, or change the
   tag. No exceptions.
 
 These block the wiki's search/navigation/discipline. Fix immediately.
 
-### 🟡 Warnings — triage with user
+### 🟡 Warnings, triage with user
 
-- **Orphan pages** — zero inbound links. Either add backlinks from related
+- **Orphan pages**: zero inbound links. Either add backlinks from related
   pages, or archive if truly standalone. Borderline pages may just need
   cross-references.
-- **Pages not in index.md** — index is the catalog. Add it or archive the page.
-- **Pages > 200 lines** — split candidate. Break into sub-topics with cross-
+- **Pages not in index.md**: index is the catalog. Add it or archive the page.
+- **Pages > 200 lines**: split candidate. Break into sub-topics with cross-
   links. Big pages hide content.
-- **Stale pages** — `updated:` > 90 days ago. Might be fine (stable facts)
+- **Stale pages**: `updated:` > 90 days ago. Might be fine (stable facts)
   or might be out of date. Review.
-- **Unresolved contradictions** — flagged in frontmatter but never closed.
+- **Unresolved contradictions**: flagged in frontmatter but never closed.
   Revisit with latest info.
 
 Discuss trends, not just individual items. If 30% of pages are stale, the
 wiki isn't being maintained actively enough.
 
-### 🔵 Info — quarterly review
+### 🔵 Info, quarterly review
 
-- **Tag usage frequency** — top tags dominate the domain. Rarely-used tags
+- **Tag usage frequency**: top tags dominate the domain. Rarely-used tags
   may be candidates for consolidation or removal.
-- **Singleton tags** (used once) — usually typos or impulsive additions.
+- **Singleton tags** (used once), usually typos or impulsive additions.
   Consolidate into existing tags or justify and keep.
-- **Log size** — rotate at 500 entries.
+- **Log size**: rotate at 500 entries.
 
 Not urgent. Save for quarterly taxonomy review.
 
@@ -59,11 +59,11 @@ python3 scripts/lint.py $WIKI --auto-fix
 
 Safe repairs applied automatically:
 
-- **Supersession link redirect** — rewrite `[[old-slug]]` → `[[new-slug]]` on
+- **Supersession link redirect**: rewrite `[[old-slug]]` → `[[new-slug]]` on
   every page where the old page has `superseded_by: new-slug` set
-- **Broken link redirect** — if a broken link target has a supersession
+- **Broken link redirect**: if a broken link target has a supersession
   mapping, rewrite to the new target instead of erroring
-- **Index backfill** — append missing non-superseded pages to `index.md`
+- **Index backfill**: append missing non-superseded pages to `index.md`
   under the correct type section
 
 NOT auto-fixed (requires human judgement):
@@ -80,11 +80,11 @@ themselves (`queries/lint-*.md`) are excluded from scans.
 
 Run-over-run patterns matter more than single reports.
 
-- **Orphans climbing** — ingest flow skipping backlink audit.
-- **Broken links climbing** — pages being deleted/renamed without sweep.
-- **Stale count climbing** — update discipline slipping, or domain expanding
+- **Orphans climbing**: ingest flow skipping backlink audit.
+- **Broken links climbing**: pages being deleted/renamed without sweep.
+- **Stale count climbing**: update discipline slipping, or domain expanding
   faster than curation.
-- **Tag count sprawling** — taxonomy enforcement slipping.
+- **Tag count sprawling**: taxonomy enforcement slipping.
 
 Treat lint as the wiki's health dashboard, not a one-off cleanup.
 

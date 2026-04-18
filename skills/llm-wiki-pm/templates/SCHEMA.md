@@ -1,4 +1,4 @@
-# Wiki Schema — PM
+# Wiki Schema, PM
 
 ## Domain
 
@@ -32,11 +32,11 @@ updated: YYYY-MM-DD
 type: entity | concept | comparison | query | summary
 tags: [from taxonomy below]
 sources: [raw/articles/example.md, raw/transcripts/call-YYYY-MM-DD.md]
-contradictions: []        # optional — pages with conflicting claims
-supersedes: []            # optional — page slugs this page replaces
-superseded_by: null       # optional — slug of the page that replaces this one
-private: false            # optional — true = exclude from exports/shares
-confidence: verified      # optional — verified | likely | rumor
+contradictions: []        # optional, pages with conflicting claims
+supersedes: []            # optional, page slugs this page replaces
+superseded_by: null       # optional, slug of the page that replaces this one
+private: false            # optional, true = exclude from exports/shares
+confidence: verified      # optional, verified | likely | rumor
 ---
 ```
 
@@ -45,37 +45,37 @@ confidence: verified      # optional — verified | likely | rumor
 Every tag on a page must appear here. Add new tags here FIRST, then use.
 
 ### Entities
-- `company` — external org (competitor, partner, customer)
-- `product` — named product or SKU
-- `person` — named individual (internal or external)
-- `team` — org unit (sales, SE, data, eng)
-- `model` — AI model (GPT-5, Claude, Llama, etc.)
-- `vendor` — tool/platform provider
+- `company`, external org (competitor, partner, customer)
+- `product`, named product or SKU
+- `person`, named individual (internal or external)
+- `team`, org unit (sales, SE, data, eng)
+- `model`, AI model (GPT-5, Claude, Llama, etc.)
+- `vendor`, tool/platform provider
 
 ### Domains
-- `competitive` — rival positioning, pricing, features
-- `customer` — named account, segment, persona
-- `strategy` — direction, positioning, bet
-- `roadmap` — planned or shipped work
-- `ai` — AI features, market, models
-- `migration` — customer migration work
-- `enterprise` — enterprise-specific
-- `pricing` — pricing, packaging, monetization
-- `gtm` — sales, marketing, SE enablement
+- `competitive`, rival positioning, pricing, features
+- `customer`, named account, segment, persona
+- `strategy`, direction, positioning, bet
+- `roadmap`, planned or shipped work
+- `ai`, AI features, market, models
+- `migration`, customer migration work
+- `enterprise`, enterprise-specific
+- `pricing`, pricing, packaging, monetization
+- `gtm`, sales, marketing, SE enablement
 
 ### Meta
-- `comparison` — side-by-side
-- `timeline` — chronological synthesis
-- `decision` — recorded decision + rationale
-- `risk` — identified risk, mitigation
-- `question` — open question to investigate
-- `prediction` — forward-looking claim with date
+- `comparison`, side-by-side
+- `timeline`, chronological synthesis
+- `decision`, recorded decision + rationale
+- `risk`, identified risk, mitigation
+- `question`, open question to investigate
+- `prediction`, forward-looking claim with date
 
 ### Katalon-specific
-- `trueplatform` — TruePlatform (formerly TestOps)
-- `studio` — Katalon Studio (not my scope but relevant)
-- `kai` — Kai AI product
-- `katalon-internal` — internal org/people
+- `trueplatform`, TruePlatform (formerly TestOps)
+- `studio`, Katalon Studio (not my scope but relevant)
+- `kai`, Kai AI product
+- `katalon-internal`, internal org/people
 
 Rule: tag sprawl kills wikis. Max ~40 tags. Consolidate quarterly.
 
@@ -84,8 +84,8 @@ Rule: tag sprawl kills wikis. Max ~40 tags. Consolidate quarterly.
 - **Create** when entity/concept appears in 2+ sources OR is central to one source
 - **Update** existing page for new info on covered ground
 - **Don't create** for passing mentions, footnote name-drops, out-of-scope items
-- **Split** when page > 200 lines — break by sub-topic with cross-links
-- **Archive** when fully superseded — move to `_archive/`, remove from index
+- **Split** when page > 200 lines, break by sub-topic with cross-links
+- **Archive** when fully superseded, move to `_archive/`, remove from index
 
 ## Entity Pages
 
@@ -126,7 +126,7 @@ Fields:
 ## Update Policy
 
 Conflicting info:
-1. Check dates — newer sources generally supersede
+1. Check dates, newer sources generally supersede
 2. If genuinely contradictory, note both with dates + sources
 3. Mark in frontmatter: `contradictions: [other-page]`
 4. Flag in next lint for user review
@@ -142,12 +142,12 @@ When a new page materially replaces an old one (not just revises it):
 
 1. New page frontmatter: `supersedes: [old-slug]`
 2. Old page frontmatter: `superseded_by: new-slug`
-3. Don't delete the old page — keep for audit trail
+3. Don't delete the old page, keep for audit trail
 4. Move old page to `_archive/` if fully replaced
 5. Rewrite inbound `[[old-slug]]` links to `[[new-slug]]` (lint --auto-fix does this)
 6. Log: `## [YYYY-MM-DD] supersede | old-slug → new-slug`
 
-Revision (same page, new info) is NOT supersession — use Update flow instead.
+Revision (same page, new info) is NOT supersession, use Update flow instead.
 
 ## Privacy Policy
 
@@ -171,9 +171,9 @@ Privacy filter checklist before every ingest:
 
 Optional `confidence:` frontmatter field:
 
-- `verified` — multiple independent sources, recently confirmed
-- `likely` — single credible source, plausible
-- `rumor` — single low-credibility source, unconfirmed, hearsay
+- `verified`, multiple independent sources, recently confirmed
+- `likely`, single credible source, plausible
+- `rumor`, single low-credibility source, unconfirmed, hearsay
 
-Use sparingly — mostly for competitive intel and market claims where
+Use sparingly, mostly for competitive intel and market claims where
 source quality varies. Not needed for internal facts.

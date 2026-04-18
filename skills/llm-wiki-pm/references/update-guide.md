@@ -22,13 +22,13 @@ If the source is brand new territory (no existing pages), use Ingest instead.
 Three-way search for completeness:
 
 ```bash
-# Structural — pages that link to the entity being revised
+# Structural, pages that link to the entity being revised
 python3 scripts/backlinks.py "$WIKI" <slug>
 
-# Semantic — paraphrases of the stale claim
+# Semantic, paraphrases of the stale claim
 qmd query "old claim phrased in various ways"
 
-# Exact token — numbers, codenames, specific quotes
+# Exact token, numbers, codenames, specific quotes
 grep -r "claim keyword" "$WIKI" --include="*.md"
 ```
 
@@ -40,7 +40,7 @@ Don't update one page and leave stale variants. If the claim appears in:
 - `comparisons/test-automation-mq.md`
 - `overview.md`
 
-…all three need the update.
+...all three need the update.
 
 ### 2. Show diff before writing
 
@@ -78,7 +78,7 @@ As of 2026-03, ~1.4x Katalon enterprise SKU
 Previously (2025-08): 2x Katalon.
 ```
 
-Don't overwrite old claims — preserve the history with dates when relevant
+Don't overwrite old claims, preserve the history with dates when relevant
 to understanding trends.
 
 ### 4. Stale-claim sweep
@@ -96,10 +96,10 @@ Every page touched → update `updated:` in frontmatter.
 
 ### 6. Handle contradictions and supersession explicitly
 
-**Revision** (same page, refined info) — stays in this Update flow. Bump
+**Revision** (same page, refined info), stays in this Update flow. Bump
 `updated:`, preserve history with dates, cite source.
 
-**Supersession** (new page materially *replaces* old one) — different flow:
+**Supersession** (new page materially *replaces* old one), different flow:
 
 ```yaml
 # new page frontmatter
@@ -139,11 +139,11 @@ Use `supersedes:` / `superseded_by:` when one claim replaces another.
 
 ## Anti-patterns
 
-- **Silent overwrite** — old claim deleted, no trace. Breaks trust.
-- **Update one page, miss three** — wiki becomes internally inconsistent.
-- **Uncited update** — nobody can verify 6 months later.
-- **Batch update without diffs** — user can't catch over-corrections.
-- **Update through Ingest flow** — loses the discipline. Use the right tool.
+- **Silent overwrite**: old claim deleted, no trace. Breaks trust.
+- **Update one page, miss three**: wiki becomes internally inconsistent.
+- **Uncited update**: nobody can verify 6 months later.
+- **Batch update without diffs**: user can't catch over-corrections.
+- **Update through Ingest flow**: loses the discipline. Use the right tool.
 
 ## Mass updates (10+ pages)
 

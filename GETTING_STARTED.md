@@ -2,8 +2,8 @@
 
 Two paths depending on who's driving the setup.
 
-- **[Scenario 1](#scenario-1-human-user-with-claude-code)** — You are a human, using Claude Code, want a personal wiki
-- **[Scenario 2](#scenario-2-application-orchestrated-scaffold)** — You are a platform/application scaffolding wikis for end-users programmatically
+- **[Scenario 1](#scenario-1-human-user-with-claude-code)**: You are a human, using Claude Code, want a personal wiki
+- **[Scenario 2](#scenario-2-application-orchestrated-scaffold)**: You are a platform/application scaffolding wikis for end-users programmatically
 
 ---
 
@@ -15,7 +15,7 @@ knowledge base working in 15 minutes.
 ### 1. Get the skill onto disk
 
 ```bash
-# Clone (or download a tarball — location doesn't matter, skill is path-agnostic)
+# Clone (or download a tarball, location doesn't matter, skill is path-agnostic)
 git clone <repo-url> ~/llm-wiki-pm
 # or if already here:
 # cd ~/llm-wiki-pm
@@ -30,7 +30,7 @@ mkdir -p ~/.claude/skills
 ln -s ~/llm-wiki-pm/skills/llm-wiki-pm ~/.claude/skills/llm-wiki-pm
 ```
 
-Restart Claude Code. Run `/skills` — `llm-wiki-pm` should appear.
+Restart Claude Code. Run `/skills`, `llm-wiki-pm` should appear.
 
 ### 3. Bootstrap your wiki
 
@@ -47,7 +47,7 @@ This creates `~/pm-wiki/` with:
 
 ```
 pm-wiki/
-├── SCHEMA.md       # edit this — see step 4
+├── SCHEMA.md       # edit this, see step 4
 ├── index.md
 ├── overview.md
 ├── log.md
@@ -63,10 +63,10 @@ pm-wiki/
 
 Open `~/pm-wiki/SCHEMA.md`. Edit three sections:
 
-1. **Domain** — one paragraph: what this wiki covers, what's out of scope
-2. **Tag taxonomy** — add/remove tags for your specific competitors, customers,
+1. **Domain**, one paragraph: what this wiki covers, what's out of scope
+2. **Tag taxonomy**: add/remove tags for your specific competitors, customers,
    themes. Default is Katalon-PM-tuned; yours will differ.
-3. **Page thresholds** — tune later after a dozen ingests; defaults are fine
+3. **Page thresholds**: tune later after a dozen ingests; defaults are fine
 
 Skipping this step = generic wiki that doesn't fit your domain.
 
@@ -86,13 +86,13 @@ npm install -g @tobilu/qmd
 # Wire your wiki as qmd collections
 qmd collection add "$WIKI_PATH"      --name wiki
 qmd collection add "$WIKI_PATH/raw"  --name raw
-qmd context add qmd://wiki "PM knowledge base — entities, concepts, comparisons, queries"
-qmd context add qmd://raw  "Immutable source docs — analyst reports, transcripts"
+qmd context add qmd://wiki "PM knowledge base, entities, concepts, comparisons, queries"
+qmd context add qmd://raw  "Immutable source docs, analyst reports, transcripts"
 qmd embed
 qmd status   # confirm everything is indexed
 ```
 
-Optional — auto-reindex on file change (see `references/qmd-search.md` for
+Optional, auto-reindex on file change (see `references/qmd-search.md` for
 systemd setup).
 
 ### 6. First ingest
@@ -120,7 +120,7 @@ offers to file the answer as a new page if it's substantial.
 
 ### 8. Mobile access (optional, 10 minutes)
 
-If you want to read the wiki on your phone before meetings — use
+If you want to read the wiki on your phone before meetings, use
 obsidian-headless. See `references/obsidian-sync.md` for the full systemd
 setup. TL;DR:
 
@@ -146,7 +146,7 @@ Then install Obsidian on your phone, pair with the synced vault.
 
 - **Skill doesn't activate** → confirm symlink exists, restart Claude Code,
   run `/skills`. Check SKILL.md frontmatter is intact.
-- **Claude can't find the wiki** → `echo $WIKI_PATH` — must be set in the
+- **Claude can't find the wiki** → `echo $WIKI_PATH`, must be set in the
   shell Claude Code launched from. Export in rc file, then re-launch.
 - **qmd returns nothing** → `qmd status` shows collection health. Run
   `qmd update && qmd embed` if files exist but aren't indexed.
@@ -163,15 +163,15 @@ From here the loop is: ingest → query → lint → repeat. The wiki compounds.
 ## Scenario 2: Application-orchestrated scaffold
 
 You are building a platform/application that provisions wikis for end-users
-programmatically. The user doesn't run `scaffold.py` themselves — your app does.
+programmatically. The user doesn't run `scaffold.py` themselves, your app does.
 
 ### Design decisions to make first
 
 **1. Where does the skill live?**
 
-- **Option A — shared install**: one copy per host, symlinked into each user's
+- **Option A, shared install**: one copy per host, symlinked into each user's
   Claude Code config. Simpler, but all users get the same SKILL.md and scripts.
-- **Option B — per-user copy**: copy the skill into each user's wiki root or
+- **Option B, per-user copy**: copy the skill into each user's wiki root or
   a per-user `.claude/skills/` dir. Lets you version-pin per user, customize
   SCHEMA templates per domain.
 
@@ -179,7 +179,7 @@ Most orchestration apps want **Option B** for isolation.
 
 **2. Where does the wiki live?**
 
-- **Per-user local dir**: `/var/lib/yourapp/wikis/<user-id>/` — simplest
+- **Per-user local dir**: `/var/lib/yourapp/wikis/<user-id>/`, simplest
 - **Per-user object storage sync**: local working copy + S3/R2 backup
 - **Database-backed**: don't. Markdown files in a directory is the point.
 
@@ -239,7 +239,7 @@ def scaffold(wiki_path: Path, domain: str, user_id: str | None = None) -> None:
     for sub in SUBDIRS:
         (wiki_path / sub).mkdir(parents=True, exist_ok=True)
 
-    # SCHEMA.md — customize per-domain by swapping templates or string-replacing
+    # SCHEMA.md, customize per-domain by swapping templates or string-replacing
     schema = (TEMPLATES / "SCHEMA.md").read_text()
     schema = schema.replace(
         "Product management knowledge base.",
@@ -360,7 +360,7 @@ If your platform provisions qmd too:
 
 ```python
 def setup_qmd(wiki_path: Path, user_id: str) -> None:
-    # Each user gets their own qmd db — isolated indexes, isolated search
+    # Each user gets their own qmd db, isolated indexes, isolated search
     db_path = Path(f"/var/lib/yourapp/qmd/{user_id}.sqlite")
     db_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -417,21 +417,21 @@ Isolated per-user DB, no CLI subprocess overhead.
 - **Audit log persistence**: ship `log.md` lines to your central logging for
   compliance
 - **Backup**: `raw/` and wiki `.md` files are the data. qmd DB is
-  regeneratable — don't need to back it up, just rebuild on restore
-- **Versioning**: consider making each wiki a git repo under the hood —
+  regeneratable, don't need to back it up, just rebuild on restore
+- **Versioning**: consider making each wiki a git repo under the hood ,
   automatic history, blame, rollback
 
 ### Onboarding flow UX (suggested)
 
 When a new user signs up:
 
-1. **Interview** — 3-5 questions to pick domain preset and seed taxonomy
-2. **Scaffold** — create wiki dir + SCHEMA customized to answers
-3. **First source** — prompt them to upload 1-3 sources immediately so the
+1. **Interview**: 3-5 questions to pick domain preset and seed taxonomy
+2. **Scaffold**: create wiki dir + SCHEMA customized to answers
+3. **First source**: prompt them to upload 1-3 sources immediately so the
    wiki isn't empty on first query
-4. **First query** — ask them a seed question about their domain to
+4. **First query**: ask them a seed question about their domain to
    demonstrate the compound-knowledge flow
-5. **Habit cue** — explain the weekly rhythm (ingest → query → lint)
+5. **Habit cue**: explain the weekly rhythm (ingest → query → lint)
 
 Skipping step 1 leaves users with a generic SCHEMA they'll never customize.
 Skipping step 3 leaves them with an empty wiki that feels broken.
@@ -481,7 +481,7 @@ Metrics worth emitting:
 - Private page ratio (governance signal)
 - Archive ratio (healthy pruning signal)
 
-Alert on sudden jumps in 🔴 errors or orphan ratio — usually indicates the
+Alert on sudden jumps in 🔴 errors or orphan ratio, usually indicates the
 agent is skipping orientation.
 
 ---
