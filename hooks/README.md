@@ -30,7 +30,7 @@ Hooks are defined in `hooks/hooks.json` at the plugin root and activate automati
 Make the scripts executable after cloning:
 
 ```bash
-chmod +x skills/llm-wiki-pm/hooks/*.sh
+chmod +x hooks/*.sh
 ```
 
 Script paths in `hooks/hooks.json` use `${CLAUDE_PLUGIN_ROOT}` so they resolve correctly regardless of where the plugin is installed.
@@ -55,8 +55,8 @@ Add to `~/.bashrc` or `~/.zshrc`:
 
 ```bash
 # Run wiki health check before starting any AI session
-alias wiki-start='bash /path/to/skills/llm-wiki-pm/hooks/session-start.sh'
-alias wiki-stop='bash /path/to/skills/llm-wiki-pm/hooks/session-stop.sh'
+alias wiki-start='bash /path/to/hooks/session-start.sh'
+alias wiki-stop='bash /path/to/hooks/session-stop.sh'
 ```
 
 Call `wiki-start` before opening your AI tool, `wiki-stop` when you close it.

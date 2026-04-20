@@ -16,7 +16,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-HOOKS_DIR = REPO_ROOT / "skills" / "llm-wiki-pm" / "hooks"
+HOOKS_DIR = REPO_ROOT / "hooks"
 TEMPLATES_DIR = REPO_ROOT / "skills" / "llm-wiki-pm" / "templates"
 
 SESSION_START = HOOKS_DIR / "session-start.sh"

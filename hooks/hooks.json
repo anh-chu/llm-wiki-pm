@@ -6,7 +6,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "bash \"${CLAUDE_PLUGIN_ROOT}/skills/llm-wiki-pm/hooks/session-start.sh\"",
+						"command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh\"",
 						"statusMessage": "Checking wiki health..."
 					}
 				]
@@ -18,7 +18,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "bash \"${CLAUDE_PLUGIN_ROOT}/skills/llm-wiki-pm/hooks/post-write.sh\"",
+						"command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/post-write.sh\"",
 						"async": true
 					}
 				]
@@ -29,7 +29,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "bash \"${CLAUDE_PLUGIN_ROOT}/skills/llm-wiki-pm/hooks/session-stop.sh\""
+						"command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/session-stop.sh\""
 					}
 				]
 			}
