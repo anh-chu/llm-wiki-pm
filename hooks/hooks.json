@@ -1,35 +1,38 @@
 {
-	"SessionStart": [
-		{
-			"hooks": [
-				{
-					"type": "command",
-					"command": "bash \"${CLAUDE_PLUGIN_ROOT}/skills/llm-wiki-pm/hooks/session-start.sh\"",
-					"statusMessage": "Checking wiki health..."
-				}
-			]
-		}
-	],
-	"PostToolUse": [
-		{
-			"matcher": "Write|Edit",
-			"hooks": [
-				{
-					"type": "command",
-					"command": "bash \"${CLAUDE_PLUGIN_ROOT}/skills/llm-wiki-pm/hooks/post-write.sh\"",
-					"async": true
-				}
-			]
-		}
-	],
-	"SessionEnd": [
-		{
-			"hooks": [
-				{
-					"type": "command",
-					"command": "bash \"${CLAUDE_PLUGIN_ROOT}/skills/llm-wiki-pm/hooks/session-stop.sh\""
-				}
-			]
-		}
-	]
+	"description": "Wiki health check, backlink validation, and log rotation hooks for llm-wiki-pm",
+	"hooks": {
+		"SessionStart": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "bash \"${CLAUDE_PLUGIN_ROOT}/skills/llm-wiki-pm/hooks/session-start.sh\"",
+						"statusMessage": "Checking wiki health..."
+					}
+				]
+			}
+		],
+		"PostToolUse": [
+			{
+				"matcher": "Write|Edit|MultiEdit",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "bash \"${CLAUDE_PLUGIN_ROOT}/skills/llm-wiki-pm/hooks/post-write.sh\"",
+						"async": true
+					}
+				]
+			}
+		],
+		"SessionEnd": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "bash \"${CLAUDE_PLUGIN_ROOT}/skills/llm-wiki-pm/hooks/session-stop.sh\""
+					}
+				]
+			}
+		]
+	}
 }
