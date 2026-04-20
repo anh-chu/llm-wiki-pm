@@ -108,9 +108,45 @@ The `|| true` prevents the hook from failing if there is nothing to commit or gi
 
 ---
 
-## Environment variables
+## Configuration
 
+### Plugin config (preferred)
+
+Set at plugin enable time via the `/plugin` menu in Claude Code, or manually
+add to `~/.claude/settings.json`:
+
+```json
+"pluginConfigs": {
+  "llm-wiki-pm@anh-chu-plugins": {
+    "options": {
+      "wiki_path": "~/pm-wiki",
+      "wiki_domain": "PM, Katalon"
+    }
+  }
+}
+```
+
+| Field | Type | Description | Example |
+|-------|------|-------------|---------|
+| `wiki_path` | string (directory) | Absolute or `~/` path where the wiki lives. Created on first session start if it does not exist. | `~/pm-wiki` |
+| `wiki_domain` | string | Domain label written into `SCHEMA.md` and `log.md` on scaffold. Used to scope the tag taxonomy. | `"PM, Katalon"` |
+
+The plugin ID key (`llm-wiki-pm@anh-chu-plugins`) must match the marketplace
+you installed from. Check with `claude plugin list`.
+
+### Fallback: environment variable
+
+If plugin config is not set, `WIKI_PATH` is used instead. Add to `~/.bashrc`
+or `~/.zshrc`:
+
+```bash
+export WIKI_PATH=~/pm-wiki
+export WIKI_DOMAIN="PM, Katalon"  # optional, defaults to "PM"
+```
+
+`WIKI_DOMAIN` is only read at scaffold time. Changing it after the wiki is
+created has no effect on existing files.
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `WIKI_PATH` | `$HOME/llm-wiki-pm/wiki` | Override the wiki directory location |
-| stdin JSON | (from hook system) | `post-write.sh` reads `.tool_input.file_path` from the JSON Claude Code sends on stdin |
+| `WIKI_PATH` | `$HOME/llm-wiki-pm/wiki` | Wiki directory location |
+| `WIKI_DOMAIN` | `PM` | Domain label used during scaffold |
