@@ -14,10 +14,10 @@ past their confidence decay threshold (>60 days). Writes `_status.md` and
 outputs an `additionalContext` summary directly into Claude's context.
 
 **post-write.sh**
-Runs after every file write inside the wiki directory. It checks the written file for broken `[[wikilinks]]` and calls `backlinks.py` to catch dangling references. Results are appended to `_status.md`. The hook always exits 0 so it never blocks a write.
+Runs after every file write inside the wiki directory. It reads the file path from stdin JSON (`tool_input.file_path`), then scans the written file for broken `[[wikilinks]]` against the wiki page directories. Results are appended to `_status.md`. The hook always exits 0 so it never blocks a write.
 
 **session-stop.sh**
-Guards log rotation at the end of each session. When `log.md` grows past 500 lines it renames the file to `log-YYYY.md` (or `log-YYYY-part-N.md` if that already exists) and creates a fresh `log.md` with a rotation header.
+Guards log rotation at the end of each session. When `log.md` exceeds 500 entries (lines starting with `## [`) it renames the file to `log-YYYY.md` (or `log-YYYY-part-N.md` if that already exists) and creates a fresh `log.md` with a rotation header.
 
 ---
 
@@ -37,11 +37,11 @@ Script paths in `hooks/hooks.json` use `${CLAUDE_PLUGIN_ROOT}` so they resolve c
 
 **Notes on events:**
 - `SessionStart` fires once when the session opens (new, resumed, or cleared). Not on every message.
-- `PostToolUse` with `matcher: "Write|Edit"` fires after file writes. The hook reads the file path from stdin JSON (`tool_input.file_path`).
+- `PostToolUse` with `matcher: "Write|Edit|MultiEdit"` fires after file writes. The hook reads the file path from stdin JSON (`tool_input.file_path`).
 - `SessionEnd` fires when the session terminates. Not after every Claude response (`Stop` does that).
 
 **Notes on `PostToolUse` matcher:**
-The `"matcher"` field is matched against the tool name. `Write|Edit` catches all file-writing tools (`Write` creates or overwrites, `Edit` replaces strings). There is no `MultiEdit` tool in Claude Code.
+The `"matcher"` field is matched against the tool name. `Write|Edit|MultiEdit` covers all file-writing tools. `MultiEdit` is confirmed in the official Anthropic `security-guidance` plugin example.
 
 ---
 

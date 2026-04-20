@@ -225,6 +225,19 @@ state.
 
 ## License
 
+## Tests
+
+Hook scripts and plugin manifest validation:
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install pytest -q
+.venv/bin/python -m pytest tests/ -v
+```
+
+43 tests covering scaffold, wikilink validation, log rotation, stdin parsing,
+and plugin manifest compliance. All tests create isolated temp wikis and feed
+the real Claude Code hook JSON schema to the scripts.
+
 MIT.
 
 ## Credits
