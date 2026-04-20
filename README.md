@@ -41,7 +41,7 @@ pages. Every query cites specific wiki entries. The wiki compounds.
 
 ```bash
 claude plugin marketplace add anh-chu/llm-wiki-pm
-claude plugin install llm-wiki-pm@anh-chu/llm-wiki-pm
+claude plugin install llm-wiki-pm@anh-chu-plugins
 ```
 
 ### Option B: Symlink from a clone
@@ -55,7 +55,7 @@ ln -s ~/llm-wiki-pm/skills/llm-wiki-pm ~/.claude/skills/llm-wiki-pm
 The symlink makes the skill available to Claude Code but does not install the plugin. Without the plugin, the `SessionStart` health-check hook and the `PostToolUse` link-check hook do not run, and the wiki is not auto-scaffolded. For hook automation and auto-scaffold, also install the plugin:
 
 ```bash
-claude plugin install llm-wiki-pm@anh-chu/llm-wiki-pm
+claude plugin install llm-wiki-pm@anh-chu-plugins
 ```
 
 ### Then: start Claude Code

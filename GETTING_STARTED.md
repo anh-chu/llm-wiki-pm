@@ -18,7 +18,7 @@ Installs the skill and hooks together. The wiki auto-scaffolds on the first sess
 
 ```bash
 claude plugin marketplace add anh-chu/llm-wiki-pm
-claude plugin install llm-wiki-pm@anh-chu/llm-wiki-pm
+claude plugin install llm-wiki-pm@anh-chu-plugins
 ```
 
 Restart Claude Code. Open it interactively and use `/plugin` to configure
