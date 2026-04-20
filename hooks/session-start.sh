@@ -11,7 +11,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Trust CLAUDE_PLUGIN_ROOT when set (always set during plugin execution).
-# Fallback for local dev: script lives at <plugin-root>/skills/llm-wiki-pm/hooks/
+# Fallback for local dev: script lives at <plugin-root>/hooks/
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 TEMPLATES_DIR="$PLUGIN_ROOT/skills/llm-wiki-pm/templates"
 SCRIPTS_DIR="$PLUGIN_ROOT/skills/llm-wiki-pm/scripts"
