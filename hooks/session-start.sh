@@ -17,6 +17,32 @@ TEMPLATES_DIR="$PLUGIN_ROOT/skills/llm-wiki-pm/templates"
 SCRIPTS_DIR="$PLUGIN_ROOT/skills/llm-wiki-pm/scripts"
 
 # ① Resolve wiki path from plugin config, then env var, then default
+# If neither is set, the plugin was installed without running through the
+# /plugin config UI. Output a clear message asking the user to configure it.
+if [[ -z "${CLAUDE_PLUGIN_OPTION_wiki_path:-}" && -z "${WIKI_PATH:-}" ]]; then
+  python3 -c "
+import json
+print(json.dumps({
+  'hookSpecificOutput': {
+    'hookEventName': 'SessionStart',
+    'additionalContext': (
+      'llm-wiki-pm: wiki path not configured. '
+      'Add this to ~/.claude/settings.json to finish setup:\\n\\n'
+      '  \"pluginConfigs\": {\\n'
+      '    \"llm-wiki-pm@anh-chu-plugins\": {\\n'
+      '      \"options\": {\\n'
+      '        \"wiki_path\": \"~/pm-wiki\",\\n'
+      '        \"wiki_domain\": \"PM\"\\n'
+      '      }\\n'
+      '    }\\n'
+      '  }\\n\\n'
+      'Then restart Claude Code. Until configured, no wiki features are active.'
+    )
+  }
+}))
+"
+  exit 0
+fi
 WIKI="${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-$HOME/llm-wiki-pm/wiki}}"
 DOMAIN="${CLAUDE_PLUGIN_OPTION_wiki_domain:-PM}"
 

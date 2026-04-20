@@ -403,6 +403,36 @@ class TestSessionStart:
         if result.returncode == 0:
             json.loads(result.stdout)  # must be parseable if it exits 0
 
+    def test_unconfigured_outputs_setup_instructions(self):
+        """No wiki_path or WIKI_PATH set: outputs setup instructions, exits 0."""
+        env = {
+            k: v
+            for k, v in os.environ.items()
+            if k
+            not in (
+                "WIKI_PATH",
+                "CLAUDE_PLUGIN_OPTION_wiki_path",
+                "CLAUDE_PLUGIN_OPTION_wiki_domain",
+            )
+        }
+        env["CLAUDE_PLUGIN_ROOT"] = str(REPO_ROOT)
+        env["HOME"] = "/nonexistent-home"  # prevent accidental fallback match
+
+        result = subprocess.run(
+            ["bash", str(SESSION_START)],
+            input=json.dumps(session_start_payload()),
+            capture_output=True,
+            text=True,
+            env=env,
+        )
+
+        assert result.returncode == 0
+        output = json.loads(result.stdout)
+        ctx = output["hookSpecificOutput"]["additionalContext"]
+        assert "not configured" in ctx
+        assert "pluginConfigs" in ctx
+        assert "wiki_path" in ctx
+
 
 # ---------------------------------------------------------------------------
 # post-write.sh tests
