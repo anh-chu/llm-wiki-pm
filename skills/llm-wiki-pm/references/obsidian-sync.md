@@ -52,8 +52,8 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/home/sil/.local/share/fnm/node-versions/v24.14.1/installation/bin/ob sync --continuous
-WorkingDirectory=%h/llm-wiki-pm/wiki
+ExecStart=/usr/bin/ob sync --continuous
+WorkingDirectory=%h/pm-wiki
 Restart=on-failure
 RestartSec=10
 

@@ -23,7 +23,7 @@ Three-way search for completeness:
 
 ```bash
 # Structural, pages that link to the entity being revised
-python3 scripts/backlinks.py "$WIKI" <slug>
+python3 "${CLAUDE_SKILL_DIR}/scripts/backlinks.py" "$WIKI" <slug>
 
 # Semantic, paraphrases of the stale claim
 qmd query "old claim phrased in various ways"
