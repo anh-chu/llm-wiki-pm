@@ -84,7 +84,7 @@ fi
 # ⑤ Scan for stale and decayed pages
 scan_dir() {
   local dir="$1"
-  [[ -d "$WIKI/$dir" ]] || return
+  [[ -d "$WIKI/$dir" ]] || return 0  # explicit 0: avoid set -e triggering in caller
   while IFS= read -r -d '' file; do
     local slug updated_val updated_ts
     slug=$(basename "$file" .md)

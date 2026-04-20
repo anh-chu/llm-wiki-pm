@@ -3,3 +3,4 @@ TODO.md
 .pi/
 .pi-lens/
 __pycache__/
+.venv/
