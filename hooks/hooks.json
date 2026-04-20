@@ -1,12 +1,12 @@
 {
-	"description": "Wiki health check, backlink validation, and log rotation hooks for llm-wiki-pm",
+	"description": "Wiki health check, wikilink validation, and log rotation hooks for llm-wiki-pm",
 	"hooks": {
 		"SessionStart": [
 			{
 				"hooks": [
 					{
 						"type": "command",
-						"command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh\"",
+						"command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh",
 						"statusMessage": "Checking wiki health..."
 					}
 				]
@@ -18,7 +18,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/post-write.sh\"",
+						"command": "${CLAUDE_PLUGIN_ROOT}/hooks/post-write.sh",
 						"async": true
 					}
 				]
@@ -29,7 +29,7 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/session-stop.sh\""
+						"command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-stop.sh"
 					}
 				]
 			}
