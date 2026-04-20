@@ -13,12 +13,14 @@ The agent writes. You curate sources, ask questions, steer.
 
 ## When This Skill Activates
 
-- User asks to ingest a source (article, report, transcript, meeting notes, PDF extract) into their wiki
+- User asks to ingest a source (article, report, transcript, meeting notes, PDF extract, Slack thread, Gmail chain, or current conversation) into their wiki
 - User asks a question and a wiki exists at `$WIKI_PATH`
 - User asks to update or revise a page with new info
 - User asks to lint, audit, or health-check the wiki
 - User asks to create or bootstrap a PM wiki
 - User references "my wiki", "the wiki", "knowledge base", "notes" in a PM context
+- User asks to build a persona or communication profile for a person
+- User asks to map relationships or org hierarchy in the wiki
 
 ## Wiki Location
 
@@ -62,6 +64,10 @@ Before any ingest/query/update/lint, **always**:
 ③ Read last 20-30 lines of `log.md`, recent activity
 ④ Read `overview.md`, current synthesis state
 ⑤ For 100+ page wikis: `grep -r "topic" $WIKI --include="*.md"` before creating
+⑥ **Staleness warning**: if any page has `updated:` older than 14 days
+   (overview/index) or 30 days (entity/concept pages) AND log.md shows recent
+   activity touching that area, surface: "Warning: [[page]] may be stale.
+   Last updated YYYY-MM-DD. Recent log activity: [date, action]."
 
 Skipping orientation → duplicate pages, missed cross-refs, schema drift.
 
@@ -80,10 +86,23 @@ domain (see `templates/SCHEMA.md` for PM-tuned defaults).
 
 ### 2. Ingest a source
 
-① **Capture raw:**
+① **Capture raw** (choose source type):
    - URL → `web_fetch` → save markdown to `raw/articles/<slug>.md`
    - PDF → extract text → `raw/papers/<slug>.md` (keep PDF in `raw/assets/`)
    - Paste/transcript → `raw/transcripts/<slug>.md`
+   - **Slack thread**: copy thread messages → `raw/internal/<channel>-<date>.md`.
+     Add frontmatter: `source_channel: "#channel-name"`, `source_date_range: "YYYY-MM-DD"`,
+     `source_thread_id: "<thread_ts>"`. Dedup: before saving, grep wiki for same
+     thread_ts to avoid double-ingest. Strip @mentions to initials if private.
+   - **Gmail chain**: export thread text → `raw/internal/email-<subject-slug>-<date>.md`.
+     Add frontmatter: `source_channel: "Gmail"`, `source_date_range: "YYYY-MM-DD/YYYY-MM-DD"`,
+     `source_thread_id: "<gmail-thread-id>"`. Strip external email addresses if sensitive.
+   - **Current conversation**: when user says "from this conversation" or "use what
+     we discussed", treat the session as a source. Save a summary to
+     `raw/internal/conversation-<YYYY-MM-DD>.md`. Distinguish:
+       - User-stated facts: attribute as `user, <date>`
+       - Tool-retrieved (Slack, Gmail, web_fetch): attribute to original source
+     Do not collapse these. Keep provenance separate in the raw file.
    - Name descriptively: `raw/articles/gartner-test-automation-mq-2026.md`
    - **Privacy filter (mandatory)**: strip API keys, tokens, passwords from raw.
      If the source contains customer-identifying info, deal sizes, 1:1 content,
@@ -98,6 +117,9 @@ domain (see `templates/SCHEMA.md` for PM-tuned defaults).
 
 ④ **Apply Page Thresholds** (from SCHEMA.md):
    - Create entity page only if 2+ sources mention OR central to current source
+   - **People specifically**: create a person entity page when a person appears
+     in 2+ sources, has a named role, or is central to a relationship being mapped.
+     Don't wait for the user to ask. Apply the same 2+ threshold proactively.
    - Passing mentions in footnotes don't warrant pages
    - Update existing pages rather than duplicating
 
@@ -114,16 +136,27 @@ domain (see `templates/SCHEMA.md` for PM-tuned defaults).
 ⑥ **Backlink audit**: after creating a page, scan related pages and add
    inbound `[[links]]` so the new page isn't an orphan.
 
-⑦ **Update `overview.md`**: if the source shifts the domain synthesis, edit
+⑧ **Entity promotion scan**: after writing or updating any concept page, scan
+   for named people, companies, and products described with 3+ distinct attributes
+   (role, decisions, style, concerns, history, etc.) inline.
+   - Count how many entities meet that threshold.
+   - If any do, prompt: "N entities on this page meet the entity threshold.
+     Create individual entity pages?"
+   - Create entity pages for confirmed items. Link the concept page out to each
+     new entity page instead of keeping the prose inline.
+   - For promoted person entities: check whether a persona page is warranted
+     (see §8 Persona Pages).
+
+⑧ **Update `overview.md`**: if the source shifts the domain synthesis, edit
    the overview. Keep it under 200 lines. Link heavily.
 
-⑧ **Update navigation:**
+⑨ **Update navigation:**
    - Add new pages to `index.md` under correct section, alphabetical
    - Bump total page count + "Last updated" header
    - Append to `log.md`: `## [YYYY-MM-DD] ingest | <source title>` with list
      of every file created/updated
 
-⑨ **Report to user**: list every file touched. One source → 5-15 pages is
+①⓪ **Report to user**: list every file touched. One source → 5-15 pages is
    normal. Confirm before mass-updating (10+ pages).
 ①① **Crystallize (for transcripts and research chains)**: when ingesting a
    meeting transcript, 1:1 notes, or a multi-source research thread, also
@@ -144,6 +177,17 @@ domain (see `templates/SCHEMA.md` for PM-tuned defaults).
    ```
    Link from affected entity/concept pages back to the crystallize page.
    This is how exploration compounds into the wiki, not just raw ingests.
+
+①② **Entity promotion scan** (after every ingest): scan pages you just created
+   or updated for named people, companies, and products described with 3+ attributes
+   (role, style, concerns, position, history, etc.).
+   - If found in a concept page: prompt user, "X entities in [[page]] meet the
+     entity threshold. Create individual entity pages?"
+   - Don't silently promote. Always confirm.
+   - After splitting, update the concept page to link out: `[[entity-slug]]`
+     instead of the inline prose.
+   - Check whether a persona page is warranted for any promoted person entity
+     (see §8 Persona Pages).
 
 ### 3. Query
 ② **Primary search: qmd MCP tools** (`query`, `get`, `multi_get`). Use qmd
@@ -205,12 +249,14 @@ Checks:
 4. 🟡 Orphan pages (zero inbound links)
 5. 🟡 Pages not in `index.md` (or vice versa)
 6. 🟡 Pages > 200 lines (split candidates)
-7. 🟡 Stale pages (updated > 90 days, source newer)
-8. 🟡 Contradictions flagged in frontmatter but unresolved
-9. 🔵 Tag usage frequency (taxonomy tuning)
-10. 🔵 Log size > 500 entries (rotation due)
+7. 🟡 Contradictions flagged in frontmatter but unresolved
+8. 🟡 Stale pages (updated > 90 days, no correlated log activity)
+9. 🟠 Stale overview/index (updated > 14 days, log shows recent activity)
+10. 🟠 Stale entity/concept/comparison (updated > 30 days, log shows recent activity)
+11. 🔵 Tag usage frequency (taxonomy tuning)
+12. 🔵 Log size > 500 entries (rotation due)
 
-Read the report, act on 🔴 items, discuss 🟡 with user, note 🔵 for later.
+Read the report, act on 🔴 items, investigate 🟠 stale pages, discuss 🟡 with user, note 🔵 for later.
 
 ### 6. Archive
 
@@ -221,6 +267,78 @@ Superseded or out-of-scope content:
 4. Update inbound linkers: replace `[[old]]` with plain text "(archived)"
 5. Log archive action with reason
 
+### 7. Staleness Check
+
+Run when: user asks "is the wiki up to date?", "what needs updating?", or after
+an extended gap in wiki activity. Also runs automatically during orient (step ⑥).
+
+① **Scan frontmatter dates**: read `updated:` from all pages in `entities/`,
+   `concepts/`, `comparisons/`, `overview.md`, and `index.md`.
+
+② **Apply thresholds**:
+   - `overview.md`, `index.md`: stale if `updated:` > 14 days ago
+   - `entities/`, `concepts/`, `comparisons/`: stale if `updated:` > 30 days ago
+
+③ **Cross-reference log.md**: for each stale page, check whether log.md has
+   entries in the past 30 days referencing that entity or topic. Log activity
+   with no page update means the page is likely behind, not just dormant.
+
+④ **Surface findings** to user:
+   - "X pages haven't been updated in Y+ days" (grouped by type)
+   - Highlight pages where log.md shows activity but `updated:` hasn't moved
+   - Suggest the 2-3 most likely candidates for updates based on log recency
+
+⑤ **Offer update flow**: for each flagged page, offer to run the Update flow (§4)
+   or open the page for manual review.
+
+⑥ **Log**: append staleness check to `log.md` regardless of whether updates follow.
+
+### 8. Persona Pages
+
+Build when: user asks for a communication profile, style analysis, or persona
+for a person. Also triggered after promoting a person entity when 3+ attributes
+exist about their communication style.
+
+① **Confirm data sources**: ask user which communication tiers have actual
+   source material. Don't fabricate tiers you have no data for.
+   Typical tiers: Slack DM, Slack channel, Email internal, Email external.
+
+② **Gather source material**: ingest any Slack threads, email chains, or
+   conversation content via §2 ingest flow before writing the persona page.
+
+③ **Write persona page** at `entities/<name>-persona.md`:
+   - Type: `persona`. Link to `[[<name>]]` entity in frontmatter `sources:`.
+   - Core traits summary (3-5 sentences, no bullet spray).
+   - One section per tier with data. Format per tier:
+     ```
+     ### Slack DM
+     - Formality: informal
+     - Sentence length: short, often 1 line
+     - Humor: dry, occasional
+     - Sign-off: none typical
+     - Notes: mixes Vietnamese in casual threads
+     ```
+   - Cross-tier comparison table at the bottom:
+     | Dimension | Slack DM | Slack channel | Email internal | Email external |
+     |-----------|----------|---------------|----------------|----------------|
+     | Formality | ... | ... | ... | ... |
+     | Length | ... | ... | ... | ... |
+     | Humor | ... | ... | ... | ... |
+     | Sign-off | ... | ... | ... | ... |
+
+④ **Link persona to person entity**: add `[[<name>-persona]]` to the person
+   entity page under Relationships or a "Communication profile" section.
+
+⑤ **Relationship map**: when 3+ person entity pages exist, check whether
+   `concepts/relationship-map.md` exists. If not, offer to create it.
+   Format: markdown table with columns Name, Role, Reports to, Peers,
+   Interaction frequency. Update when new person entities are added.
+
+⑥ **Log**: `## [YYYY-MM-DD] persona | <name>-persona | tiers: [list]`
+
+```
+## [YYYY-MM-DD] staleness-check | X stale pages found | updated: [slugs] or none
+```
 ## PM Workflow Patterns
 
 **Weekly competitive digest:** user drops 3-5 analyst links → ingest all →
@@ -304,6 +422,7 @@ handy for pre-meeting glance.
 - `references/schema-guide.md`, customizing SCHEMA.md for your domain
 - `references/update-guide.md`, diff discipline, stale-claim sweep patterns
 - `references/lint-guide.md`, interpreting tiered reports
+- `references/persona-guide.md`, building persona and relationship map pages
 - `references/obsidian-sync.md`, headless sync deep dive
 - `references/privacy-guide.md`, pre-ingest filter + `private:` flag
 - `references/crystallize-guide.md`, transcript → decision digest pattern

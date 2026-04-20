@@ -29,7 +29,7 @@ Out of scope: code specifics (use Hindsight + code comments). Personal life.
 title: Page Title
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
-type: entity | concept | comparison | query | summary
+type: entity | concept | comparison | query | summary | persona
 tags: [from taxonomy below]
 sources: [raw/articles/example.md, raw/transcripts/call-YYYY-MM-DD.md]
 contradictions: []        # optional, pages with conflicting claims
@@ -37,6 +37,31 @@ supersedes: []            # optional, page slugs this page replaces
 superseded_by: null       # optional, slug of the page that replaces this one
 private: false            # optional, true = exclude from exports/shares
 confidence: verified      # optional, verified | likely | rumor
+# Persona pages only:
+language_patterns:         # optional, for persona type
+  sentence_length: short | medium | long | mixed
+  capitalization: standard | lowercase | mixed
+  punctuation: minimal | heavy | standard
+tone_by_channel: {}        # optional, map of channel → tone descriptor
+vocabulary_markers:        # optional
+  hedging_level: low | medium | high
+  humor_style: none | dry | casual | none
+  signoff_patterns: []     # e.g. ["Best,", "Thanks,", "Cheers"]
+code_switching: []         # e.g. ["Vietnamese in casual Slack DMs"]
+core_traits: []            # 3-5 top traits
+# Person entity pages only:
+reports_to: null           # optional, [[wikilink]] to manager entity
+direct_reports: []         # optional, list of [[wikilink]] entity slugs
+peers: []                  # optional, cross-functional or same-level
+interaction_frequency: null # optional, daily | weekly | project-based
+# Slack/Gmail sourced pages:
+source_channel: null       # optional, e.g. "#product-strategy" or "Gmail thread"
+source_date_range: null    # optional, e.g. "2026-03-01/2026-04-01"
+source_thread_id: null     # optional, Slack thread_ts or Gmail thread ID
+# Source metadata (Slack / email sources)
+channel_id: null          # optional, Slack channel ID or Gmail label
+thread_ts: null           # optional, Slack thread_ts (e.g. 1713456789.123456)
+message_date: null        # optional, YYYY-MM-DD of original message or thread start
 ---
 ```
 
@@ -48,6 +73,7 @@ Every tag on a page must appear here. Add new tags here FIRST, then use.
 - `company`, external org (competitor, partner, customer)
 - `product`, named product or SKU
 - `person`, named individual (internal or external)
+- `persona`, communication style and language profile for a person
 - `team`, org unit (sales, SE, data, eng)
 - `model`, AI model (GPT-5, Claude, Llama, etc.)
 - `vendor`, tool/platform provider
@@ -82,6 +108,7 @@ Rule: tag sprawl kills wikis. Max ~40 tags. Consolidate quarterly.
 ## Page Thresholds
 
 - **Create** when entity/concept appears in 2+ sources OR is central to one source
+- **Person entities**: same rule applies. When a named person appears in 2+ sources, or is the central subject of one source, create `entities/<slug>.md`. When a concept page accumulates 3+ distinct attributes for a person (role, employer, decisions, relationships), that person meets the entity threshold and should be promoted to their own page.
 - **Update** existing page for new info on covered ground
 - **Don't create** for passing mentions, footnote name-drops, out-of-scope items
 - **Split** when page > 200 lines, break by sub-topic with cross-links
@@ -95,6 +122,13 @@ Fields:
 - Relationships (`[[wikilinks]]` to related entities)
 - Relevance to our work (why this matters for Katalon PM)
 - Source references
+
+Person entity additional fields (when available):
+- Org relationships (`reports_to`, `direct_reports`, `peers`)
+- Interaction frequency (daily / weekly / project-based)
+- Link to persona page: `[[person-name-persona]]`
+- When 3+ person entities exist in the wiki, auto-generate
+  `concepts/relationship-map.md` with an org chart table and interaction tiers
 
 ## Concept Pages
 
@@ -122,6 +156,24 @@ Fields:
 - Pages drawn from
 - Date asked
 - Filed because: [reason it's worth keeping]
+
+## Persona Pages
+
+Type: `persona`. One page per person. Slug: `<name>-persona.md`.
+
+Fields:
+- Core traits summary (3-5 lines)
+- Communication tiers (one section per tier):
+  - **Slack DM**: formality, language, message length, humor, sign-off
+  - **Slack channel**: formality, language, message length, humor, sign-off
+  - **Email internal**: formality, language, message length, humor, sign-off
+  - **Email external**: formality, language, message length, humor, sign-off
+- Cross-tier comparison table (auto-generated from tier sections)
+- Vocabulary markers (hedging, humor style, sign-offs, code-switching)
+- Source notes (what conversations or messages informed this analysis)
+
+Always link back to the corresponding person entity page (`[[person-name]]`).
+Always confirm with user which tiers have actual source data before generating.
 
 ## Update Policy
 

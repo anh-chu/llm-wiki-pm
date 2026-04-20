@@ -24,14 +24,27 @@ These block the wiki's search/navigation/discipline. Fix immediately.
 - **Pages not in index.md**: index is the catalog. Add it or archive the page.
 - **Pages > 200 lines**: split candidate. Break into sub-topics with cross-
   links. Big pages hide content.
-- **Stale pages**: `updated:` > 90 days ago. Might be fine (stable facts)
-  or might be out of date. Review.
+- **Stale pages**: `updated:` > 90 days ago with no correlated log activity.
+  May be stable facts or genuinely neglected. Review with user.
 - **Unresolved contradictions**: flagged in frontmatter but never closed.
   Revisit with latest info.
 
 Discuss trends, not just individual items. If 30% of pages are stale, the
 wiki isn't being maintained actively enough.
 
+### 🟠 Stale (STALE), review before next session
+
+- **Stale overview/index**: `updated:` > 14 days ago AND log.md contains entries
+  in the same window. The synthesis is behind known activity. Update it now.
+- **Stale entity/concept/comparison**: `updated:` > 30 days ago AND log.md shows
+  ingests or updates touching the same entity or topic in that period. The page is
+  likely outdated, not just dormant.
+
+For each flagged page: read the relevant log entries, identify what changed, then
+run the Update flow. Don't mass-update blindly. Prioritize by log frequency.
+
+Staleness with no log correlation = 🟡 Warning (might be fine).
+Staleness with log correlation = 🟠 STALE (act on it).
 ### 🔵 Info, quarterly review
 
 - **Tag usage frequency**: top tags dominate the domain. Rarely-used tags
@@ -49,6 +62,8 @@ After lint:
 1. Open the generated report at `wiki/queries/lint-YYYY-MM-DD.md`
 2. Fix all 🔴 errors in one pass. Re-run lint to confirm.
 3. Scan 🟡 warnings. Flag 3-5 for user discussion. Batch similar fixes.
+3a. Review 🟠 STALE pages. For each, cross-check against log.md to confirm the
+    page is actually behind, then run Update flow in priority order.
 4. Note 🔵 info. Check back next quarter.
 5. Update `overview.md` if the lint revealed drift in the synthesis.
 ## Auto-Fix Mode
