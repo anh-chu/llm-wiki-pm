@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Bootstrap a new PM wiki. Usage: scaffold.py <wiki_path> <domain>"""
 
+import contextlib
 import json
 import sys
 from pathlib import Path
@@ -25,16 +26,19 @@ SUBDIRS = [
 
 
 HOOK_CONFIG = {
-    "UserPromptSubmit": [
+    # SessionStart fires once when the session begins (not on every prompt)
+    "SessionStart": [
         {"hooks": [{"type": "command", "command": "{hooks_dir}/session-start.sh"}]}
     ],
+    # PostToolUse fires after Write or Edit tool calls; hook reads file path from stdin JSON
     "PostToolUse": [
         {
             "matcher": "Write|Edit",
             "hooks": [{"type": "command", "command": "{hooks_dir}/post-write.sh"}],
         }
     ],
-    "Stop": [
+    # SessionEnd fires when the session terminates (not after every turn)
+    "SessionEnd": [
         {"hooks": [{"type": "command", "command": "{hooks_dir}/session-stop.sh"}]}
     ],
 }

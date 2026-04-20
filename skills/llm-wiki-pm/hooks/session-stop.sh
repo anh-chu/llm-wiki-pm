@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # session-stop.sh
 # Runs at session end. Guards log rotation to keep log.md manageable.
-# Hook type: Stop (Claude Code)
+# Hook type: SessionEnd (fires when session terminates, not after every turn)
 
 set -euo pipefail
 

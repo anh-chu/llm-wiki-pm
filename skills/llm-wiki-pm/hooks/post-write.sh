@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # post-write.sh
 # Runs after any file write to the wiki directory. Checks backlinks for the written file.
-# Hook type: PostToolUse (Write / Edit tools) in Claude Code
+# Hook type: PostToolUse (Write|Edit tools) in Claude Code
+# Input: JSON on stdin with tool_name and tool_input fields
 
 set -euo pipefail
 
@@ -11,16 +12,14 @@ SCRIPTS_DIR="$SCRIPT_DIR/../scripts"
 
 WIKI="${WIKI_PATH:-$HOME/llm-wiki-pm/wiki}"
 
-# ① Determine which file was written
-# Claude Code passes the file path via $TOOL_INPUT_FILE or as $1
-WRITTEN_FILE="${TOOL_INPUT_FILE:-${1:-}}"
+# ① Read file path from stdin JSON (Claude Code passes hook input on stdin)
+INPUT=$(cat)
+TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null || true)
+WRITTEN_FILE=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty' 2>/dev/null || true)
 
 if [[ -z "$WRITTEN_FILE" ]]; then
-  # No file passed; nothing to check
   exit 0
 fi
-
-# Normalize to absolute path
 WRITTEN_FILE="$(realpath "$WRITTEN_FILE" 2>/dev/null || echo "$WRITTEN_FILE")"
 
 # ② Skip if file is not inside the wiki directory

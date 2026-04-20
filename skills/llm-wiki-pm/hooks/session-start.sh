@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # session-start.sh
 # Runs at session start. Pre-computes wiki health and writes _status.md.
-# Hook type: UserPromptSubmit (Claude Code)
+# Hook type: SessionStart (fires once per session, not on every prompt)
 
 set -euo pipefail
 

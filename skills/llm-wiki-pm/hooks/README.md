@@ -32,9 +32,8 @@ Then add this to your `settings.json`:
 ```json
 {
   "hooks": {
-    "UserPromptSubmit": [
+    "SessionStart": [
       {
-        "matcher": "",
         "hooks": [
           {
             "type": "command",
@@ -45,7 +44,7 @@ Then add this to your `settings.json`:
     ],
     "PostToolUse": [
       {
-        "matcher": "Write|Edit|MultiEdit",
+        "matcher": "Write|Edit",
         "hooks": [
           {
             "type": "command",
@@ -54,9 +53,8 @@ Then add this to your `settings.json`:
         ]
       }
     ],
-    "Stop": [
+    "SessionEnd": [
       {
-        "matcher": "",
         "hooks": [
           {
             "type": "command",
@@ -71,8 +69,10 @@ Then add this to your `settings.json`:
 
 Replace `/path/to/your/` with the actual absolute path to this repo.
 
-**Notes on `UserPromptSubmit`:**
-This hook fires on every message, not just the first one. `session-start.sh` is idempotent and fast (no network calls), so repeated runs are fine. `_status.md` gets refreshed each time, which is useful for long sessions.
+**Notes on events:**
+- `SessionStart` fires once when the session opens (new, resumed, or cleared). Not on every message.
+- `PostToolUse` with `matcher: "Write|Edit"` fires after file writes. The hook reads the file path from stdin JSON (`tool_input.file_path`).
+- `SessionEnd` fires when the session terminates. Not after every Claude response (`Stop` does that).
 
 **Notes on `PostToolUse` matcher:**
 The `"matcher"` field is matched against the tool name. `Write|Edit|MultiEdit` catches all file-writing tools. Adjust if Claude Code uses different tool names in your version.
@@ -106,10 +106,11 @@ your-ai-tool "$@"
 bash /path/to/hooks/session-stop.sh
 ```
 
-For `post-write.sh`, pass the written file path as the first argument or set `TOOL_INPUT_FILE` before calling it:
+For `post-write.sh`, pass the hook JSON payload on stdin (same format Claude Code uses):
 
 ```bash
-TOOL_INPUT_FILE="/path/to/written/file.md" bash /path/to/hooks/post-write.sh
+echo '{"tool_name":"Write","tool_input":{"file_path":"/path/to/wiki/entities/example.md"}}' \
+  | WIKI_PATH=/path/to/wiki bash /path/to/hooks/post-write.sh
 ```
 
 ---
@@ -146,4 +147,4 @@ The `|| true` prevents the hook from failing if there is nothing to commit or gi
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `WIKI_PATH` | `$HOME/llm-wiki-pm/wiki` | Override the wiki directory location |
-| `TOOL_INPUT_FILE` | (none) | Set by hook system for `post-write.sh`; falls back to `$1` |
+| stdin JSON | (from hook system) | `post-write.sh` reads `.tool_input.file_path` from the JSON Claude Code sends on stdin |
