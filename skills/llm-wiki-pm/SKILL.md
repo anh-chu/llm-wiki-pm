@@ -25,6 +25,72 @@ The agent writes. You curate sources, ask questions, steer.
   Capture the fact as a short wiki page or update to an existing relevant page.
   Use §2 Ingest with source `conversation | <date>`. Ask user which page it
   belongs to if unclear, or create a new entity/concept page if it warrants one.
+- "I have a meeting/call/1:1 with [person]" → triggers §9 Pre-Meeting Briefing
+- "What happened this week / last week / recently?" → triggers §10 Catch Me Up
+- "[tag] digest" or "catch me up on [topic]" → triggers §11 Tag Digest
+
+## Proactive Behaviors
+
+These fire whenever the skill is loaded. They are not tied to explicit wiki commands.
+Apply them as quiet background checks. Don't interrupt the main answer. Append
+notes briefly after your response.
+
+### 1. Proactive Recall
+
+When the user mentions a named entity (company, person, product), grep the wiki
+for that name. If a page exists, surface it inline:
+
+> "Wiki has [[page]] (updated YYYY-MM-DD). Want a summary?"
+
+Append after your answer, not before. One line. Don't ask if the entity clearly
+came up only in passing.
+
+### 2. Ambient Fact Capture
+
+When the user makes a declarative statement about PM-domain topics (pricing,
+decisions, people, companies, roadmap, competitors, customers), flag it:
+
+> "That sounds wikifiable. Want me to add it?"
+
+Only flag PM-domain facts. Skip casual chat, opinions without specifics, and
+hypotheticals. Use judgment.
+
+### 3. Contradiction Alert
+
+When the user states a fact about a known entity, grep the wiki for that entity
+and check for conflicting claims. If a conflict exists, surface it:
+
+> "This may conflict with [[page]] from YYYY-MM-DD. Which is current?"
+
+Best-effort. Don't surface false positives from vague matches.
+
+### 4. Open Question Backlog
+
+When a factual question is raised in conversation that the wiki can't answer,
+offer to log it:
+
+> "Want me to log that as an open question in the wiki?"
+
+Create a `question`-tagged page under `queries/` with the question text and date.
+Don't log rhetorical questions or things the user is clearly about to answer
+themselves.
+
+### 5. Decision Journaling
+
+When the user uses decision language ("we decided", "the call is", "going with X",
+"I've decided", "we're going to"), offer to crystallize it:
+
+> "Want me to log that decision in the wiki?"
+
+If yes, create or update a `decision`-tagged page. Include who decided, when,
+and the rationale if stated.
+
+### 6. Relationship-Aware Answers
+
+When answering any question involving a named person, check for
+`entities/<name>-persona.md` and `concepts/relationship-map.md`. If found, fold
+in 1-2 lines of key traits alongside the factual answer. Don't pad. If persona
+data isn't relevant to the question, skip it.
 
 ## Wiki Location
 
@@ -72,6 +138,17 @@ Before any ingest/query/update/lint, **always**:
    (overview/index) or 30 days (entity/concept pages) AND log.md shows recent
    activity touching that area, surface: "Warning: [[page]] may be stale.
    Last updated YYYY-MM-DD. Recent log activity: [date, action]."
+
+⑦ **Confidence decay check**: after reading `log.md`, run:
+   ```bash
+   grep -r "competitive" $WIKI/entities $WIKI/concepts --include="*.md" -l
+   ```
+   For each result, check its `updated:` date. If older than 60 days, surface:
+   > "⚠️ Confidence decay: [[page]] is 60+ days old. Verify before use."
+
+⑧ **Read `_status.md`**: if `$WIKI/_status.md` exists, read it. This file
+   contains pre-computed health data from the session-start hook. Surface any
+   warnings from it immediately before proceeding.
 
 Skipping orientation → duplicate pages, missed cross-refs, schema drift.
 
@@ -343,6 +420,57 @@ exist about their communication style.
 ```
 ## [YYYY-MM-DD] staleness-check | X stale pages found | updated: [slugs] or none
 ```
+
+### 9. Pre-Meeting Briefing
+
+Trigger: "I have a meeting/call/1:1 with X" or "brief me on X before my call"
+
+① grep wiki for entity name. Read entity page.
+② Read persona page if it exists: `entities/<name>-persona.md`
+③ grep `concepts/relationship-map.md` for relevant context.
+④ Read last 5 entries in `log.md` that mention that entity.
+⑤ grep for open `question`-tagged pages related to that entity.
+⑥ Synthesize into a short brief:
+   - **Who**: role, org, relationship to you
+   - **What we know**: key facts from entity page
+   - **Recent activity**: log entries from step ④
+   - **Open questions**: from step ⑤
+   - **Communication tips**: from persona page if available (1-2 lines)
+⑦ Log: `## [YYYY-MM-DD] brief | <entity> | pre-meeting`
+
+### 10. Catch Me Up
+
+Trigger: "what happened this week", "catch me up", "what's new in the wiki",
+"what did I miss"
+
+① Read `log.md`. Filter entries from the last N days (default 7, user can specify).
+② List:
+   - New pages created
+   - Pages updated
+   - Decisions logged
+   - Open questions added
+③ Check `_status.md` if it exists. Surface any pre-computed staleness warnings.
+④ Surface the 2-3 most active areas based on log frequency.
+⑤ Offer to run a staleness check or tag digest if the summary warrants it.
+
+Log: `## [YYYY-MM-DD] catchup | last N days | X actions`
+
+### 11. Tag Digest
+
+Trigger: "[tag] digest", "summarize [tag] pages", "what's new in
+[competitive/customer/roadmap/etc]"
+
+① grep wiki frontmatter for the requested tag.
+② Read matching pages, newest first by `updated:` date.
+③ Synthesize into a structured brief:
+   - Key players or themes
+   - Recent changes
+   - Open questions
+   - Notable patterns
+④ Offer to file the synthesis as a query page.
+
+Log: `## [YYYY-MM-DD] digest | tag: <tag> | X pages synthesized`
+
 ## PM Workflow Patterns
 
 **Weekly competitive digest:** user drops 3-5 analyst links → ingest all →

@@ -37,6 +37,8 @@ supersedes: []            # optional, page slugs this page replaces
 superseded_by: null       # optional, slug of the page that replaces this one
 private: false            # optional, true = exclude from exports/shares
 confidence: verified      # optional, verified | likely | rumor
+confidence_decay_days: null # optional, integer. Warn if updated: is older than N days.
+                            #   Default 60 for competitive-tagged pages, null for others.
 # Persona pages only:
 language_patterns:         # optional, for persona type
   sentence_length: short | medium | long | mixed
@@ -229,3 +231,23 @@ Optional `confidence:` frontmatter field:
 
 Use sparingly, mostly for competitive intel and market claims where
 source quality varies. Not needed for internal facts.
+
+### Confidence Decay
+
+Optional `confidence_decay_days:` frontmatter field (integer or null).
+
+Sets the number of days after which the page should be flagged as potentially
+stale and unverified. Default behavior:
+
+- `competitive`-tagged pages: 60 days (applied automatically during orient)
+- All other pages: null (no decay, rely on standard staleness thresholds)
+
+Set explicitly on any page where time-sensitivity matters:
+
+```yaml
+confidence_decay_days: 30   # e.g. for fast-moving pricing pages
+```
+
+The orient step (step ⑦) greps for competitive-tagged pages and flags any with
+`updated:` older than their decay threshold. The `_status.md` hook pre-computes
+this check so it's instant at session start.

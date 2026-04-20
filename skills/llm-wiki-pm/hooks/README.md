@@ -1,0 +1,149 @@
+# Wiki Hooks
+
+Three shell scripts that keep the wiki healthy across sessions. They run automatically if you wire them up to your AI coding tool's hook system.
+
+---
+
+## What these hooks do
+
+**session-start.sh**
+Scans the wiki at the start of each session and writes `_status.md`. It checks for broken links (via `lint.py`), orphan pages, stale entries (not updated in 30+ days), and competitive pages that may need confidence score review (60+ days old). The agent reads `_status.md` during the orient step so it surfaces issues before you ask.
+
+**post-write.sh**
+Runs after every file write inside the wiki directory. It checks the written file for broken `[[wikilinks]]` and calls `backlinks.py` to catch dangling references. Results are appended to `_status.md`. The hook always exits 0 so it never blocks a write.
+
+**session-stop.sh**
+Guards log rotation at the end of each session. When `log.md` grows past 500 lines it renames the file to `log-YYYY.md` (or `log-YYYY-part-N.md` if that already exists) and creates a fresh `log.md` with a rotation header.
+
+---
+
+## Installation for Claude Code
+
+Claude Code hooks live in `.claude/settings.json` (project-scoped) or `~/.claude/settings.json` (global).
+
+Make the scripts executable first:
+
+```bash
+chmod +x skills/llm-wiki-pm/hooks/*.sh
+```
+
+Then add this to your `settings.json`:
+
+```json
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/path/to/your/skills/llm-wiki-pm/hooks/session-start.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/path/to/your/skills/llm-wiki-pm/hooks/post-write.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/path/to/your/skills/llm-wiki-pm/hooks/session-stop.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Replace `/path/to/your/` with the actual absolute path to this repo.
+
+**Notes on `UserPromptSubmit`:**
+This hook fires on every message, not just the first one. `session-start.sh` is idempotent and fast (no network calls), so repeated runs are fine. `_status.md` gets refreshed each time, which is useful for long sessions.
+
+**Notes on `PostToolUse` matcher:**
+The `"matcher"` field is matched against the tool name. `Write|Edit|MultiEdit` catches all file-writing tools. Adjust if Claude Code uses different tool names in your version.
+
+---
+
+## Installation for other systems
+
+If you are not using Claude Code, you can source the scripts from a shell wrapper or alias.
+
+**Shell alias approach:**
+
+Add to `~/.bashrc` or `~/.zshrc`:
+
+```bash
+# Run wiki health check before starting any AI session
+alias wiki-start='bash /path/to/skills/llm-wiki-pm/hooks/session-start.sh'
+alias wiki-stop='bash /path/to/skills/llm-wiki-pm/hooks/session-stop.sh'
+```
+
+Call `wiki-start` before opening your AI tool, `wiki-stop` when you close it.
+
+**Wrapper script approach:**
+
+```bash
+#!/usr/bin/env bash
+# ai-session.sh -- wrapper that runs hooks around your AI tool
+
+bash /path/to/hooks/session-start.sh
+your-ai-tool "$@"
+bash /path/to/hooks/session-stop.sh
+```
+
+For `post-write.sh`, pass the written file path as the first argument or set `TOOL_INPUT_FILE` before calling it:
+
+```bash
+TOOL_INPUT_FILE="/path/to/written/file.md" bash /path/to/hooks/post-write.sh
+```
+
+---
+
+## How the agent uses hook output
+
+`session-start.sh` writes `$WIKI/_status.md` before the agent gets your first message. The skill instructs the agent to read `_status.md` during the orient step (before planning any work). This means:
+
+- Broken links are surfaced automatically, not discovered mid-task.
+- Confidence decay warnings appear at session start, prompting a review.
+- Stale pages are listed so the agent can factor them into recommendations.
+
+`post-write.sh` appends to `_status.md` after each write. If the agent writes multiple files in one session, issues accumulate there. The agent can re-read `_status.md` at the end of a session to summarize what changed.
+
+---
+
+## Skipping auto-commit
+
+Auto-commit is not included in these hooks. Automatic commits can obscure work-in-progress and create noisy git history.
+
+If you want auto-commit on session end, add this to `session-stop.sh` before the final `exit 0`:
+
+```bash
+# Optional auto-commit -- add manually if desired
+cd "$WIKI" && git add -A && git commit -m "wiki update $(date +%Y-%m-%d)" 2>/dev/null || true
+```
+
+The `|| true` prevents the hook from failing if there is nothing to commit or git is not initialized.
+
+---
+
+## Environment variables
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `WIKI_PATH` | `$HOME/llm-wiki-pm/wiki` | Override the wiki directory location |
+| `TOOL_INPUT_FILE` | (none) | Set by hook system for `post-write.sh`; falls back to `$1` |
