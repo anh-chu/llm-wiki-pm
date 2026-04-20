@@ -41,7 +41,7 @@ Script paths in `hooks/hooks.json` use `${CLAUDE_PLUGIN_ROOT}` so they resolve c
 - `SessionEnd` fires when the session terminates. Not after every Claude response (`Stop` does that).
 
 **Notes on `PostToolUse` matcher:**
-The `"matcher"` field is matched against the tool name. `Write|Edit|MultiEdit` catches all file-writing tools. Adjust if Claude Code uses different tool names in your version.
+The `"matcher"` field is matched against the tool name. `Write|Edit` catches all file-writing tools (`Write` creates or overwrites, `Edit` replaces strings). There is no `MultiEdit` tool in Claude Code.
 
 ---
 

@@ -52,12 +52,17 @@ mkdir -p ~/.claude/skills
 ln -s ~/llm-wiki-pm/skills/llm-wiki-pm ~/.claude/skills/llm-wiki-pm
 ```
 
-### Then: start Claude Code
+The symlink makes the skill available to Claude Code but does not install the plugin. Without the plugin, the `SessionStart` health-check hook and the `PostToolUse` link-check hook do not run, and the wiki is not auto-scaffolded. For hook automation and auto-scaffold, also install the plugin:
 
-The plugin scaffolds your wiki automatically on the first session.
 ```bash
-# Restart Claude Code after enabling the plugin. The SessionStart hook
-# creates the wiki directory using the path you set at plugin enable time.
+claude plugin install llm-wiki-pm@anh-chu/llm-wiki-pm
+```
+
+### Then: start Claude Code
+Restart Claude Code after enabling the plugin. You will be prompted for your wiki path and domain. The `SessionStart` hook creates the wiki directory on the first session start.
+
+If you used Option B without installing the plugin, set `WIKI_PATH` before starting Claude Code:
+```bash
 echo 'export WIKI_PATH=$HOME/pm-wiki' >> ~/.bashrc && source ~/.bashrc
 ```
 
@@ -101,26 +106,16 @@ Not a fit if you:
 
 ```
 llm-wiki-pm/
-├── SKILL.md                  # Main agent instructions
-├── README.md                 # This file
-├── references/
-│   ├── schema-guide.md       # Customizing SCHEMA.md
-│   ├── update-guide.md       # Update flow discipline
-│   ├── lint-guide.md         # Interpreting tiered reports
-│   ├── obsidian-sync.md      # Headless sync for mobile access
-│   ├── privacy-guide.md      # Pre-ingest filter + private flag
-│   ├── crystallize-guide.md  # Transcript → decision digest pattern
-│   ├── qmd-search.md         # Primary search engine (BM25+vector+rerank)
-│   ├── output-formats.md     # Marp / matplotlib / CSV / Mermaid
-│   └── nextjs-integration.md # Graph + page viewer in a Next.js app
-├── scripts/
-│   ├── lint.py               # Tiered health report + --auto-fix
-│   └── backlinks.py          # Show pages linking to a slug
-└── templates/
-    ├── SCHEMA.md             # PM-tuned domain + tag taxonomy
-    ├── index.md              # Empty content catalog
-    ├── log.md                # Empty action log
-    └── overview.md           # Empty synthesis page
+├── .claude-plugin/
+│   └── plugin.json
+├── hooks/
+│   └── hooks.json
+└── skills/llm-wiki-pm/
+    ├── SKILL.md
+    ├── hooks/         (session-start.sh, post-write.sh, session-stop.sh)
+    ├── references/
+    ├── scripts/
+    └── templates/
 ```
 
 ## Setup

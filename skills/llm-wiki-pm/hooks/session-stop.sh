@@ -20,11 +20,11 @@ if [[ ! -f "$LOG_FILE" ]]; then
   exit 0
 fi
 
-# ③ Count lines in log.md
-LINE_COUNT=$(wc -l < "$LOG_FILE")
+# ③ Count log entries (each entry starts with '## [')
+ENTRY_COUNT=$(grep -c '^## \[' "$LOG_FILE" 2>/dev/null || echo 0)
 
-# ④ Only rotate if log exceeds 500 lines
-if [[ "$LINE_COUNT" -le 500 ]]; then
+# ④ Only rotate if log exceeds 500 entries
+if [[ "$ENTRY_COUNT" -le 500 ]]; then
   exit 0
 fi
 
@@ -51,6 +51,6 @@ TODAY=$(date '+%Y-%m-%d')
 printf '# Wiki Log\n\nRotated from %s on %s.\n' "$BASE_NAME" "$TODAY" > "$LOG_FILE"
 
 # ⑦ Report the rotation to stderr
-echo "Wiki log rotated: log.md -> $BASE_NAME (was $LINE_COUNT lines)" >&2
+echo "Wiki log rotated: log.md -> $BASE_NAME ($ENTRY_COUNT entries)" >&2
 
 exit 0

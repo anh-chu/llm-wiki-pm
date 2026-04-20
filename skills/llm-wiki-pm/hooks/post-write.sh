@@ -1,29 +1,35 @@
 #!/usr/bin/env bash
 # post-write.sh
-# Runs after any file write to the wiki directory. Checks backlinks for the written file.
+# Runs after any file write to the wiki directory. Checks wikilinks in the written file.
 # Hook type: PostToolUse (Write|Edit tools) in Claude Code
 # Input: JSON on stdin with tool_name and tool_input fields
 
 set -euo pipefail
 
 # ── Resolve paths ─────────────────────────────────────────────────────────────
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SCRIPTS_DIR="$SCRIPT_DIR/../scripts"
-
 WIKI="${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-$HOME/llm-wiki-pm/wiki}}"
 
 # ① Read file path from stdin JSON (Claude Code passes hook input on stdin)
 INPUT=$(cat)
-TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null || true)
 WRITTEN_FILE=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty' 2>/dev/null || true)
 
 if [[ -z "$WRITTEN_FILE" ]]; then
   exit 0
 fi
-WRITTEN_FILE="$(realpath "$WRITTEN_FILE" 2>/dev/null || echo "$WRITTEN_FILE")"
+
+# Resolve to absolute path using Python (portable, works on macOS and Linux)
+WRITTEN_FILE=$(python3 -c "
+import os, sys
+p = os.path.realpath(os.path.abspath(sys.argv[1]))
+print(p)
+" "$WRITTEN_FILE" 2>/dev/null || echo "$WRITTEN_FILE")
 
 # ② Skip if file is not inside the wiki directory
-WIKI_REAL="$(realpath "$WIKI" 2>/dev/null || echo "$WIKI")"
+WIKI_REAL=$(python3 -c "
+import os, sys
+print(os.path.realpath(os.path.abspath(sys.argv[1])))
+" "$WIKI" 2>/dev/null || echo "$WIKI")
+
 if [[ "$WRITTEN_FILE" != "$WIKI_REAL"/* ]]; then
   exit 0
 fi
@@ -40,36 +46,23 @@ ISSUES=()
 # ③ Extract slug from filename
 SLUG=$(basename "$WRITTEN_FILE" .md)
 
-# ④ Run backlinks check via backlinks.py
-BACKLINK_ISSUES=0
-if [[ -f "$SCRIPTS_DIR/backlinks.py" ]]; then
-  BL_OUTPUT=$(python3 "$SCRIPTS_DIR/backlinks.py" "$WIKI" "$SLUG" --json 2>/dev/null || true)
-  if [[ -n "$BL_OUTPUT" ]]; then
-    BL_COUNT=$(echo "$BL_OUTPUT" | python3 -c "
-import sys, json
-d = json.load(sys.stdin)
-broken = d.get('broken', [])
-print(len(broken))
-" 2>/dev/null || echo 0)
-    if [[ "$BL_COUNT" -gt 0 ]]; then
-      BACKLINK_ISSUES="$BL_COUNT"
-      BL_LIST=$(echo "$BL_OUTPUT" | python3 -c "
-import sys, json
-d = json.load(sys.stdin)
-for b in d.get('broken', []):
-    print('  - ' + str(b))
-" 2>/dev/null || true)
-      ISSUES+=("Broken backlinks ($BL_COUNT):" "$BL_LIST")
-    fi
-  fi
-fi
-
-# ⑤ Check for broken [[wikilinks]] in the written file itself
+# ④ Check for broken [[wikilinks]] in the written file itself
 WIKILINK_ISSUES=0
 if [[ -f "$WRITTEN_FILE" ]]; then
+  # Use Python to extract wikilinks (grep -oP is GNU-only)
   while IFS= read -r link; do
+    [[ -z "$link" ]] && continue
     # Strip [[ and ]] and handle aliases: [[target|label]] -> target
-    TARGET=$(echo "$link" | sed 's/\[\[//;s/\]\]//;s/|.*//')
+    TARGET=$(echo "$link" | python3 -c "
+import sys
+raw = sys.stdin.read().strip()
+# Remove [[ and ]]
+raw = raw.lstrip('[[').rstrip(']]')
+# Handle alias syntax: target|label -> target, and anchors: target#section -> target
+raw = raw.split('|')[0].split('#')[0].strip()
+print(raw)
+")
+
     TARGET_SLUG=$(echo "$TARGET" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
 
     # Search for the target .md file anywhere in the wiki
@@ -78,10 +71,15 @@ if [[ -f "$WRITTEN_FILE" ]]; then
       WIKILINK_ISSUES=$(( WIKILINK_ISSUES + 1 ))
       ISSUES+=("  - broken wikilink: [[$TARGET]]")
     fi
-  done < <(grep -oP '\[\[[^\]]+\]\]' "$WRITTEN_FILE" 2>/dev/null || true)
+  done < <(python3 -c "
+import re, sys
+text = open(sys.argv[1]).read()
+for m in re.findall(r'\[\[[^\]]+\]\]', text):
+    print(m)
+" "$WRITTEN_FILE" 2>/dev/null || true)
 fi
 
-# ⑥ Append to _status.md
+# ⑤ Append to _status.md
 # Create _status.md with minimal header if it does not exist yet
 if [[ ! -f "$STATUS_FILE" ]]; then
   printf '# Wiki Status\n\n' > "$STATUS_FILE"
@@ -104,5 +102,5 @@ fi
   fi
 } >> "$STATUS_FILE"
 
-# ⑦ Always exit 0 so the hook never blocks a write
+# ⑥ Always exit 0 so the hook never blocks a write
 exit 0

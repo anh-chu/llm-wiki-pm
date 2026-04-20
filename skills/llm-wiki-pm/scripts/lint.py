@@ -70,6 +70,8 @@ def main():
         print("usage: lint.py <wiki_path> [--auto-fix]", file=sys.stderr)
         sys.exit(1)
     auto_fix = "--auto-fix" in args
+    output_json = "--json" in args
+    quiet = "--quiet" in args
     args = [a for a in args if not a.startswith("--")]
     wiki = Path(args[0]).expanduser().resolve()
     if not wiki.exists():
@@ -89,6 +91,7 @@ def main():
     taxonomy = load_taxonomy(wiki / "SCHEMA.md")
 
     errors, warnings, info = [], [], []
+    orphans_list = []
     fixes_applied = []
 
     inbound = defaultdict(set)
@@ -208,6 +211,7 @@ def main():
             continue
         if s not in inbound:
             warnings.append(f"orphan (zero inbound links): {p.relative_to(wiki)}")
+            orphans_list.append(str(p.relative_to(wiki)))
 
     # index completeness → auto-fix by appending missing entries
     idx_path = wiki / "index.md"
@@ -312,6 +316,23 @@ def main():
 
     report_path.write_text("\n".join(out) + "\n")
 
+    # Output structured JSON when requested (used by hooks for health checks).
+    # Using --json implies no prose on stdout.
+    if output_json:
+        import json
+
+        broken_list = [e for e in errors if e.startswith("broken [[")]
+        print(
+            json.dumps(
+                {
+                    "broken_links": broken_list,
+                    "orphans": orphans_list,
+                    "errors": len(errors),
+                    "warnings": len(warnings),
+                }
+            )
+        )
+        return
     if log_path.exists():
         with log_path.open("a") as f:
             f.write(
@@ -322,11 +343,12 @@ def main():
             if auto_fix:
                 f.write(f"- Auto-fix applied {len(fixes_applied)} repairs\n")
 
-    print(f"ok: {report_path.relative_to(wiki)}")
-    print(
-        f"  🔴 {len(errors)}  🟡 {len(warnings)}  🔵 {len(info)}  "
-        f"🔧 {len(fixes_applied)}"
-    )
+    if not quiet:
+        print(f"ok: {report_path.relative_to(wiki)}")
+        print(
+            f"  🔴 {len(errors)}  🟡 {len(warnings)}  🔵 {len(info)}  "
+            f"🔧 {len(fixes_applied)}"
+        )
 
 
 if __name__ == "__main__":

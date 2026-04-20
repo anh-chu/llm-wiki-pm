@@ -12,40 +12,20 @@ Two paths depending on who's driving the setup.
 You've cloned this repo, you use Claude Code, you want a PM (or other-domain)
 knowledge base working in 15 minutes.
 
-### 1. Get the skill onto disk
+### Install path A: Plugin (recommended)
+
+Installs the skill and hooks together. The wiki auto-scaffolds on the first session start.
 
 ```bash
-# Clone (or download a tarball, location doesn't matter, skill is path-agnostic)
-git clone <repo-url> ~/llm-wiki-pm
-# or if already here:
-# cd ~/llm-wiki-pm
+claude plugin marketplace add anh-chu/llm-wiki-pm
+claude plugin install llm-wiki-pm@anh-chu/llm-wiki-pm
 ```
 
-### 2. Install as Claude Code skill
-
-User-level (available in every project):
-
-```bash
-mkdir -p ~/.claude/skills
-ln -s ~/llm-wiki-pm/skills/llm-wiki-pm ~/.claude/skills/llm-wiki-pm
-```
-
-Restart Claude Code. Run `/skills`, `llm-wiki-pm` should appear.
-
-### 3. Start Claude Code
-
-The plugin scaffolds your wiki automatically on the first session start.
-When you enable the plugin you will be prompted for your wiki path and domain.
-```bash
-# Optional: also set WIKI_PATH in your shell for direct script use
-echo 'export WIKI_PATH=$HOME/pm-wiki' >> ~/.bashrc && source ~/.bashrc
-```
-
-This creates `~/pm-wiki/` with:
+Restart Claude Code. You will be prompted for a wiki path and domain. On the first session start, the `SessionStart` hook creates this structure at your chosen path:
 
 ```
 pm-wiki/
-├── SCHEMA.md       # edit this, see step 4
+├── SCHEMA.md       # edit this, see step below
 ├── index.md
 ├── overview.md
 ├── log.md
@@ -57,7 +37,28 @@ pm-wiki/
 └── _archive/
 ```
 
-### 4. Customize SCHEMA.md (5 minutes, critical)
+### Install path B: Skill-only (symlink)
+
+Use this if you want manual control or prefer not to use the Claude Code plugin system.
+
+```bash
+git clone <repo-url> ~/llm-wiki-pm
+mkdir -p ~/.claude/skills
+ln -s ~/llm-wiki-pm/skills/llm-wiki-pm ~/.claude/skills/llm-wiki-pm
+```
+
+Restart Claude Code. Run `/skills` to confirm `llm-wiki-pm` appears.
+
+The symlink installs the skill but not the plugin. The `SessionStart` health-check hook and `PostToolUse` link-check hook do not run, and the wiki is not auto-scaffolded. Create the wiki directory and set `WIKI_PATH` yourself:
+
+```bash
+mkdir -p ~/pm-wiki
+echo 'export WIKI_PATH=$HOME/pm-wiki' >> ~/.bashrc && source ~/.bashrc
+```
+
+Then scaffold the wiki by telling Claude: "Set up my wiki at ~/pm-wiki using the llm-wiki-pm skill templates." Alternatively, use the Python scaffold snippet in Scenario 2.
+
+### 2. Customize SCHEMA.md (5 minutes, critical)
 
 Open `~/pm-wiki/SCHEMA.md`. Edit three sections:
 
@@ -68,7 +69,7 @@ Open `~/pm-wiki/SCHEMA.md`. Edit three sections:
 
 Skipping this step = generic wiki that doesn't fit your domain.
 
-### 5. Install qmd (strongly recommended upfront)
+### 3. Install qmd (strongly recommended upfront)
 
 Your wiki will grow fast with frequent meetings. Grep alone degrades past
 ~200 pages. Install qmd now:
@@ -93,7 +94,7 @@ qmd status   # confirm everything is indexed
 Optional, auto-reindex on file change (see `references/qmd-search.md` for
 systemd setup).
 
-### 6. First ingest
+### 4. First ingest
 
 In Claude Code, open a session in any directory. Drop a source:
 
@@ -109,14 +110,14 @@ Claude will:
 - Update index.md, log.md, overview.md
 - Tell you exactly what files it touched
 
-### 7. First query
+### 5. First query
 
 > What do we know about Tricentis pricing?
 
 Claude reads overview.md, qmd-queries the wiki, synthesizes with citations,
 offers to file the answer as a new page if it's substantial.
 
-### 8. Mobile access (optional, 10 minutes)
+### 6. Mobile access (optional, 10 minutes)
 
 If you want to read the wiki on your phone before meetings, use
 obsidian-headless. See `references/obsidian-sync.md` for the full systemd
@@ -132,7 +133,7 @@ ob sync --continuous       # or run as systemd service
 
 Then install Obsidian on your phone, pair with the synced vault.
 
-### 9. Weekly rhythm (after a few ingests)
+### 7. Weekly rhythm (after a few ingests)
 
 - **Daily-ish**: ingest meeting transcripts and articles as they arrive
 - **Weekly**: quick `qmd update && qmd embed` if you don't have the watcher
@@ -144,8 +145,7 @@ Then install Obsidian on your phone, pair with the synced vault.
 
 - **Skill doesn't activate** → confirm symlink exists, restart Claude Code,
   run `/skills`. Check SKILL.md frontmatter is intact.
-- **Claude can't find the wiki** → `echo $WIKI_PATH`, must be set in the
-  shell Claude Code launched from. Export in rc file, then re-launch.
+- **Claude can't find the wiki** → The skill resolves the wiki path in this order: `CLAUDE_PLUGIN_OPTION_wiki_path` (set at plugin enable time), then `WIKI_PATH`, then a built-in default. If you installed via plugin, check the path you entered when enabling it. For skill-only installs, run `echo $WIKI_PATH` and confirm it is set in the shell that launched Claude Code. Export in your rc file and re-launch.
 - **qmd returns nothing** → `qmd status` shows collection health. Run
   `qmd update && qmd embed` if files exist but aren't indexed.
 - **Pages multiplying on same entity** → you're skipping orientation.

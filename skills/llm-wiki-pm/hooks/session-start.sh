@@ -30,8 +30,12 @@ if [[ ! -f "$WIKI/SCHEMA.md" ]]; then
   TODAY=$(date '+%Y-%m-%d')
 
   # Copy and customize SCHEMA.md
-  sed "s/Product management knowledge base\./$DOMAIN knowledge base./" \
-    "$TEMPLATES_DIR/SCHEMA.md" > "$WIKI/SCHEMA.md"
+  python3 -c "
+import sys
+text = open(sys.argv[1]).read()
+text = text.replace('Product management knowledge base.', sys.argv[2] + ' knowledge base.')
+open(sys.argv[3], 'w').write(text)
+" "$TEMPLATES_DIR/SCHEMA.md" "$DOMAIN" "$WIKI/SCHEMA.md"
 
   # index.md
   sed "s/YYYY-MM-DD/$TODAY/g" "$TEMPLATES_DIR/index.md" > "$WIKI/index.md"
@@ -82,7 +86,14 @@ scan_dir() {
     updated_val=$(grep -m1 '^updated:' "$file" 2>/dev/null \
       | sed 's/updated:[[:space:]]*//' | tr -d '"' | xargs || true)
     [[ -z "$updated_val" ]] && continue
-    updated_ts=$(date -d "$updated_val" +%s 2>/dev/null || echo 0)
+    updated_ts=$(python3 -c "
+from datetime import datetime
+import sys
+try:
+    print(int(datetime.fromisoformat(sys.argv[1]).timestamp()))
+except Exception:
+    print(0)
+" "$updated_val" 2>/dev/null || echo 0)
     [[ "$updated_ts" -eq 0 ]] && continue
 
     if [[ "$updated_ts" -lt "$THRESHOLD_STALE" ]]; then

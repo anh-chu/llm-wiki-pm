@@ -1,6 +1,8 @@
 ---
 name: llm-wiki-pm
 description: Persistent PM knowledge base, competitive intel, customer notes, strategy, roadmap, AI market. Markdown wiki with entities, concepts, comparisons. Ingest sources, query, update with diffs, lint with tiered reports.
+when_to_use: Use when user wants to ingest a source, query the wiki, update pages, lint/audit, bootstrap a new wiki, build persona pages, map relationships, or says "remember that / note that / don't forget".
+allowed-tools: Read Grep Write Edit Bash WebFetch
 ---
 
 # LLM Wiki PM
@@ -218,18 +220,8 @@ After initialization, confirm domain scope with the user and customize
 ⑥ **Backlink audit**: after creating a page, scan related pages and add
    inbound `[[links]]` so the new page isn't an orphan.
 
-⑧ **Entity promotion scan**: after writing or updating any concept page, scan
-   for named people, companies, and products described with 3+ distinct attributes
-   (role, decisions, style, concerns, history, etc.) inline.
-   - Count how many entities meet that threshold.
-   - If any do, prompt: "N entities on this page meet the entity threshold.
-     Create individual entity pages?"
-   - Create entity pages for confirmed items. Link the concept page out to each
-     new entity page instead of keeping the prose inline.
-   - For promoted person entities: check whether a persona page is warranted
-     (see §8 Persona Pages).
 
-⑧ **Update `overview.md`**: if the source shifts the domain synthesis, edit
+⑦ **Update `overview.md`**: if the source shifts the domain synthesis, edit
    the overview. Keep it under 200 lines. Link heavily.
 
 ⑨ **Update navigation:**
@@ -241,24 +233,10 @@ After initialization, confirm domain scope with the user and customize
 ①⓪ **Report to user**: list every file touched. One source → 5-15 pages is
    normal. Confirm before mass-updating (10+ pages).
 ①① **Crystallize (for transcripts and research chains)**: when ingesting a
-   meeting transcript, 1:1 notes, or a multi-source research thread, also
-   produce a distilled digest page under `queries/`:
-   ```markdown
-   ---
-   title: Crystallize: <Topic or Meeting>
-   type: query
-   tags: [decision, timeline]
-   sources: [raw/transcripts/<slug>.md]
-   private: true  # if sensitive
-   ---
-   ## Context
-   ## Decisions
-   ## Action Items (owner + date)
-   ## Open Questions
-   ## Lessons / Patterns
-   ```
-   Link from affected entity/concept pages back to the crystallize page.
-   This is how exploration compounds into the wiki, not just raw ingests.
+    meeting transcript, 1:1 notes, or multi-source research, produce a digest page
+    under `queries/` with sections: Context, Decisions, Action Items, Open Questions,
+    Lessons/Patterns. Required frontmatter: title, type: query, tags, sources, private.
+    See `references/crystallize-guide.md`. Link affected entity pages back to it.
 
 ①② **Entity promotion scan** (after every ingest): scan pages you just created
    or updated for named people, companies, and products described with 3+ attributes
@@ -321,7 +299,7 @@ Use `scripts/lint.py`, writes report to `wiki/queries/lint-YYYY-MM-DD.md`
 with severity tiers. Offers concrete fixes. Logs unconditionally.
 
 ```bash
-python3 /home/sil/llm-wiki-pm/skills/llm-wiki-pm/scripts/lint.py "$WIKI"
+python3 ${CLAUDE_SKILL_DIR}/scripts/lint.py "$WIKI"
 ```
 
 Checks:
@@ -391,22 +369,9 @@ exist about their communication style.
 ③ **Write persona page** at `entities/<name>-persona.md`:
    - Type: `persona`. Link to `[[<name>]]` entity in frontmatter `sources:`.
    - Core traits summary (3-5 sentences, no bullet spray).
-   - One section per tier with data. Format per tier:
-     ```
-     ### Slack DM
-     - Formality: informal
-     - Sentence length: short, often 1 line
-     - Humor: dry, occasional
-     - Sign-off: none typical
-     - Notes: mixes Vietnamese in casual threads
-     ```
-   - Cross-tier comparison table at the bottom:
-     | Dimension | Slack DM | Slack channel | Email internal | Email external |
-     |-----------|----------|---------------|----------------|----------------|
-     | Formality | ... | ... | ... | ... |
-     | Length | ... | ... | ... | ... |
-     | Humor | ... | ... | ... | ... |
-     | Sign-off | ... | ... | ... | ... |
+   - One section per tier (Slack DM, Slack channel, Email internal, Email external).
+     Fields per tier: formality, sentence length, humor, sign-off, notes.
+   - Cross-tier comparison table at the bottom. See `references/persona-guide.md` for templates.
 
 ④ **Link persona to person entity**: add `[[<name>-persona]]` to the person
    entity page under Relationships or a "Communication profile" section.
@@ -418,9 +383,6 @@ exist about their communication style.
 
 ⑥ **Log**: `## [YYYY-MM-DD] persona | <name>-persona | tiers: [list]`
 
-```
-## [YYYY-MM-DD] staleness-check | X stale pages found | updated: [slugs] or none
-```
 
 ### 9. Pre-Meeting Briefing
 
@@ -489,45 +451,8 @@ file post-meeting notes back into the customer page via update flow.
 needed, refresh overview.md.
 
 ## Multi-Device Access (Obsidian + obsidian-headless)
-
 Wiki dir = Obsidian vault. `[[wikilinks]]` render, Graph View works, YAML
-frontmatter powers Dataview.
-
-Server-side sync without GUI:
-
-```bash
-npm install -g obsidian-headless
-ob login --email <email> --password '<pw>'
-ob sync-create-remote --name "PM Wiki"
-cd "$WIKI" && ob sync-setup --vault "<vault-id>"
-ob sync --continuous
-```
-
-Systemd unit for background:
-
-```ini
-# ~/.config/systemd/user/obsidian-pm-sync.service
-[Unit]
-Description=Obsidian PM Wiki Sync
-After=network-online.target
-
-[Service]
-ExecStart=/usr/bin/ob sync --continuous
-WorkingDirectory=%h/llm-wiki-pm/wiki
-Restart=on-failure
-RestartSec=10
-
-[Install]
-WantedBy=default.target
-```
-
-```bash
-systemctl --user enable --now obsidian-pm-sync
-sudo loginctl enable-linger $USER
-```
-
-Now Claude Code writes on laptop, Obsidian mobile reads within seconds ,
-handy for pre-meeting glance.
+frontmatter powers Dataview. See `references/obsidian-sync.md` for headless sync setup.
 
 ## Pitfalls
 
