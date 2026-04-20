@@ -7,7 +7,11 @@ Three shell scripts that keep the wiki healthy across sessions. When installed a
 ## What these hooks do
 
 **session-start.sh**
-Scans the wiki at the start of each session and writes `_status.md`. It checks for broken links (via `lint.py`), orphan pages, stale entries (not updated in 30+ days), and competitive pages that may need confidence score review (60+ days old). The agent reads `_status.md` during the orient step so it surfaces issues before you ask.
+Runs at session start. Scaffolds the wiki on first run if it does not exist
+(reads `CLAUDE_PLUGIN_OPTION_wiki_path` set at plugin enable time). Then scans
+for broken links, orphan pages, stale entries (>30 days), and competitive pages
+past their confidence decay threshold (>60 days). Writes `_status.md` and
+outputs an `additionalContext` summary directly into Claude's context.
 
 **post-write.sh**
 Runs after every file write inside the wiki directory. It checks the written file for broken `[[wikilinks]]` and calls `backlinks.py` to catch dangling references. Results are appended to `_status.md`. The hook always exits 0 so it never blocks a write.

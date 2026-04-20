@@ -1,71 +1,95 @@
 #!/usr/bin/env bash
 # session-start.sh
-# Runs at session start. Pre-computes wiki health and writes _status.md.
+# Runs at session start (SessionStart event).
+# - Scaffolds the wiki on first run if it does not exist
+# - Pre-computes wiki health and writes _status.md
+# - Outputs a status summary as additionalContext for Claude
 # Hook type: SessionStart (fires once per session, not on every prompt)
+# Input: JSON on stdin (session_id, source, model, etc.)
 
 set -euo pipefail
 
-# ── Resolve paths ─────────────────────────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SCRIPTS_DIR="$SCRIPT_DIR/../scripts"
+PLUGIN_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+TEMPLATES_DIR="$PLUGIN_ROOT/skills/llm-wiki-pm/templates"
+SCRIPTS_DIR="$PLUGIN_ROOT/skills/llm-wiki-pm/scripts"
 
-WIKI="${WIKI_PATH:-$HOME/llm-wiki-pm/wiki}"
+# ① Resolve wiki path from plugin config, then env var, then default
+WIKI="${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-$HOME/llm-wiki-pm/wiki}}"
+DOMAIN="${CLAUDE_PLUGIN_OPTION_wiki_domain:-PM}"
 
-# ① Exit silently if wiki not initialized yet
-if [[ ! -d "$WIKI" ]]; then
-  exit 0
+# ② Scaffold wiki on first run if directory is missing or empty
+if [[ ! -f "$WIKI/SCHEMA.md" ]]; then
+  mkdir -p "$WIKI"
+  for subdir in \
+    raw/articles raw/papers raw/transcripts raw/internal raw/assets \
+    entities concepts comparisons queries _archive; do
+    mkdir -p "$WIKI/$subdir"
+  done
+
+  TODAY=$(date '+%Y-%m-%d')
+
+  # Copy and customize SCHEMA.md
+  sed "s/Product management knowledge base\./$DOMAIN knowledge base./" \
+    "$TEMPLATES_DIR/SCHEMA.md" > "$WIKI/SCHEMA.md"
+
+  # index.md
+  sed "s/YYYY-MM-DD/$TODAY/g" "$TEMPLATES_DIR/index.md" > "$WIKI/index.md"
+
+  # overview.md
+  sed "s/YYYY-MM-DD/$TODAY/g" "$TEMPLATES_DIR/overview.md" > "$WIKI/overview.md"
+
+  # log.md
+  {
+    cat "$TEMPLATES_DIR/log.md"
+    echo ""
+    echo "## [$TODAY] create | Wiki initialized"
+    echo "- Domain: $DOMAIN"
+    echo "- Structure scaffolded automatically by llm-wiki-pm plugin"
+  } > "$WIKI/log.md"
+
+  echo "Wiki scaffolded at $WIKI (domain: $DOMAIN)" >&2
 fi
 
-# ── Gather timestamps ──────────────────────────────────────────────────────────
+# ③ Gather health metrics
 NOW_TS=$(date +%s)
 NOW_FMT=$(date '+%Y-%m-%d %H:%M')
 THRESHOLD_STALE=$(( NOW_TS - 30 * 86400 ))
 THRESHOLD_DECAY=$(( NOW_TS - 60 * 86400 ))
 
-# ② Run lint and capture JSON output
-LINT_OUTPUT=""
 BROKEN_LINKS=0
 ORPHANS=0
-
-if [[ -f "$SCRIPTS_DIR/lint.py" ]]; then
-  # Try --quiet --json first; fall back to plain run
-  if LINT_OUTPUT=$(python3 "$SCRIPTS_DIR/lint.py" "$WIKI" --quiet --json 2>/dev/null); then
-    BROKEN_LINKS=$(echo "$LINT_OUTPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d.get('broken_links', [])))" 2>/dev/null || echo 0)
-    ORPHANS=$(echo "$LINT_OUTPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d.get('orphans', [])))" 2>/dev/null || echo 0)
-  else
-    LINT_OUTPUT=$(python3 "$SCRIPTS_DIR/lint.py" "$WIKI" 2>&1 || true)
-    BROKEN_LINKS=$(echo "$LINT_OUTPUT" | grep -c 'broken link' 2>/dev/null || echo 0)
-    ORPHANS=$(echo "$LINT_OUTPUT" | grep -c 'orphan' 2>/dev/null || echo 0)
-  fi
-fi
-
-# ③ Scan for stale pages (updated: > 30 days old)
 STALE_PAGES=()
 DECAY_PAGES=()
 
+# ④ Run lint if available
+if [[ -f "$SCRIPTS_DIR/lint.py" ]]; then
+  if LINT_OUT=$(python3 "$SCRIPTS_DIR/lint.py" "$WIKI" --quiet --json 2>/dev/null); then
+    BROKEN_LINKS=$(echo "$LINT_OUT" | python3 -c \
+      "import sys,json; d=json.load(sys.stdin); print(len(d.get('broken_links',[])))" 2>/dev/null || echo 0)
+    ORPHANS=$(echo "$LINT_OUT" | python3 -c \
+      "import sys,json; d=json.load(sys.stdin); print(len(d.get('orphans',[])))" 2>/dev/null || echo 0)
+  fi
+fi
+
+# ⑤ Scan for stale and decayed pages
 scan_dir() {
   local dir="$1"
   [[ -d "$WIKI/$dir" ]] || return
   while IFS= read -r -d '' file; do
-    local slug
+    local slug updated_val updated_ts
     slug=$(basename "$file" .md)
-
-    # Extract updated: frontmatter value
-    local updated_val
-    updated_val=$(grep -m1 '^updated:' "$file" 2>/dev/null | sed 's/updated:[[:space:]]*//' | tr -d '"' | xargs || true)
+    updated_val=$(grep -m1 '^updated:' "$file" 2>/dev/null \
+      | sed 's/updated:[[:space:]]*//' | tr -d '"' | xargs || true)
     [[ -z "$updated_val" ]] && continue
-
-    # Convert date to epoch (GNU date)
-    local updated_ts
     updated_ts=$(date -d "$updated_val" +%s 2>/dev/null || echo 0)
     [[ "$updated_ts" -eq 0 ]] && continue
 
     if [[ "$updated_ts" -lt "$THRESHOLD_STALE" ]]; then
       STALE_PAGES+=("$dir/$slug ($updated_val)")
     fi
-
-    # Check competitive tag for decay
-    if grep -q 'competitive' "$file" 2>/dev/null && [[ "$updated_ts" -lt "$THRESHOLD_DECAY" ]]; then
+    if grep -q 'competitive' "$file" 2>/dev/null \
+        && [[ "$updated_ts" -lt "$THRESHOLD_DECAY" ]]; then
       DECAY_PAGES+=("$dir/$slug ($updated_val)")
     fi
   done < <(find "$WIKI/$dir" -maxdepth 1 -name '*.md' -print0 2>/dev/null)
@@ -77,10 +101,10 @@ done
 
 STALE_COUNT="${#STALE_PAGES[@]}"
 DECAY_COUNT="${#DECAY_PAGES[@]}"
+TOTAL=$(( BROKEN_LINKS + ORPHANS + STALE_COUNT + DECAY_COUNT ))
 
-# ④ Write _status.md
+# ⑥ Write _status.md
 STATUS_FILE="$WIKI/_status.md"
-
 {
   echo "# Wiki Status"
   echo ""
@@ -93,47 +117,43 @@ STATUS_FILE="$WIKI/_status.md"
   echo "| Broken links | $BROKEN_LINKS |"
   echo "| Orphan pages | $ORPHANS |"
   echo "| Stale pages (>30 days) | $STALE_COUNT |"
-  echo "| Confidence decay candidates (>60 days, competitive) | $DECAY_COUNT |"
-  echo ""
+  echo "| Confidence decay (competitive >60 days) | $DECAY_COUNT |"
 
   if [[ "$DECAY_COUNT" -gt 0 ]]; then
+    echo ""
     echo "## Confidence Decay Candidates"
     echo ""
-    echo "These competitive pages have not been updated in over 60 days."
-    echo "Consider re-verifying claims or lowering confidence scores."
-    echo ""
-    for p in "${DECAY_PAGES[@]}"; do
-      echo "- $p"
-    done
-    echo ""
+    for p in "${DECAY_PAGES[@]}"; do echo "- $p"; done
   fi
 
   if [[ "$STALE_COUNT" -gt 0 ]]; then
+    echo ""
     echo "## Stale Pages"
     echo ""
-    echo "Pages with updated: frontmatter older than 30 days."
-    echo ""
-    for p in "${STALE_PAGES[@]}"; do
-      echo "- $p"
-    done
-    echo ""
+    for p in "${STALE_PAGES[@]}"; do echo "- $p"; done
   fi
 
-  if [[ -n "$LINT_OUTPUT" && "$BROKEN_LINKS" -gt 0 ]]; then
-    echo "## Lint Details"
-    echo ""
-    echo '```'
-    echo "$LINT_OUTPUT" | head -50
-    echo '```'
-    echo ""
-  fi
-
+  echo ""
   echo "---"
   echo "*Generated by session-start.sh. Do not edit manually.*"
 } > "$STATUS_FILE"
 
-# ⑤ Print one-line summary to stderr
-TOTAL_ISSUES=$(( BROKEN_LINKS + ORPHANS + STALE_COUNT + DECAY_COUNT ))
-echo "Wiki health: $TOTAL_ISSUES issues found. See _status.md" >&2
+# ⑦ Output additionalContext JSON so Claude sees the summary immediately
+CONTEXT="Wiki at $WIKI. Health check: $TOTAL issues."
+if [[ "$TOTAL" -gt 0 ]]; then
+  CONTEXT="$CONTEXT Broken links: $BROKEN_LINKS. Orphans: $ORPHANS."
+  CONTEXT="$CONTEXT Stale: $STALE_COUNT. Confidence decay: $DECAY_COUNT."
+  CONTEXT="$CONTEXT See _status.md for details."
+fi
+
+python3 -c "
+import json, sys
+print(json.dumps({
+  'hookSpecificOutput': {
+    'hookEventName': 'SessionStart',
+    'additionalContext': sys.argv[1]
+  }
+}))
+" "$CONTEXT"
 
 exit 0

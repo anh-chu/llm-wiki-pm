@@ -10,7 +10,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPTS_DIR="$SCRIPT_DIR/../scripts"
 
-WIKI="${WIKI_PATH:-$HOME/llm-wiki-pm/wiki}"
+WIKI="${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-$HOME/llm-wiki-pm/wiki}}"
 
 # ① Read file path from stdin JSON (Claude Code passes hook input on stdin)
 INPUT=$(cat)

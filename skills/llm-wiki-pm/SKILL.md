@@ -93,12 +93,12 @@ in 1-2 lines of key traits alongside the factual answer. Don't pad. If persona
 data isn't relevant to the question, skip it.
 
 ## Wiki Location
+Resolved in this order:
+1. `CLAUDE_PLUGIN_OPTION_wiki_path` — set when plugin is enabled (preferred)
+2. `WIKI_PATH` env var in your shell rc
+3. Default: `$HOME/llm-wiki-pm/wiki`
 
-```bash
-WIKI="${WIKI_PATH:-$HOME/llm-wiki-pm/wiki}"
-```
-
-Set `WIKI_PATH` in your shell rc (`~/.bashrc`, `~/.zshrc`). Default: `$HOME/llm-wiki-pm/wiki`.
+The plugin prompts for wiki path at enable time. No manual config needed.
 
 ## Architecture: Three Layers
 
@@ -155,15 +155,21 @@ Skipping orientation → duplicate pages, missed cross-refs, schema drift.
 ## Core Operations
 
 ### 1. Initialize (new wiki)
+The plugin scaffolds the wiki automatically on first session start. No manual
+command needed. The `SessionStart` hook detects a missing wiki, creates the
+directory structure, and copies templates using the domain you provided at
+plugin enable time.
 
-Use `scripts/scaffold.py`:
+If the wiki was not auto-created (e.g. plugin installed mid-session), tell the
+user to restart the session and the hook will scaffold it.
 
+For re-scaffolding or advanced use, `scripts/scaffold.py` is still available:
 ```bash
-python3 /home/sil/llm-wiki-pm/skills/llm-wiki-pm/scripts/scaffold.py "$WIKI" "PM, Katalon"
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/llm-wiki-pm/scripts/scaffold.py" "$WIKI" "PM, Katalon"
 ```
 
-Ask user to confirm domain scope. Customize `SCHEMA.md` tag taxonomy for their
-domain (see `templates/SCHEMA.md` for PM-tuned defaults).
+After initialization, confirm domain scope with the user and customize
+`SCHEMA.md` tag taxonomy (see `templates/SCHEMA.md` for PM-tuned defaults).
 
 ### 2. Ingest a source
 

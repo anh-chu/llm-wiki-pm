@@ -16,5 +16,13 @@
 		"obsidian",
 		"karpathy",
 		"markdown-wiki"
-	]
+	],
+	"userConfig": {
+		"wiki_path": {
+			"description": "Where to store your wiki (e.g. ~/my-wiki or ~/Documents/pm-wiki)"
+		},
+		"wiki_domain": {
+			"description": "Domain or scope for this wiki (e.g. \"PM, Katalon\" or \"Personal\")"
+		}
+	}
 }
