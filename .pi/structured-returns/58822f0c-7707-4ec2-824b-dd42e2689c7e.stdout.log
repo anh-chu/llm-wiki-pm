@@ -1,7 +1,0 @@
-total 32
-drwxrwxr-x 2 sil sil 4096 Apr 20 16:00 .
-drwxrwxr-x 6 sil sil 4096 Apr 20 15:59 ..
--rwxrwxr-x 1 sil sil 3299 Apr 20 15:59 post-write.sh
--rw-rw-r-- 1 sil sil 4990 Apr 20 16:00 README.md
--rwxrwxr-x 1 sil sil 4392 Apr 20 15:59 session-start.sh
--rwxrwxr-x 1 sil sil 1614 Apr 20 16:00 session-stop.sh

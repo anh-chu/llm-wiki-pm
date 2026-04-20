@@ -1,4 +1,0 @@
--rwxrwxr-x /home/sil/llm-wiki-pm/skills/llm-wiki-pm/hooks/session-start.sh
--rwxrwxr-x /home/sil/llm-wiki-pm/skills/llm-wiki-pm/hooks/post-write.sh
--rwxrwxr-x /home/sil/llm-wiki-pm/skills/llm-wiki-pm/hooks/session-stop.sh
--rw-rw-r-- /home/sil/llm-wiki-pm/skills/llm-wiki-pm/hooks/README.md
