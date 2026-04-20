@@ -32,15 +32,13 @@ ln -s ~/llm-wiki-pm/skills/llm-wiki-pm ~/.claude/skills/llm-wiki-pm
 
 Restart Claude Code. Run `/skills`, `llm-wiki-pm` should appear.
 
-### 3. Bootstrap your wiki
+### 3. Start Claude Code
 
+The plugin scaffolds your wiki automatically on the first session start.
+When you enable the plugin you will be prompted for your wiki path and domain.
 ```bash
-python3 ~/llm-wiki-pm/skills/llm-wiki-pm/scripts/scaffold.py ~/pm-wiki "Katalon PM"
-# replace "Katalon PM" with your own domain name
-
-# Set the env var so the skill knows where your wiki lives
-echo 'export WIKI_PATH=$HOME/pm-wiki' >> ~/.bashrc     # or ~/.zshrc
-source ~/.bashrc
+# Optional: also set WIKI_PATH in your shell for direct script use
+echo 'export WIKI_PATH=$HOME/pm-wiki' >> ~/.bashrc && source ~/.bashrc
 ```
 
 This creates `~/pm-wiki/` with:
@@ -163,7 +161,7 @@ From here the loop is: ingest → query → lint → repeat. The wiki compounds.
 ## Scenario 2: Application-orchestrated scaffold
 
 You are building a platform/application that provisions wikis for end-users
-programmatically. The user doesn't run `scaffold.py` themselves, your app does.
+programmatically. The user doesn't trigger scaffolding themselves, your app does.
 
 ### Design decisions to make first
 
@@ -191,27 +189,8 @@ Decide whether your app:
 - Generates SCHEMA dynamically from an onboarding interview
 
 ### Programmatic scaffold
-
-Call `scaffold.py` from your app, or replicate its logic directly.
-
-#### Python (subprocess)
-
-```python
-import subprocess
-from pathlib import Path
-
-SKILL_ROOT = Path("/opt/yourapp/llm-wiki-pm/skills/llm-wiki-pm")
-
-def provision_wiki(user_id: str, domain: str) -> Path:
-    wiki_path = Path(f"/var/lib/yourapp/wikis/{user_id}")
-    wiki_path.parent.mkdir(parents=True, exist_ok=True)
-
-    result = subprocess.run(
-        ["python3", str(SKILL_ROOT / "scripts/scaffold.py"), str(wiki_path), domain],
-        capture_output=True, text=True, check=True,
-    )
-    return wiki_path
-```
+Replicate the scaffold logic from `session-start.sh` directly in your app.
+The logic is straightforward: create subdirectories, copy and customize templates.
 
 #### Python (direct, no subprocess)
 
@@ -491,7 +470,7 @@ agent is skipping orientation.
 |                      | Scenario 1 (human)           | Scenario 2 (platform)                    |
 | ----------------------| ------------------------------| ------------------------------------------|
 | Install              | symlink to ~/.claude/skills/ | copy/symlink per-user                    |
-| Scaffold             | `scaffold.py`                | call scaffold logic programmatically     |
+| Scaffold             | embed scaffold logic         | create dirs + copy templates (see Scenario 2) |
 | Env                  | `WIKI_PATH` in rc            | pass per-request                         |
 | qmd                  | `qmd collection add`, CLI    | per-user DB via SDK                      |
 | SCHEMA               | edit by hand                 | render from presets                      |

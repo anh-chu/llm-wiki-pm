@@ -163,11 +163,6 @@ plugin enable time.
 If the wiki was not auto-created (e.g. plugin installed mid-session), tell the
 user to restart the session and the hook will scaffold it.
 
-For re-scaffolding or advanced use, `scripts/scaffold.py` is still available:
-```bash
-python3 "${CLAUDE_PLUGIN_ROOT}/skills/llm-wiki-pm/scripts/scaffold.py" "$WIKI" "PM, Katalon"
-```
-
 After initialization, confirm domain scope with the user and customize
 `SCHEMA.md` tag taxonomy (see `templates/SCHEMA.md` for PM-tuned defaults).
 
@@ -570,7 +565,6 @@ handy for pre-meeting glance.
 
 ## Scripts
 
-- `scripts/scaffold.py <path> <domain>`, bootstrap new wiki
 - `scripts/lint.py <path>`, tiered health report
 - `scripts/backlinks.py <path> <slug>`, show pages linking to a slug.
   Use `--context` for line-level matches, `--json` for agent consumption.

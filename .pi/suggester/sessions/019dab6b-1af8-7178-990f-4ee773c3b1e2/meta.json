@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "sessionId": "019dab6b-1af8-7178-990f-4ee773c3b1e2",
+  "sessionFile": "/home/sil/.pi/agent/sessions/--home-sil-llm-wiki-pm--/2026-04-20T15-03-36-441Z_019dab6b-1af8-7178-990f-4ee773c3b1e2.jsonl",
+  "cwd": "/home/sil/llm-wiki-pm",
+  "ignoreLegacyPiSessionEntries": true,
+  "legacyMigration": {
+    "performedAt": "2026-04-20T15:03:43.449Z",
+    "importedLegacyEntries": false,
+    "legacyStateEntryCount": 0,
+    "legacyUsageEntryCount": 0,
+    "note": "Legacy suggester-state/suggester-usage pi session entries were imported once into extension-owned storage and are ignored afterwards."
+  }
+}

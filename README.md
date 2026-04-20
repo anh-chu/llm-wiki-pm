@@ -52,13 +52,13 @@ mkdir -p ~/.claude/skills
 ln -s ~/llm-wiki-pm/skills/llm-wiki-pm ~/.claude/skills/llm-wiki-pm
 ```
 
-### Then: bootstrap your first wiki
+### Then: start Claude Code
 
+The plugin scaffolds your wiki automatically on the first session.
 ```bash
-python3 ~/llm-wiki-pm/skills/llm-wiki-pm/scripts/scaffold.py ~/pm-wiki "My PM Domain"
+# Restart Claude Code after enabling the plugin. The SessionStart hook
+# creates the wiki directory using the path you set at plugin enable time.
 echo 'export WIKI_PATH=$HOME/pm-wiki' >> ~/.bashrc && source ~/.bashrc
-# Restart Claude Code, then say:
-#   "Ingest this analyst report: <paste url>"
 ```
 
 Full setup, including qmd search and mobile Obsidian sync, in
@@ -89,7 +89,7 @@ Good fit if you:
 - Work as a PM, analyst, researcher, or founder with lots of meetings and reports
 - Want a local-first, markdown-based knowledge base that you own
 - Use Claude Code as your primary agent
-- Are comfortable on a terminal (you'll run `scaffold.py` and `lint.py`)
+- Are comfortable on a terminal (you'll occasionally run `lint.py`)
 
 Not a fit if you:
 
@@ -114,7 +114,6 @@ llm-wiki-pm/
 │   ├── output-formats.md     # Marp / matplotlib / CSV / Mermaid
 │   └── nextjs-integration.md # Graph + page viewer in a Next.js app
 ├── scripts/
-│   ├── scaffold.py           # Bootstrap new wiki directory
 │   ├── lint.py               # Tiered health report + --auto-fix
 │   └── backlinks.py          # Show pages linking to a slug
 └── templates/
@@ -128,22 +127,16 @@ llm-wiki-pm/
 
 Two scenarios documented in detail in [GETTING_STARTED.md](GETTING_STARTED.md):
 
-1. **Human user with Claude Code**: ~15 min from zero to first ingest
-2. **Application-orchestrated scaffold**: programmatic wiki provisioning
-   for platform/multi-tenant deployments
+1. **Human user with Claude Code**: enable plugin, wiki auto-scaffolds on first session
+2. **Application-orchestrated**: programmatic wiki provisioning for platform deployments
 
 ## Quick Start
 
 ### 1. Bootstrap a wiki
-
-```bash
-python3 /home/sil/llm-wiki-pm/skills/llm-wiki-pm/scripts/scaffold.py ~/pm-wiki "Katalon PM"
-export WIKI_PATH=~/pm-wiki
-# add to ~/.bashrc or ~/.zshrc for persistence
-```
-
-This creates `~/pm-wiki/` with SCHEMA.md, index.md, log.md, overview.md, and
-the raw/entities/concepts/comparisons/queries/_archive subdirs.
+Enable the plugin. When prompted, enter your wiki path and domain.
+On the first session start, the `SessionStart` hook creates:
+`~/pm-wiki/` with SCHEMA.md, index.md, log.md, overview.md, and
+the raw/entities/concepts/comparisons/queries/_archive subdirectories.
 
 ### 1b. Install qmd (recommended, upfront)
 
