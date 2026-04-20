@@ -100,12 +100,8 @@ Before running any bash command that uses `$WIKI`, resolve it with:
 WIKI="${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-$HOME/llm-wiki-pm/wiki}}"
 ```
 
-Resolution order:
-1. `CLAUDE_PLUGIN_OPTION_wiki_path` — set at plugin enable time (preferred)
-2. `WIKI_PATH` — env var in shell rc
-3. Default: `$HOME/llm-wiki-pm/wiki`
-The `additionalContext` injected by the SessionStart hook also states the active
-path. If it says "Wiki at /path/to/wiki", use that path directly.
+Resolution: `CLAUDE_PLUGIN_OPTION_wiki_path` → `WIKI_PATH` → `$HOME/llm-wiki-pm/wiki`.
+The SessionStart hook's `additionalContext` also states the active path.
 
 ## Architecture: Three Layers
 
