@@ -12,8 +12,6 @@ Markdown files in a directory. Readable in Obsidian, VS Code, any editor.
 The agent writes. You curate sources, ask questions, steer.
 
 ## When This Skill Activates
-
-- User asks to ingest a source (article, report, transcript, meeting notes, PDF extract, Slack thread, Gmail chain, or current conversation) into their wiki
 - User asks a question and a wiki exists at `$WIKI_PATH`
 - User asks to update or revise a page with new info
 - User asks to lint, audit, or health-check the wiki
@@ -21,6 +19,12 @@ The agent writes. You curate sources, ask questions, steer.
 - User references "my wiki", "the wiki", "knowledge base", "notes" in a PM context
 - User asks to build a persona or communication profile for a person
 - User asks to map relationships or org hierarchy in the wiki
+- **Natural memory phrases** (no other memory system assumed): "remember that",
+  "note that", "don't forget", "keep in mind", "save this", "log this",
+  "make a note", "record that", "I want to remember" → treat as a wiki ingest.
+  Capture the fact as a short wiki page or update to an existing relevant page.
+  Use §2 Ingest with source `conversation | <date>`. Ask user which page it
+  belongs to if unclear, or create a new entity/concept page if it warrants one.
 
 ## Wiki Location
 
