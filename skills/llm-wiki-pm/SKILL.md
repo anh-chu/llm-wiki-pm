@@ -94,12 +94,18 @@ in 1-2 lines of key traits alongside the factual answer. Don't pad. If persona
 data isn't relevant to the question, skip it.
 
 ## Wiki Location
-Resolved in this order:
-1. `CLAUDE_PLUGIN_OPTION_wiki_path` — set when plugin is enabled (preferred)
-2. `WIKI_PATH` env var in your shell rc
-3. Default: `$HOME/llm-wiki-pm/wiki`
+Before running any bash command that uses `$WIKI`, resolve it with:
 
-The plugin prompts for wiki path at enable time. No manual config needed.
+```bash
+WIKI="${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-$HOME/llm-wiki-pm/wiki}}"
+```
+
+Resolution order:
+1. `CLAUDE_PLUGIN_OPTION_wiki_path` — set at plugin enable time (preferred)
+2. `WIKI_PATH` — env var in shell rc
+3. Default: `$HOME/llm-wiki-pm/wiki`
+The `additionalContext` injected by the SessionStart hook also states the active
+path. If it says "Wiki at /path/to/wiki", use that path directly.
 
 ## Architecture: Three Layers
 
