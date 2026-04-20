@@ -19,10 +19,12 @@
 	],
 	"userConfig": {
 		"wiki_path": {
-			"description": "Where to store your wiki (e.g. ~/my-wiki or ~/Documents/pm-wiki)"
+			"description": "Where to store your wiki (e.g. ~/my-wiki or ~/Documents/pm-wiki)",
+			"sensitive": false
 		},
 		"wiki_domain": {
-			"description": "Domain or scope for this wiki (e.g. \"PM, Katalon\" or \"Personal\")"
+			"description": "Domain or scope for this wiki (e.g. \"PM, Katalon\" or \"Personal\")",
+			"sensitive": false
 		}
 	}
 }

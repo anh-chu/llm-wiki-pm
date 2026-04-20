@@ -10,7 +10,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PLUGIN_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+# Trust CLAUDE_PLUGIN_ROOT when set (always set during plugin execution).
+# Fallback for local dev: script lives at <plugin-root>/skills/llm-wiki-pm/hooks/
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 TEMPLATES_DIR="$PLUGIN_ROOT/skills/llm-wiki-pm/templates"
 SCRIPTS_DIR="$PLUGIN_ROOT/skills/llm-wiki-pm/scripts"
 
@@ -18,8 +20,18 @@ SCRIPTS_DIR="$PLUGIN_ROOT/skills/llm-wiki-pm/scripts"
 WIKI="${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-$HOME/llm-wiki-pm/wiki}}"
 DOMAIN="${CLAUDE_PLUGIN_OPTION_wiki_domain:-PM}"
 
-# ② Scaffold wiki on first run if directory is missing or empty
-if [[ ! -f "$WIKI/SCHEMA.md" ]]; then
+# ② Scaffold wiki on first run — only if dir is new or truly empty
+# Never overwrite files in an existing non-empty directory.
+SCAFFOLD=false
+if [[ ! -e "$WIKI" ]]; then
+  SCAFFOLD=true
+elif [[ -z "$(find "$WIKI" -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null)" ]]; then
+  SCAFFOLD=true
+elif [[ ! -f "$WIKI/SCHEMA.md" ]]; then
+  echo "Warning: $WIKI exists and is non-empty but has no SCHEMA.md. Skipping scaffold to avoid overwriting files." >&2
+fi
+
+if [[ "$SCAFFOLD" == true ]]; then
   mkdir -p "$WIKI"
   for subdir in \
     raw/articles raw/papers raw/transcripts raw/internal raw/assets \
@@ -29,21 +41,16 @@ if [[ ! -f "$WIKI/SCHEMA.md" ]]; then
 
   TODAY=$(date '+%Y-%m-%d')
 
-  # Copy and customize SCHEMA.md
+  # Copy and customize SCHEMA.md (Python for safe replacement of any domain string)
   python3 -c "
 import sys
 text = open(sys.argv[1]).read()
 text = text.replace('Product management knowledge base.', sys.argv[2] + ' knowledge base.')
+text = text.replace('# Wiki Schema, PM', '# Wiki Schema, ' + sys.argv[2])
 open(sys.argv[3], 'w').write(text)
 " "$TEMPLATES_DIR/SCHEMA.md" "$DOMAIN" "$WIKI/SCHEMA.md"
-
-  # index.md
   sed "s/YYYY-MM-DD/$TODAY/g" "$TEMPLATES_DIR/index.md" > "$WIKI/index.md"
-
-  # overview.md
   sed "s/YYYY-MM-DD/$TODAY/g" "$TEMPLATES_DIR/overview.md" > "$WIKI/overview.md"
-
-  # log.md
   {
     cat "$TEMPLATES_DIR/log.md"
     echo ""
@@ -51,8 +58,6 @@ open(sys.argv[3], 'w').write(text)
     echo "- Domain: $DOMAIN"
     echo "- Structure scaffolded automatically by llm-wiki-pm plugin"
   } > "$WIKI/log.md"
-
-  echo "Wiki scaffolded at $WIKI (domain: $DOMAIN)" >&2
 fi
 
 # ③ Gather health metrics

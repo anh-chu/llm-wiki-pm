@@ -14,7 +14,7 @@ Markdown files in a directory. Readable in Obsidian, VS Code, any editor.
 The agent writes. You curate sources, ask questions, steer.
 
 ## When This Skill Activates
-- User asks a question and a wiki exists at `$WIKI_PATH`
+- User asks a question about PM knowledge, competitive intel, customers, strategy, or roadmap
 - User asks to update or revise a page with new info
 - User asks to lint, audit, or health-check the wiki
 - User asks to create or bootstrap a PM wiki
@@ -33,10 +33,9 @@ The agent writes. You curate sources, ask questions, steer.
 
 ## Proactive Behaviors
 
-These fire whenever the skill is loaded. They are not tied to explicit wiki commands.
-Apply them as quiet background checks. Don't interrupt the main answer. Append
-notes briefly after your response.
-
+These fire whenever the skill is loaded. Not tied to explicit wiki commands.
+Append notes briefly after your response. Don't interrupt the main answer.
+**Limits:** max 1 suggestion per turn; skip during code/debug tasks; only trigger for PM-domain facts not already addressed.
 ### 1. Proactive Recall
 
 When the user mentions a named entity (company, person, product), grep the wiki
@@ -273,7 +272,7 @@ Separate discipline from ingest. Triggered when new info conflicts with or
 refines existing content.
 
 ① **Identify all affected pages**: three-way search:
-   - `scripts/backlinks.py $WIKI <slug>` for structural backlinks (pages
+   - `python3 "${CLAUDE_SKILL_DIR}/scripts/backlinks.py" "$WIKI" <slug>` for structural backlinks (pages
      linking to the entity being revised)
    - `qmd query` for semantic variants (paraphrases of the stale claim)
    - `grep -r` for exact token match (dollar figures, codenames)
@@ -490,8 +489,8 @@ frontmatter powers Dataview. See `references/obsidian-sync.md` for headless sync
 
 ## Scripts
 
-- `scripts/lint.py <path>`, tiered health report
-- `scripts/backlinks.py <path> <slug>`, show pages linking to a slug.
+- `python3 "${CLAUDE_SKILL_DIR}/scripts/lint.py" <path>`, tiered health report
+- `python3 "${CLAUDE_SKILL_DIR}/scripts/backlinks.py" <path> <slug>`, show pages linking to a slug.
   Use `--context` for line-level matches, `--json` for agent consumption.
-- `scripts/lint.py <path> --auto-fix`, repair safe issues (supersession
+- `python3 "${CLAUDE_SKILL_DIR}/scripts/lint.py" <path> --auto-fix`, repair safe issues (supersession
   link redirects, index backfill)

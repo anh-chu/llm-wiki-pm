@@ -9,10 +9,16 @@ set -euo pipefail
 # ── Resolve paths ─────────────────────────────────────────────────────────────
 WIKI="${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-$HOME/llm-wiki-pm/wiki}}"
 
-# ① Read file path from stdin JSON (Claude Code passes hook input on stdin)
+# ① Read file path from stdin JSON using Python (no jq dependency)
 INPUT=$(cat)
-WRITTEN_FILE=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty' 2>/dev/null || true)
-
+WRITTEN_FILE=$(python3 -c "
+import json, sys
+try:
+    data = json.loads(sys.argv[1])
+    print((data.get('tool_input') or {}).get('file_path', ''))
+except Exception:
+    print('')
+" "$INPUT" 2>/dev/null || true)
 if [[ -z "$WRITTEN_FILE" ]]; then
   exit 0
 fi
@@ -65,8 +71,10 @@ print(raw)
 
     TARGET_SLUG=$(echo "$TARGET" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
 
-    # Search for the target .md file anywhere in the wiki
-    FOUND=$(find "$WIKI" -name "${TARGET}.md" -o -name "${TARGET_SLUG}.md" 2>/dev/null | head -1 || true)
+    # Search only in wiki page dirs (not raw/) to avoid false positives
+    FOUND=$(find \
+      "$WIKI/entities" "$WIKI/concepts" "$WIKI/comparisons" "$WIKI/queries" \
+      -name "${TARGET}.md" -o -name "${TARGET_SLUG}.md" 2>/dev/null | head -1 || true)
     if [[ -z "$FOUND" ]]; then
       WIKILINK_ISSUES=$(( WIKILINK_ISSUES + 1 ))
       ISSUES+=("  - broken wikilink: [[$TARGET]]")
