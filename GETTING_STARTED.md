@@ -21,7 +21,19 @@ claude plugin marketplace add anh-chu/llm-wiki-pm
 claude plugin install llm-wiki-pm@anh-chu/llm-wiki-pm
 ```
 
-Restart Claude Code. You will be prompted for a wiki path and domain. On the first session start, the `SessionStart` hook creates this structure at your chosen path:
+Restart Claude Code. Open it interactively and use `/plugin` to configure the plugin — you will be prompted for a wiki path and domain.
+
+> **Note:** `claude plugin install` via the CLI does not trigger the userConfig prompt.
+> You must either use the `/plugin` menu inside Claude Code, or manually add this to `~/.claude/settings.json`:
+> ```json
+> "pluginConfigs": {
+>   "llm-wiki-pm@anh-chu-plugins": {
+>     "options": { "wiki_path": "~/pm-wiki", "wiki_domain": "PM" }
+>   }
+> }
+> ```
+
+On the first session start, the `SessionStart` hook creates this structure at your chosen path:
 
 ```
 pm-wiki/
