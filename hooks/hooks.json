@@ -1,0 +1,35 @@
+{
+	"SessionStart": [
+		{
+			"hooks": [
+				{
+					"type": "command",
+					"command": "\"${CLAUDE_PLUGIN_ROOT}/skills/llm-wiki-pm/hooks/session-start.sh\"",
+					"statusMessage": "Checking wiki health..."
+				}
+			]
+		}
+	],
+	"PostToolUse": [
+		{
+			"matcher": "Write|Edit",
+			"hooks": [
+				{
+					"type": "command",
+					"command": "\"${CLAUDE_PLUGIN_ROOT}/skills/llm-wiki-pm/hooks/post-write.sh\"",
+					"async": true
+				}
+			]
+		}
+	],
+	"SessionEnd": [
+		{
+			"hooks": [
+				{
+					"type": "command",
+					"command": "\"${CLAUDE_PLUGIN_ROOT}/skills/llm-wiki-pm/hooks/session-stop.sh\""
+				}
+			]
+		}
+	]
+}

@@ -1,6 +1,6 @@
 # Wiki Hooks
 
-Three shell scripts that keep the wiki healthy across sessions. They run automatically if you wire them up to your AI coding tool's hook system.
+Three shell scripts that keep the wiki healthy across sessions. When installed as a Claude Code plugin, they activate automatically via `hooks/hooks.json` at the plugin root. No manual configuration needed.
 
 ---
 
@@ -17,57 +17,19 @@ Guards log rotation at the end of each session. When `log.md` grows past 500 lin
 
 ---
 
-## Installation for Claude Code
+## Installation
 
-Claude Code hooks live in `.claude/settings.json` (project-scoped) or `~/.claude/settings.json` (global).
+### Claude Code plugin (automatic)
 
-Make the scripts executable first:
+Hooks are defined in `hooks/hooks.json` at the plugin root and activate automatically when the plugin is enabled. No manual `settings.json` editing required.
+
+Make the scripts executable after cloning:
 
 ```bash
 chmod +x skills/llm-wiki-pm/hooks/*.sh
 ```
 
-Then add this to your `settings.json`:
-
-```json
-{
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/path/to/your/skills/llm-wiki-pm/hooks/session-start.sh"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/path/to/your/skills/llm-wiki-pm/hooks/post-write.sh"
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/path/to/your/skills/llm-wiki-pm/hooks/session-stop.sh"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-Replace `/path/to/your/` with the actual absolute path to this repo.
+Script paths in `hooks/hooks.json` use `${CLAUDE_PLUGIN_ROOT}` so they resolve correctly regardless of where the plugin is installed.
 
 **Notes on events:**
 - `SessionStart` fires once when the session opens (new, resumed, or cleared). Not on every message.
@@ -79,9 +41,9 @@ The `"matcher"` field is matched against the tool name. `Write|Edit|MultiEdit` c
 
 ---
 
-## Installation for other systems
+### Standalone use (without plugin)
 
-If you are not using Claude Code, you can source the scripts from a shell wrapper or alias.
+If using the scripts without the Claude Code plugin system, wire them manually.
 
 **Shell alias approach:**
 
