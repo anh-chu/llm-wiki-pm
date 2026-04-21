@@ -10,6 +10,7 @@ Run: python3 -m pytest tests/test_hooks.py -v
 import json
 import os
 import subprocess
+from tempfile import mkdtemp
 import textwrap
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -37,12 +38,16 @@ def run_hook(
     env["CLAUDE_PLUGIN_ROOT"] = str(REPO_ROOT)
     if env_overrides:
         env.update(env_overrides)
+    # Run from explicit cwd or a fresh temp dir to avoid picking up
+    # the repo's own .claude/settings.local.json during tests.
+    cwd = (env_overrides.get("_CWD") if env_overrides else None) or mkdtemp()
     return subprocess.run(
         ["bash", str(script)],
         input=json.dumps(stdin_json),
         capture_output=True,
         text=True,
         env=env,
+        cwd=cwd,
     )
 
 
@@ -424,6 +429,7 @@ class TestSessionStart:
             capture_output=True,
             text=True,
             env=env,
+            cwd=mkdtemp(),
         )
 
         assert result.returncode == 0

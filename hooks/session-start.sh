@@ -17,7 +17,21 @@ TEMPLATES_DIR="$PLUGIN_ROOT/skills/llm-wiki-pm/templates"
 SCRIPTS_DIR="$PLUGIN_ROOT/skills/llm-wiki-pm/scripts"
 
 # ① Resolve wiki path
-WIKI="${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-}}"
+# Priority: local settings.local.json > plugin option (global) > WIKI_PATH env > cwd fallback
+PLUGIN_ID="llm-wiki-pm@anh-chu-plugins"
+LOCAL_SETTINGS="$(pwd)/.claude/settings.local.json"
+
+# Read from project-local settings.local.json first
+LOCAL_WIKI=$(python3 -c "
+import json, sys
+try:
+    d = json.load(open(sys.argv[1]))
+    print(d.get('pluginConfigs',{}).get(sys.argv[2],{}).get('options',{}).get('wiki_path',''))
+except Exception:
+    print('')
+" "$LOCAL_SETTINGS" "$PLUGIN_ID" 2>/dev/null || true)
+
+WIKI="${LOCAL_WIKI:-${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-}}}"
 DOMAIN="${CLAUDE_PLUGIN_OPTION_wiki_domain:-PM}"
 GLOBAL_WARNING=""
 if [[ -z "$WIKI" ]]; then
@@ -25,17 +39,8 @@ if [[ -z "$WIKI" ]]; then
   WIKI="$(pwd)"
   GLOBAL_WARNING="llm-wiki-pm: no wiki path configured. Falling back to current directory ($WIKI) as wiki root. Run /llm-wiki-pm:set-wiki-path ~/your-path to set a permanent path."
 else
-  # Check if path comes from project-local settings or global
-  LOCAL_SETTINGS="$(pwd)/.claude/settings.local.json"
-  if ! python3 -c "
-import json, sys
-try:
-    d = json.load(open(sys.argv[1]))
-    opts = d.get('pluginConfigs',{}).get('llm-wiki-pm@anh-chu-plugins',{}).get('options',{})
-    sys.exit(0 if opts.get('wiki_path') else 1)
-except Exception:
-    sys.exit(1)
-" "$LOCAL_SETTINGS" 2>/dev/null; then
+  # Warn if not using project-local config
+  if [[ -z "$LOCAL_WIKI" ]]; then
     GLOBAL_WARNING="llm-wiki-pm: using global wiki path ($WIKI) for this project. Run /llm-wiki-pm:set-wiki-path ~/your-path to set a project-specific path."
   fi
 fi
