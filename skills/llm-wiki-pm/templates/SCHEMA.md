@@ -39,6 +39,8 @@ private: false            # optional, true = exclude from exports/shares
 confidence: verified      # optional, verified | likely | rumor
 confidence_decay_days: null # optional, integer. Warn if updated: is older than N days.
                             #   Default 60 for competitive-tagged pages, null for others.
+coverage: partial         # optional, stub | partial | comprehensive
+gaps: []                  # optional, known information gaps for this entity/concept
 # Persona pages only:
 language_patterns:         # optional, for persona type
   sentence_length: short | medium | long | mixed
@@ -251,3 +253,37 @@ confidence_decay_days: 30   # e.g. for fast-moving pricing pages
 The orient step (step ⑦) greps for competitive-tagged pages and flags any with
 `updated:` older than their decay threshold. The `_status.md` hook pre-computes
 this check so it's instant at session start.
+
+### Coverage Markers
+
+Optional `coverage:` frontmatter field:
+
+- `stub`: bare entity with minimal facts, needs research
+- `partial`: some sections filled but known gaps remain
+- `comprehensive`: all known sections covered, actively maintained
+
+Pair with `gaps:` list on stub/partial pages to track what's missing:
+
+```yaml
+coverage: partial
+gaps: ["pricing model unknown", "no recent competitive data"]
+```
+
+Used by Coverage Audit (§12) and surfaced in Proactive Recall. Helps the user
+know whether to trust a page's completeness or dig deeper.
+
+### Inline Provenance
+
+Every non-obvious factual claim in a wiki page must carry an inline source
+marker anchoring it to the specific raw source:
+
+```markdown
+Katalon holds ~15% market share in SE Asia [source: gartner-mq-2026, p.12]
+```
+
+The `sources:` frontmatter field lists all sources for the page. Inline markers
+anchor individual claims. Without inline markers, updates silently corrupt
+provenance because the agent can't tell which source backs which claim.
+
+Format: `[source: <raw-slug>, <location>]` where location is a page number,
+section name, or timestamp.

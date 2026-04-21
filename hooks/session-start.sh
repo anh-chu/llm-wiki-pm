@@ -9,6 +9,9 @@
 
 set -euo pipefail
 
+# Save stdin (JSON input) for later use
+STDIN_JSON=$(cat)
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Trust CLAUDE_PLUGIN_ROOT when set (always set during plugin execution).
 # Fallback for local dev: script lives at <plugin-root>/hooks/
@@ -70,6 +73,39 @@ open(sys.argv[3], 'w').write(text)
     echo "- Structure scaffolded automatically by llm-wiki-pm plugin"
   } > "$WIKI/log.md"
 fi
+
+# ②b Concurrent session lock
+LOCKFILE="$WIKI/.wiki-lock"
+LOCK_WARNING=""
+if [[ -f "$LOCKFILE" ]]; then
+  LOCK_OWNER=$(cat "$LOCKFILE" 2>/dev/null || true)
+  LOCK_AGE=0
+  if [[ -n "$LOCK_OWNER" ]]; then
+    LOCK_TS=$(echo "$LOCK_OWNER" | cut -d: -f2- || true)
+    if [[ -n "$LOCK_TS" ]]; then
+      LOCK_EPOCH=$(python3 -c "
+from datetime import datetime
+import sys
+try:
+    print(int(datetime.fromisoformat(sys.argv[1].replace('Z','+00:00')).timestamp()))
+except Exception:
+    print(0)
+" "$LOCK_TS" 2>/dev/null || echo 0)
+      if [[ "$LOCK_EPOCH" -gt 0 ]]; then
+        LOCK_AGE=$(( $(date +%s) - LOCK_EPOCH ))
+      fi
+    fi
+  fi
+  # Stale lock threshold: 2 hours (session probably crashed)
+  if [[ "$LOCK_AGE" -gt 7200 ]]; then
+    rm -f "$LOCKFILE"
+  else
+    LOCK_WARNING="Another wiki session may be active (lock: $LOCK_OWNER). Concurrent writes risk data loss. Proceed with caution or wait for the other session to end."
+  fi
+fi
+# Write our lock
+SESSION_ID=$(echo "$STDIN_JSON" | python3 -c "import json,sys; print(json.load(sys.stdin).get('session_id','unknown'))" 2>/dev/null || echo "$$")
+echo "${SESSION_ID}:$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$LOCKFILE" 2>/dev/null || true
 
 # ③ Gather health metrics
 NOW_TS=$(date +%s)
@@ -171,6 +207,9 @@ if [[ "$TOTAL" -gt 0 ]]; then
   CONTEXT="$CONTEXT Broken links: $BROKEN_LINKS. Orphans: $ORPHANS."
   CONTEXT="$CONTEXT Stale: $STALE_COUNT. Confidence decay: $DECAY_COUNT."
   CONTEXT="$CONTEXT See _status.md for details."
+fi
+if [[ -n "$LOCK_WARNING" ]]; then
+  CONTEXT="$CONTEXT LOCK WARNING: $LOCK_WARNING"
 fi
 
 python3 -c "

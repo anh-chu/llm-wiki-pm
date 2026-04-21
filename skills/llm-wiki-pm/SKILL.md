@@ -1,7 +1,7 @@
 ---
 name: llm-wiki-pm
 description: Persistent PM knowledge base, competitive intel, customer notes, strategy, roadmap, AI market. Markdown wiki with entities, concepts, comparisons. Ingest sources, query, update with diffs, lint with tiered reports.
-when_to_use: Use when user wants to ingest a source, query the wiki, update pages, lint/audit, bootstrap a new wiki, build persona pages, map relationships, or says "remember that / note that / don't forget".
+when_to_use: Use when user wants to ingest a source, query the wiki, update pages, lint/audit, bootstrap a new wiki, build persona pages, map relationships, audit coverage gaps, or says "remember that / note that / don't forget / what am I missing / blind spots".
 allowed-tools: Read Grep Write Edit Bash WebFetch
 ---
 
@@ -30,6 +30,7 @@ The agent writes. You curate sources, ask questions, steer.
 - "I have a meeting/call/1:1 with [person]" → triggers §9 Pre-Meeting Briefing
 - "What happened this week / last week / recently?" → triggers §10 Catch Me Up
 - "[tag] digest" or "catch me up on [topic]" → triggers §11 Tag Digest
+- "What am I missing?", "blind spots?", "coverage gaps?" → triggers §12 Coverage Audit
 
 ## Proactive Behaviors
 
@@ -41,20 +42,25 @@ Append notes briefly after your response. Don't interrupt the main answer.
 When the user mentions a named entity (company, person, product), grep the wiki
 for that name. If a page exists, surface it inline:
 
-> "Wiki has [[page]] (updated YYYY-MM-DD). Want a summary?"
+> "Wiki has [[page]] (updated YYYY-MM-DD, confidence: verified, coverage: partial). Want a summary?"
 
+Include `confidence:` and `coverage:` when present in frontmatter. If confidence
+is `rumor`, always surface it: "Wiki has [[page]] (rumor, unverified). Treat with caution."
 Append after your answer, not before. One line. Don't ask if the entity clearly
 came up only in passing.
 
 ### 2. Ambient Fact Capture
-
-When the user makes a declarative statement about PM-domain topics (pricing,
 decisions, people, companies, roadmap, competitors, customers), flag it:
-
 > "That sounds wikifiable. Want me to add it?"
-
 Only flag PM-domain facts. Skip casual chat, opinions without specifics, and
 hypotheticals. Use judgment.
+**Dedup gate (mandatory):** before offering to capture, grep the wiki for the
+key noun phrases in the statement. If an existing page already contains the
+claim (same entity + same fact), respond instead:
+
+> "Already in [[page]] (updated YYYY-MM-DD). Want me to update it?"
+
+Don't create duplicate facts. Update existing pages when the claim overlaps.
 
 ### 3. Contradiction Alert
 
@@ -112,6 +118,8 @@ wiki/
 ├── index.md               # Sectioned content catalog
 ├── overview.md            # Evolving synthesis, single entry point
 ├── log.md                 # Append-only action log (rotate at 500)
+├── _status.md             # Pre-computed health (session-start hook)
+├── .wiki-lock             # Session lock (auto-managed by hooks)
 ├── raw/                   # Layer 1: Immutable sources
 │   ├── articles/          # Analyst reports, press, blog clippings
 │   ├── papers/            # PDFs, whitepapers
@@ -122,7 +130,7 @@ wiki/
 ├── concepts/              # Layer 2: Strategies, themes, frameworks
 ├── comparisons/           # Layer 2: Side-by-side analyses
 ├── queries/               # Layer 2: Filed Q&A worth keeping
-└── _archive/              # Superseded content
+└── _archive/              # Superseded content + pre-update snapshots
 ```
 
 **Layer 1 raw/**: immutable. Agent reads, never modifies.
@@ -153,6 +161,13 @@ Before any ingest/query/update/lint, **always**:
 ⑧ **Read `_status.md`**: if `$WIKI/_status.md` exists, read it. This file
    contains pre-computed health data from the session-start hook. Surface any
    warnings from it immediately before proceeding.
+
+⑨ **Orient gate (enforced):** if you have NOT completed steps ①-④ in THIS
+   session, refuse any write operation (ingest, update, archive, supersede).
+   Surface: "Need to orient first. Running now." Then orient, then proceed.
+   Read-only queries (§3) may proceed without full orient if the user's
+   question is narrow and you can answer from a single page read. But any
+   operation that creates or modifies a wiki page requires orient.
 
 Skipping orientation → duplicate pages, missed cross-refs, schema drift.
 
@@ -218,6 +233,17 @@ After initialization, confirm domain scope with the user and customize
    - Supersession: if a new page materially *replaces* (not just revises) an
      old one, set `supersedes: [old-slug]` on new page, `superseded_by: new-slug`
      on old page. Archive the old page. `lint --auto-fix` rewrites inbound links.
+   - **Inline provenance (mandatory):** every non-obvious factual claim must
+     have an inline source marker: `[source: raw-slug, p.N]` or
+     `[source: raw-slug, section-name]`. Frontmatter `sources:` lists all
+     sources for the page; inline markers anchor specific claims to specific
+     sources. Without inline markers, updates silently corrupt provenance.
+   - **Coverage marker:** set `coverage: stub | partial | comprehensive` in
+     frontmatter. `stub` = bare entity with minimal facts. `partial` = some
+     sections filled but known gaps. `comprehensive` = all known sections
+     covered. Add `gaps:` list for partial/stub pages.
+   - **Confidence level:** set `confidence: verified | likely | rumor` when
+     source quality varies. See SCHEMA.md for definitions.
 
 ⑥ **Backlink audit**: after creating a page, scan related pages and add
    inbound `[[links]]` so the new page isn't an orphan.
@@ -274,6 +300,10 @@ After initialization, confirm domain scope with the user and customize
 Separate discipline from ingest. Triggered when new info conflicts with or
 refines existing content.
 
+**Pre-update snapshot (mandatory):** before any destructive update (overwrite,
+archive, supersede), copy the current page to `_archive/<slug>-<YYYY-MM-DD>.md`.
+Log: `snapshot: _archive/<slug>-<date>.md before update`. This makes "undo that
+last change" trivial. Skip snapshots only for trivial edits (typo fix, date bump).
 ① **Identify all affected pages**: three-way search:
    - `python3 "${CLAUDE_SKILL_DIR}/scripts/backlinks.py" "$WIKI" <slug>` for structural backlinks (pages
      linking to the entity being revised)
@@ -294,6 +324,15 @@ refines existing content.
 
 ⑥ **Log**: `## [YYYY-MM-DD] update | <claim/page> | source: raw/...`
    List every file modified.
+
+⑦ **Write verification:** after writing any page, re-read the file and confirm
+   frontmatter parses (title, updated, type, tags all present). If write failed
+   or frontmatter is malformed, surface error immediately and do NOT update
+   index.md or log.md. Partial state is worse than a failed write.
+
+⑧ **Inline provenance on updates:** when changing a specific claim, update
+   the inline `[source: ...]` marker on that claim. Don't leave old source
+   markers on revised facts.
 
 ### 5. Lint (tiered report)
 
@@ -436,6 +475,26 @@ Trigger: "[tag] digest", "summarize [tag] pages", "what's new in
 
 Log: `## [YYYY-MM-DD] digest | tag: <tag> | X pages synthesized`
 
+### 12. Coverage Audit
+
+Trigger: "what am I missing?", "blind spots?", "coverage gaps?", "what don't
+we know?", "wiki completeness"
+
+① Scan all `coverage:` frontmatter across entities/, concepts/, comparisons/.
+   Count: stub, partial, comprehensive, missing (no coverage field = missing).
+② Collect all `gaps:` lists from pages with partial/stub coverage.
+③ Read open `question`-tagged pages from queries/.
+④ Cross-reference: for every entity mentioned in 3+ pages but lacking its own
+   entity page, flag it as a coverage gap.
+⑤ Surface findings:
+   - "N entities have partial/stub coverage. Top gaps: [list]"
+   - "N open questions pending investigation"
+   - "N entities referenced across pages but have no wiki page"
+   - "Areas with no pages: [domains from SCHEMA.md tag taxonomy with zero pages]"
+⑥ Offer to create stub pages for the biggest gaps.
+
+Log: `## [YYYY-MM-DD] coverage-audit | stubs: N | gaps: N | open-questions: N`
+
 ## PM Workflow Patterns
 
 **Weekly competitive digest:** user drops 3-5 analyst links → ingest all →
@@ -476,6 +535,20 @@ frontmatter powers Dataview. See `references/obsidian-sync.md` for headless sync
   explicit `supersedes:` / `superseded_by:` fields. Old page archived, not deleted.
 - **Use qmd first**: grep misses semantic matches. At dozens of meetings/week
   the wiki grows fast; grep + index alone will silently degrade quality.
+- **Snapshot before destructive writes**: copy page to `_archive/<slug>-<date>.md`
+  before overwrite, archive, or supersede. Makes rollback trivial.
+- **Verify writes**: re-read after writing, confirm frontmatter parses. Don't
+  update index/log if the write failed.
+- **Inline provenance**: every non-obvious claim needs `[source: slug, location]`.
+  Frontmatter sources alone don't anchor claims. Updates without inline markers
+  silently corrupt provenance.
+- **Coverage markers**: set `coverage:` and `gaps:` on every entity/concept page.
+  Without these, the user can't tell if a page is trustworthy or just a stub.
+- **Session lock**: `.wiki-lock` prevents concurrent session corruption. The
+  session-start hook writes it; session-stop removes it. If a stale lock
+  persists (>2h), session-start auto-clears it.
+- **Dedup ambient captures**: grep before offering to add a fact the wiki already
+  knows. Duplicate facts erode trust faster than missing facts.
 
 ## References
 

@@ -13,6 +13,10 @@ if [[ ! -d "$WIKI" ]]; then
   exit 0
 fi
 
+# ①b Release session lock
+LOCKFILE="$WIKI/.wiki-lock"
+rm -f "$LOCKFILE" 2>/dev/null || true
+
 LOG_FILE="$WIKI/log.md"
 
 # ② Exit silently if log.md does not exist

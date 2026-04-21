@@ -7,6 +7,146 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.5.0] - 2026-04-21
+
+Behavioral trust hardening. Eight features to make the wiki a reliable second brain.
+
+### Added
+
+- **Inline claim provenance (mandatory).** Every non-obvious factual claim now
+  requires `[source: raw-slug, location]` inline markers. Frontmatter `sources:`
+  alone no longer sufficient. Applies to ingest (S2 step 5) and update (S4 step 8).
+- **Pre-update rollback snapshots.** Before any destructive write (overwrite,
+  archive, supersede), the current page is copied to `_archive/<slug>-<date>.md`.
+  Makes "undo that last change" trivial. Skipped for trivial edits (typo, date bump).
+- **Concurrent session lock.** `session-start.sh` writes `.wiki-lock` with
+  session ID and timestamp. `session-stop.sh` removes it. Stale locks (>2h)
+  auto-cleared. Lock warning surfaced via `additionalContext` if another session
+  is active.
+- **Coverage markers.** New `coverage: stub | partial | comprehensive` and
+  `gaps: []` frontmatter fields. Proactive Recall now surfaces coverage level.
+  Used by Coverage Audit (S12).
+- **Orient gate enforcement.** Hard gate: write operations (ingest, update,
+  archive, supersede) refused if SCHEMA.md, index.md, and log.md have not been
+  read in the current session. Read-only narrow queries exempt.
+- **Confidence in Proactive Recall.** Recall now surfaces `confidence:` and
+  `coverage:` from frontmatter. Rumor-grade pages always flagged.
+- **Ambient capture dedup.** Before offering to capture a fact, grep wiki for
+  key noun phrases. If already present, offer to update instead of creating
+  duplicate.
+- **S12 Coverage Audit.** New operation triggered by "what am I missing?",
+  "blind spots?", "coverage gaps?". Scans coverage fields, collects gaps,
+  cross-references entity mentions vs existing pages, surfaces blind spots.
+
+### Changed
+
+- Architecture diagram now shows `_status.md` and `.wiki-lock`.
+- `_archive/` description updated: "Superseded content + pre-update snapshots".
+- `when_to_use` frontmatter expanded with coverage audit triggers.
+- Pitfalls section expanded with 7 new entries (snapshots, write verification,
+  inline provenance, coverage markers, session lock, dedup, orient gate).
+- SCHEMA.md template: added `coverage:` and `gaps:` to frontmatter spec,
+  new "Coverage Markers" and "Inline Provenance" documentation sections.
+- `session-start.sh`: saves stdin early for session ID extraction, writes
+  lock file, surfaces lock warnings in additionalContext.
+- `session-stop.sh`: releases `.wiki-lock` on session end.
+- Write verification added to S4 Update: re-read after writing, confirm
+  frontmatter parses before updating index/log.
+
+---
+
+## [2.4.0] - 2026-04-21
+
+### Added
+
+- `.wiki-path` file for project-specific wiki path configuration. Takes
+  precedence over `CLAUDE_PLUGIN_OPTION_wiki_path` and `WIKI_PATH` env var.
+- `/llm-wiki-pm:set-wiki-path` command writes `.wiki-path` to project root.
+
+### Changed
+
+- Wiki path resolution order: `.wiki-path` (project) > plugin option (global)
+  > `WIKI_PATH` env > cwd fallback.
+- Docs updated: `.wiki-path` replaces `settings.local.json` for project config.
+- Strengthened skill invoke instruction in `additionalContext`: before first
+  user message, regardless of content.
+
+---
+
+## [2.3.1] - 2026-04-21
+
+### Added
+
+- SessionStart `additionalContext` now instructs Claude to auto-invoke the
+  skill at session start so proactive behaviors activate without user trigger.
+
+### Fixed
+
+- `plugin.json` and `marketplace.json` version synced to 2.3.1.
+- `.gitignore` updated to exclude runtime wiki output files.
+
+---
+
+## [2.3.0] - 2026-04-21
+
+### Changed
+
+- Simplified wiki path configuration. Removed hardcoded default path.
+- `systemMessage` used for unconfigured wiki path warning (separate from
+  `additionalContext` health summary).
+- cwd fallback when no wiki path configured.
+
+---
+
+## [2.2.0] - 2026-04-21
+
+### Fixed
+
+- `/llm-wiki-pm:set-wiki-path` now writes to correct settings scope.
+
+---
+
+## [2.1.2] - 2026-04-20
+
+### Fixed
+
+- `hooks.json` spec compliance: corrected format to match plugin system
+  requirements.
+
+---
+
+## [2.1.1] - 2026-04-20
+
+### Fixed
+
+- Plugin spec compliance: corrected `plugin.json` structure.
+
+---
+
+## [2.1.0] - 2026-04-20
+
+### Added
+
+- `/llm-wiki-pm:set-wiki-path` slash command for setting wiki path from
+  any project directory.
+- `/llm-wiki-pm:llm-wiki-path` command to display current resolved path.
+- SKILL.md: explicit `$WIKI` resolution block before any bash command.
+- `pluginConfigs` format documented in `hooks/README.md` and
+  `GETTING_STARTED.md`.
+
+### Changed
+
+- Trimmed SKILL.md wiki location section to stay under 500 lines.
+
+---
+
+## [2.0.1] - 2026-04-20
+
+### Fixed
+
+- Hook command format: removed `bash` prefix and path quotes that broke
+  execution on some systems.
+
 ## [2.0.0] - 2026-04-20
 
 Major release. Plugin architecture rebuilt from scratch. Breaking changes throughout.
