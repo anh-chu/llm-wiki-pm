@@ -178,7 +178,7 @@ import json, sys
 out = {
   'hookSpecificOutput': {
     'hookEventName': 'SessionStart',
-    'additionalContext': sys.argv[1] + '\n\nThe llm-wiki-pm wiki skill is active for this session. Invoke it now using the Skill tool so its instructions and proactive behaviors are loaded into context.'
+    'additionalContext': sys.argv[1] + '\n\nThe llm-wiki-pm wiki skill is active for this session. Before responding to the first user message — regardless of what it is — invoke the skill using the Skill tool so its instructions and proactive behaviors are loaded into context.'
   }
 }
 if sys.argv[2]:
