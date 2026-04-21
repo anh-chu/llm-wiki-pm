@@ -95,13 +95,14 @@ data isn't relevant to the question, skip it.
 
 ## Wiki Location
 Before running any bash command that uses `$WIKI`, resolve it with:
-
 ```bash
-WIKI="${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-}}"
+WIKI=$(cat .wiki-path 2>/dev/null | tr -d '[:space:]')
+WIKI=${WIKI:-${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-$(pwd)}}}
 ```
 
-Resolution: `CLAUDE_PLUGIN_OPTION_wiki_path` → `WIKI_PATH`. No default.
-The SessionStart hook's `additionalContext` also states the active path.
+Resolution: `.wiki-path` (project) → `CLAUDE_PLUGIN_OPTION_wiki_path` (global) → `WIKI_PATH` → cwd. Run `/llm-wiki-pm:set-wiki-path ~/path` to set project path. `additionalContext` states the active path each session.
+
+The SessionStart hook's `additionalContext` states the active path each session.
 
 ## Architecture: Three Layers
 

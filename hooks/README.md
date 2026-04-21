@@ -8,7 +8,7 @@ Three shell scripts that keep the wiki healthy across sessions. When installed a
 
 **session-start.sh**
 Runs at session start. Scaffolds the wiki on first run if it does not exist
-(reads `CLAUDE_PLUGIN_OPTION_wiki_path` set at plugin enable time). Then scans
+(reads `.wiki-path` file in cwd (project-specific), then `CLAUDE_PLUGIN_OPTION_wiki_path` (global plugin config), then `WIKI_PATH` env, then cwd). Then scans
 for broken links, orphan pages, stale entries (>30 days), and competitive pages
 past their confidence decay threshold (>60 days). Writes `_status.md` and
 outputs an `additionalContext` summary directly into Claude's context.
@@ -110,9 +110,9 @@ The `|| true` prevents the hook from failing if there is nothing to commit or gi
 
 ## Configuration
 
-### Plugin config (preferred)
+### Project config (preferred)
 
-Set at plugin enable time via the `/plugin` menu in Claude Code, or manually
+Create a `.wiki-path` file in your project directory (via `/llm-wiki-pm:set-wiki-path ~/path` or manually):
 add to `~/.claude/settings.json`:
 
 ```json

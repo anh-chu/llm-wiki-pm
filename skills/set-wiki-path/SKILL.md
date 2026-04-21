@@ -14,8 +14,9 @@ Run:
 python3 "${CLAUDE_SKILL_DIR}/scripts/set-wiki-path.py" "$ARGUMENTS"
 ```
 
-Always writes to `.claude/settings.local.json` in the current directory.
-That file is gitignored and takes precedence over global config for this project.
+Writes the resolved path to `.wiki-path` in the current directory.
+That file is read by the SessionStart hook to set the wiki location for this project.
+Add `.wiki-path` to `.gitignore` if the path is personal; commit it if the whole team shares the same wiki location.
 
 Tell the user the new path and remind them to restart Claude Code.
-If the path does not exist yet, note that the SessionStart hook will create it on next start.
+If the path does not exist yet, the SessionStart hook will create it on next start.

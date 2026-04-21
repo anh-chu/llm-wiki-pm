@@ -917,48 +917,35 @@ class TestSetWikiPath:
         # and produces expected output format when settings exist
         assert result.returncode == 0 or "settings.json" in result.stderr
 
-    def test_always_writes_to_settings_local_json(self, tmp_path):
-        """set-wiki-path always writes to .claude/settings.local.json."""
-        env = {**os.environ, "HOME": str(tmp_path)}
-        (tmp_path / ".claude").mkdir(exist_ok=True)
+    def test_always_writes_to_wiki_path_file(self, tmp_path):
+        """set-wiki-path writes path to .wiki-path in cwd."""
         result = subprocess.run(
             ["python3", str(SET_WIKI_PATH), "/my/project/wiki"],
             capture_output=True,
             text=True,
             cwd=str(tmp_path),
-            env=env,
         )
         assert result.returncode == 0
-        local = tmp_path / ".claude" / "settings.local.json"
-        assert local.exists()
-        data = json.loads(local.read_text())
-        assert (
-            data["pluginConfigs"]["llm-wiki-pm@anh-chu-plugins"]["options"]["wiki_path"]
-            == "/my/project/wiki"
-        )
+        wiki_file = tmp_path / ".wiki-path"
+        assert wiki_file.exists()
+        assert wiki_file.read_text().strip() == "/my/project/wiki"
 
-    def test_writes_to_local_not_project_settings(self, tmp_path):
-        """Always writes to settings.local.json, never to settings.json."""
-        env = {**os.environ, "HOME": str(tmp_path)}
-        claude_dir = tmp_path / ".claude"
-        claude_dir.mkdir()
-        project_settings = claude_dir / "settings.json"
-        project_settings.write_text(
+    def test_writes_to_wiki_path_not_settings_json(self, tmp_path):
+        """set-wiki-path never touches settings.json."""
+        settings = tmp_path / ".claude" / "settings.json"
+        settings.parent.mkdir()
+        settings.write_text(
             json.dumps({"enabledPlugins": {"llm-wiki-pm@anh-chu-plugins": True}})
         )
 
-        result = subprocess.run(
+        subprocess.run(
             ["python3", str(SET_WIKI_PATH), "/local/wiki"],
             capture_output=True,
             text=True,
             cwd=str(tmp_path),
-            env=env,
         )
-        assert result.returncode == 0
-        assert (claude_dir / "settings.local.json").exists()
-        # Project settings.json must NOT be modified
-        data = json.loads(project_settings.read_text())
-        assert "pluginConfigs" not in data
+        assert (tmp_path / ".wiki-path").exists()
+        assert "pluginConfigs" not in json.loads(settings.read_text())
 
     def test_expands_tilde_in_path(self, tmp_path):
         """~ in path is expanded to home directory."""

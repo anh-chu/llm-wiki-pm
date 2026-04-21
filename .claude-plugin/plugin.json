@@ -1,6 +1,6 @@
 {
 	"name": "llm-wiki-pm",
-	"version": "2.3.1",
+	"version": "2.4.0",
 	"description": "PM knowledge base skill implementing Karpathy's LLM Wiki pattern. Ingest sources, query a compounding markdown wiki, supersede with auto-link rewrite, crystallize transcripts into decision digests, and search with qmd hybrid BM25 + vector + rerank.",
 	"author": {
 		"name": "Anh Chu",

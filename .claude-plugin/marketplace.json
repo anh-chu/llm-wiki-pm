@@ -6,7 +6,7 @@
 	},
 	"metadata": {
 		"description": "Personal marketplace. Agent skills for product management and knowledge work.",
-		"version": "2.3.1"
+		"version": "2.4.0"
 	},
 	"plugins": [
 		{
@@ -16,7 +16,7 @@
 				"repo": "anh-chu/llm-wiki-pm"
 			},
 			"description": "PM knowledge base skill implementing Karpathy's LLM Wiki pattern. Ingest sources, query a compounding markdown wiki, supersede with auto-link rewrite, crystallize transcripts into decision digests, search with qmd hybrid BM25 + vector + rerank.",
-			"version": "2.3.1",
+			"version": "2.4.0",
 			"author": {
 				"name": "Anh Chu",
 				"email": "anhdchu@gmail.com"
