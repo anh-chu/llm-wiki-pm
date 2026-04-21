@@ -6,7 +6,7 @@
 set -euo pipefail
 
 # ── Resolve WIKI path ──────────────────────────────────────────────────────────
-WIKI="${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-$HOME/llm-wiki-pm/wiki}}"
+WIKI="${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-}}"
 
 # ① Exit silently if wiki not initialized yet
 if [[ ! -d "$WIKI" ]]; then

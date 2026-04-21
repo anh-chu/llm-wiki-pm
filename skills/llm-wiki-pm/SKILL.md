@@ -97,10 +97,10 @@ data isn't relevant to the question, skip it.
 Before running any bash command that uses `$WIKI`, resolve it with:
 
 ```bash
-WIKI="${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-$HOME/llm-wiki-pm/wiki}}"
+WIKI="${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-}}"
 ```
 
-Resolution: `CLAUDE_PLUGIN_OPTION_wiki_path` → `WIKI_PATH` → `$HOME/llm-wiki-pm/wiki`.
+Resolution: `CLAUDE_PLUGIN_OPTION_wiki_path` → `WIKI_PATH`. No default.
 The SessionStart hook's `additionalContext` also states the active path.
 
 ## Architecture: Three Layers

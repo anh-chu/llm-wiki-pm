@@ -43,7 +43,7 @@ print(json.dumps({
 "
   exit 0
 fi
-WIKI="${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-$HOME/llm-wiki-pm/wiki}}"
+WIKI="${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-}}"
 DOMAIN="${CLAUDE_PLUGIN_OPTION_wiki_domain:-PM}"
 
 # ② Scaffold wiki on first run — only if dir is new or truly empty

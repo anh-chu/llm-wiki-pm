@@ -7,7 +7,8 @@
 set -euo pipefail
 
 # ── Resolve paths ─────────────────────────────────────────────────────────────
-WIKI="${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-$HOME/llm-wiki-pm/wiki}}"
+WIKI="${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-}}"
+[[ -z "$WIKI" ]] && exit 0
 
 # ① Read file path from stdin JSON using Python (no jq dependency)
 INPUT=$(cat)

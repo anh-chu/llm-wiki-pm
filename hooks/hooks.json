@@ -1,4 +1,5 @@
 {
+	"description": "Wiki health check, wikilink validation, and log rotation hooks for llm-wiki-pm",
 	"hooks": {
 		"SessionStart": [
 			{
@@ -13,7 +14,7 @@
 		],
 		"PostToolUse": [
 			{
-				"matcher": "Write|Edit",
+				"matcher": "Write|Edit|MultiEdit",
 				"hooks": [
 					{
 						"type": "command",

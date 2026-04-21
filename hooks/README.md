@@ -148,5 +148,5 @@ export WIKI_DOMAIN="PM, Katalon"  # optional, defaults to "PM"
 created has no effect on existing files.
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `WIKI_PATH` | `$HOME/llm-wiki-pm/wiki` | Wiki directory location |
+| `WIKI_PATH` | (none) | Wiki directory location fallback |
 | `WIKI_DOMAIN` | `PM` | Domain label used during scaffold |
