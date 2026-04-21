@@ -16,29 +16,29 @@ PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 TEMPLATES_DIR="$PLUGIN_ROOT/skills/llm-wiki-pm/templates"
 SCRIPTS_DIR="$PLUGIN_ROOT/skills/llm-wiki-pm/scripts"
 
-# ① Resolve wiki path from plugin config, then env var, then default
-# If neither is set, the plugin was installed without running through the
-# /plugin config UI. Output a clear message asking the user to configure it.
-if [[ -z "${CLAUDE_PLUGIN_OPTION_wiki_path:-}" && -z "${WIKI_PATH:-}" ]]; then
-  python3 -c "
-import json
-msg = (
-  'llm-wiki-pm wiki path not configured. '
-  'Run /llm-wiki-pm:set-wiki-path ~/your-path or '
-  'add wiki_path to pluginConfigs in ~/.claude/settings.json.'
-)
-print(json.dumps({
-  'systemMessage': msg,
-  'hookSpecificOutput': {
-    'hookEventName': 'SessionStart',
-    'additionalContext': msg
-  }
-}))
-"
-  exit 0
-fi
+# ① Resolve wiki path
 WIKI="${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-}}"
 DOMAIN="${CLAUDE_PLUGIN_OPTION_wiki_domain:-PM}"
+GLOBAL_WARNING=""
+if [[ -z "$WIKI" ]]; then
+  # Last resort: fall back to current working directory
+  WIKI="$(pwd)"
+  GLOBAL_WARNING="llm-wiki-pm: no wiki path configured. Falling back to current directory ($WIKI) as wiki root. Run /llm-wiki-pm:set-wiki-path ~/your-path to set a permanent path."
+else
+  # Check if path comes from project-local settings or global
+  LOCAL_SETTINGS="$(pwd)/.claude/settings.local.json"
+  if ! python3 -c "
+import json, sys
+try:
+    d = json.load(open(sys.argv[1]))
+    opts = d.get('pluginConfigs',{}).get('llm-wiki-pm@anh-chu-plugins',{}).get('options',{})
+    sys.exit(0 if opts.get('wiki_path') else 1)
+except Exception:
+    sys.exit(1)
+" "$LOCAL_SETTINGS" 2>/dev/null; then
+    GLOBAL_WARNING="llm-wiki-pm: using global wiki path ($WIKI) for this project. Run /llm-wiki-pm:set-wiki-path ~/your-path to set a project-specific path."
+  fi
+fi
 
 # ② Scaffold wiki on first run — only if dir is new or truly empty
 # Never overwrite files in an existing non-empty directory.
@@ -184,12 +184,15 @@ fi
 
 python3 -c "
 import json, sys
-print(json.dumps({
+out = {
   'hookSpecificOutput': {
     'hookEventName': 'SessionStart',
     'additionalContext': sys.argv[1]
   }
-}))
-" "$CONTEXT"
+}
+if sys.argv[2]:
+    out['systemMessage'] = sys.argv[2]
+print(json.dumps(out))
+" "$CONTEXT" "$GLOBAL_WARNING"
 
 exit 0
