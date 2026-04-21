@@ -22,22 +22,16 @@ SCRIPTS_DIR="$PLUGIN_ROOT/skills/llm-wiki-pm/scripts"
 if [[ -z "${CLAUDE_PLUGIN_OPTION_wiki_path:-}" && -z "${WIKI_PATH:-}" ]]; then
   python3 -c "
 import json
+msg = (
+  'llm-wiki-pm wiki path not configured. '
+  'Run /llm-wiki-pm:set-wiki-path ~/your-path or '
+  'add wiki_path to pluginConfigs in ~/.claude/settings.json.'
+)
 print(json.dumps({
+  'systemMessage': msg,
   'hookSpecificOutput': {
     'hookEventName': 'SessionStart',
-    'additionalContext': (
-      'llm-wiki-pm: wiki path not configured. '
-      'Add this to ~/.claude/settings.json to finish setup:\\n\\n'
-      '  \"pluginConfigs\": {\\n'
-      '    \"llm-wiki-pm@anh-chu-plugins\": {\\n'
-      '      \"options\": {\\n'
-      '        \"wiki_path\": \"~/pm-wiki\",\\n'
-      '        \"wiki_domain\": \"PM\"\\n'
-      '      }\\n'
-      '    }\\n'
-      '  }\\n\\n'
-      'Then restart Claude Code. Until configured, no wiki features are active.'
-    )
+    'additionalContext': msg
   }
 }))
 "
