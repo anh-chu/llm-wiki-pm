@@ -24,9 +24,16 @@ claude plugin install llm-wiki-pm@anh-chu-plugins
 Restart Claude Code. Open it interactively and use `/plugin` to configure
 the plugin — you will be prompted for `wiki_path` and `wiki_domain`.
 
-**If the prompt does not appear** (e.g. you installed via CLI), configure
-manually in `~/.claude/settings.json`:
+Set your wiki path by running the skill command from your project directory:
 
+```bash
+/llm-wiki-pm:set-wiki-path ~/pm-wiki
+```
+
+This writes `~/pm-wiki` (resolved) to `.wiki-path` in the current directory.
+The SessionStart hook reads that file on every session start.
+
+**If you prefer global config** (applies across all projects), add to `~/.claude/settings.json`:
 ```json
 "pluginConfigs": {
   "llm-wiki-pm@anh-chu-plugins": {
@@ -37,14 +44,10 @@ manually in `~/.claude/settings.json`:
   }
 }
 ```
-
 | Field | Description | Example |
-|-------|-------------|---------|
+|-------|-------------|---------|  
 | `wiki_path` | Directory where your wiki lives. Created on first run. | `~/pm-wiki` |
-| `wiki_domain` | Domain label used in SCHEMA.md and log on scaffold. | `"PM, Katalon"` |
-
-The key `llm-wiki-pm@anh-chu-plugins` must match your marketplace name.
-Verify with `claude plugin list`.
+| `wiki_domain` | Domain label used in SCHEMA.md on scaffold. | `"PM, Katalon"` |
 
 On the first session start, the `SessionStart` hook creates this structure at your chosen path:
 

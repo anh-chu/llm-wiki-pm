@@ -111,28 +111,21 @@ The `|| true` prevents the hook from failing if there is nothing to commit or gi
 ## Configuration
 
 ### Project config (preferred)
+Create a `.wiki-path` file in your project directory:
 
-Create a `.wiki-path` file in your project directory (via `/llm-wiki-pm:set-wiki-path ~/path` or manually):
-add to `~/.claude/settings.json`:
+```bash
+# via the skill command (recommended)
+/llm-wiki-pm:set-wiki-path ~/pm-wiki
 
-```json
-"pluginConfigs": {
-  "llm-wiki-pm@anh-chu-plugins": {
-    "options": {
-      "wiki_path": "~/pm-wiki",
-      "wiki_domain": "PM, Katalon"
-    }
-  }
-}
+# or manually
+echo ~/pm-wiki > .wiki-path
 ```
 
-| Field | Type | Description | Example |
-|-------|------|-------------|---------|
-| `wiki_path` | string (directory) | Absolute or `~/` path where the wiki lives. Created on first session start if it does not exist. | `~/pm-wiki` |
-| `wiki_domain` | string | Domain label written into `SCHEMA.md` and `log.md` on scaffold. Used to scope the tag taxonomy. | `"PM, Katalon"` |
+The SessionStart hook reads this file on every session start. Commit it to share a
+team wiki location; add it to `.gitignore` for personal paths.
 
-The plugin ID key (`llm-wiki-pm@anh-chu-plugins`) must match the marketplace
-you installed from. Check with `claude plugin list`.
+`wiki_domain` is set at scaffold time via the plugin's `userConfig` prompt or
+`CLAUDE_PLUGIN_OPTION_wiki_domain`. It defaults to `PM` if not set.
 
 ### Fallback: environment variable
 
