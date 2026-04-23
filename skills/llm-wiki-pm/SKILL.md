@@ -167,7 +167,10 @@ If missing: "Wiki directory not found. Scaffold a new wiki or run `/llm-wiki-pm:
 **② SCHEMA.md exists?**
 If `$WIKI/SCHEMA.md` is absent: offer to scaffold it from `templates/SCHEMA.md`. Do not proceed with any write operation until SCHEMA.md exists.
 
-**③ Role pack detection (optional)**
+**③ MY-INTEGRATIONS.md (optional)**
+If `$WIKI/MY-INTEGRATIONS.md` exists, read it. Apply any routing preferences in the "Routing Notes" section (e.g., preferred Slack channel naming, Gmail label patterns) to the current session's ingest defaults. No file = use generic defaults. Never create this file during Pre-Flight — it is auto-created on first ingest.
+
+**④ Role pack detection (optional)**
 Check `.claude/roles/` for a matching role file based on how the user describes their role. If found, apply these behaviors for the session:
 
 | Field | Effect |
@@ -180,10 +183,10 @@ Check `.claude/roles/` for a matching role file based on how the user describes 
 
 No role pack = all defaults apply. Missing `.claude/roles/` is not an error.
 
-**④ Surface _status.md warnings**
+**⑤ Surface _status.md warnings**
 If `$WIKI/_status.md` exists, read it now. Surface any pre-computed staleness or lock warnings immediately.
 
-If all checks pass: proceed silently. No need to narrate the pre-flight to the user unless a problem is found.
+If all checks pass (①–⑤): proceed silently. No need to narrate the pre-flight to the user unless a problem is found.
 
 **Pre-Flight runs before Orient.** Once Pre-Flight completes, proceed to the Orient steps below.
 
@@ -300,11 +303,19 @@ After initialization, confirm domain scope with the user and customize
 ⑦ **Update `overview.md`**: if the source shifts the domain synthesis, edit
    the overview. Keep it under 200 lines. Link heavily.
 
-⑨ **Update navigation:**
+⑧ **Update navigation:**
    - Add new pages to `index.md` under correct section, alphabetical
    - Bump total page count + "Last updated" header
    - Append to `log.md`: `## [YYYY-MM-DD] ingest | <source title>` with list
      of every file created/updated
+
+⑨ **Update MY-INTEGRATIONS.md** (auto-log source routing):
+   After each ingest, append or update the source row in `$WIKI/MY-INTEGRATIONS.md`.
+   If the file doesn't exist, create it from `$CLAUDE_SKILL_DIR/templates/MY-INTEGRATIONS.md`.
+   Row format: `| <source-label> | <type> | <YYYY-MM-DD> | <N> | <notes> |`
+   Types: `web` | `slack` | `gmail` | `transcript` | `pdf` | `conversation` | `internal`
+   This is how the skill learns which integrations you actually use. No fabrication
+   — only log sources actually ingested this session.
 
 ①⓪ **Report to user**: list every file touched. One source → 5-15 pages is
    normal. Confirm before mass-updating (10+ pages).
@@ -492,6 +503,9 @@ Trigger: "I have a meeting/call/1:1 with X" or "brief me on X before my call"
 
 ### 10. Catch Me Up
 
+> **If `llm-wiki-brief` is installed**, it handles this with richer output (daily brief, weekly
+> brief, coverage brief). This operation is the fallback when that sub-skill is not present.
+
 Trigger: "what happened this week", "catch me up", "what's new in the wiki",
 "what did I miss"
 
@@ -508,6 +522,9 @@ Trigger: "what happened this week", "catch me up", "what's new in the wiki",
 Log: `## [YYYY-MM-DD] catchup | last N days | X actions`
 
 ### 11. Tag Digest
+
+> **If `llm-wiki-brief` is installed**, it handles tag digests with cross-referencing and
+> file-to-queries output. This operation is the fallback when that sub-skill is not present.
 
 Trigger: "[tag] digest", "summarize [tag] pages", "what's new in
 [competitive/customer/roadmap/etc]"

@@ -7,6 +7,56 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.7.0] - 2026-04-23
+
+Sub-skill architecture, MY-INTEGRATIONS learned routing, worker-people-updater, CRM layer.
+
+### Added
+
+- **Sub-skill architecture**. Four optional skills that extend the core without
+  bloating `llm-wiki-pm/SKILL.md`. Each has scoped `when_to_use` triggers; core
+  skill serves as fallback when sub-skills are not installed.
+  - **`llm-wiki-brief`**: daily/weekly briefs, tag digests, coverage brief. Read-only
+    by default; files output to `queries/` only on user request. Richer output than
+    core §10/§11 fallbacks.
+  - **`llm-wiki-prd`**: PRD drafts, user stories, release notes. Wiki-grounded only —
+    gaps surfaced before drafting. No fabrication policy enforced.
+  - **`llm-wiki-research`**: research sprints, competitive deep dives, auto-research
+    (stub enrichment), gap research. Delegates all URL fetching to `worker-source-fetcher`
+    — never WebFetch directly for source saving.
+  - **`llm-wiki-crm`**: PM CRM layer. Relationship health check (tier staleness
+    thresholds), auto-enrichment (public data only via WebSearch), account health
+    dashboard, feature ask tracker (`key_asks` aggregation across accounts),
+    touchpoint logging. No dollar figures — `arr_tier` tiers only.
+- **`skills/llm-wiki-crm/templates/SCHEMA-crm-fields.md`**: patch file (not a
+  SCHEMA.md replacement) with CRM frontmatter additions for person and company
+  entities. Merge instructions included.
+- **`worker-people-updater`** (`.claude/agents/`). Scans wiki for promotion
+  candidates (names in 3+ pages, no entity page), stale profiles (log activity
+  but page not updated), and CRM touchpoint overdue. Report-only — never modifies
+  wiki files. Outputs to `/tmp/wiki-people-update-<YYYYMMDD>.md`.
+- **`MY-INTEGRATIONS.md`** template (`skills/llm-wiki-pm/templates/`). Learned
+  source routing file — auto-populated by skill after each ingest (source type,
+  last used, ingest count). Pre-Flight now checks for and reads this file. Replaces
+  hardcoded source routing defaults with observed ingest behavior.
+
+### Changed
+
+- `SKILL.md` Pre-Flight: new step ③ reads `MY-INTEGRATIONS.md` if present; existing
+  role pack detection shifted to step ④; `_status.md` check shifted to step ⑤.
+- `SKILL.md` §2 Ingest: new step ①⓪ auto-updates `MY-INTEGRATIONS.md` after each
+  ingest; Crystallize shifted to ①②, entity promotion scan to ①③.
+- `SKILL.md` §10, §11: added fallback notes pointing to `llm-wiki-brief` when installed.
+- `AGENTS.md`: added sub-skill architecture table; updated Agent Surfaces section;
+  removed Kiro/Gemini CLI references.
+- `plugin.json`: version 2.7.0, skillCount 5 (core + 4 sub-skills), workerCount 5,
+  skill architecture note updated, keywords expanded (crm, research, briefs).
+- `marketplace.json`: version 2.7.0, tags expanded (crm, research, briefs, prd).
+- `README.md`: layout diagram shows full sub-skill tree; "What you get" updated with
+  sub-skills and MY-INTEGRATIONS.
+
+---
+
 ## [2.6.0] - 2026-04-23
 
 COG-inspired architecture: worker agents, role packs, universal agent contract, and pre-flight hardening.

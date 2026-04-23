@@ -33,10 +33,16 @@ pages. Every query cites specific wiki entries. The wiki compounds.
 - **Privacy-first**: pre-ingest filter + `private:` frontmatter flag
 - **qmd search**: BM25 + vector + LLM rerank over your whole wiki
 - **Obsidian-compatible**: works as a vault out of the box
-- **Worker agents**: four subagents (indexer, fetcher, link-validator, lint)
+- **Worker agents**: five subagents (indexer, fetcher, link-validator, lint, people-updater)
   handle expensive ops without bloating the lead session
 - **Role packs**: PM, researcher, executive, founder personas tune proactive
   recall sensitivity, output format, and crystallize templates per session
+- **Sub-skills** (optional, install as needed):
+  - `llm-wiki-brief` — daily/weekly briefs, tag digests, coverage brief
+  - `llm-wiki-prd` — PRD drafts, user stories, release notes (wiki-grounded, no fabrication)
+  - `llm-wiki-research` — research sprints, competitive deep dives, stub enrichment
+  - `llm-wiki-crm` — relationship health, account health dashboard, feature ask tracker, auto-enrichment
+- **MY-INTEGRATIONS.md**: learned source routing — auto-populated from actual ingest activity
 - **Next.js embed path** for platform deployments
 
 ## Install
@@ -120,7 +126,8 @@ llm-wiki-pm/
 │   │   ├── worker-wiki-indexer.md
 │   │   ├── worker-source-fetcher.md
 │   │   ├── worker-link-validator.md
-│   │   └── worker-lint.md
+│   │   ├── worker-lint.md
+│   │   └── worker-people-updater.md
 │   └── roles/                       # Role packs
 │       ├── _template.md
 │       ├── product-manager.md
@@ -131,12 +138,24 @@ llm-wiki-pm/
 │   └── hooks.json
 ├── scripts/
 │   └── update-safe.sh
-└── skills/llm-wiki-pm/
-    ├── SKILL.md
-    ├── hooks/         (session-start.sh, post-write.sh, session-stop.sh)
-    ├── references/
-    ├── scripts/       (lint.py, backlinks.py)
-    └── templates/
+└── skills/
+    ├── llm-wiki-pm/                 # Core skill (required)
+    │   ├── SKILL.md
+    │   ├── hooks/   (session-start.sh, post-write.sh, session-stop.sh)
+    │   ├── references/
+    │   ├── scripts/ (lint.py, backlinks.py)
+    │   └── templates/ (SCHEMA.md, index.md, overview.md, log.md, persona.md,
+    │                    MY-INTEGRATIONS.md)
+    ├── llm-wiki-brief/              # Optional: daily/weekly briefs, tag digests
+    │   └── SKILL.md
+    ├── llm-wiki-prd/                # Optional: PRD drafts, user stories, release notes
+    │   └── SKILL.md
+    ├── llm-wiki-research/           # Optional: research sprints, competitive deep dives
+    │   └── SKILL.md
+    └── llm-wiki-crm/                # Optional: relationship health, CRM layer
+        ├── SKILL.md
+        └── templates/
+            └── SCHEMA-crm-fields.md
 ```
 
 ## Setup

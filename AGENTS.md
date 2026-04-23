@@ -1,6 +1,6 @@
 # LLM Wiki PM — Universal Agent Contract
 
-Behavioral rules for all agents (Claude Code, Kiro, Gemini CLI, Cursor). Operation details live in `skills/llm-wiki-pm/SKILL.md`. This file governs *how* agents behave, not *what* they do.
+Behavioral rules for all agents. Operation details live in `skills/llm-wiki-pm/SKILL.md` and sub-skill files. This file governs *how* agents behave, not *what* they do.
 
 ## Wiki Path Resolution
 
@@ -75,11 +75,27 @@ The page's frontmatter `sources:` field lists all sources for the page. Inline m
 
 Workers write output ≥ 2K tokens to `/tmp/{task}-{YYYYMMDD}.md` and return short status + path.
 
+## Skill Architecture
+
+The plugin uses a modular sub-skill design. Each sub-skill is a separate SKILL.md with
+scoped `when_to_use` triggers. The core skill (`llm-wiki-pm`) serves as the fallback for
+any operation not handled by an installed sub-skill.
+
+| Sub-skill | Handles | Core fallback |
+|-----------|---------|---------------|
+| `llm-wiki-brief` | Daily/weekly briefs, tag digests, coverage brief | §10, §11 |
+| `llm-wiki-prd` | PRD drafts, user stories, release notes | — |
+| `llm-wiki-research` | Research sprints, competitive deep dives, stub enrichment | — |
+| `llm-wiki-crm` | Relationship health, auto-enrichment, feature ask tracking | — |
+
+Sub-skills are additive. Install only what you need. The core skill works standalone.
+
 ## Agent Surfaces
 
-This plugin ships support for:
-- **Claude Code**: `skills/llm-wiki-pm/SKILL.md` + `.claude/agents/` workers + `.claude/roles/` packs
-- **Kiro**: `.kiro/powers/llm-wiki-pm/POWER.md`
-- **Gemini CLI**: `.gemini/commands/llm-wiki-pm.toml`
+This plugin ships Claude Code support:
+- **Core skill**: `skills/llm-wiki-pm/SKILL.md`
+- **Sub-skills**: `skills/llm-wiki-{brief,prd,research,crm}/SKILL.md`
+- **Workers**: `.claude/agents/` (indexer, fetcher, link-validator, lint, people-updater)
+- **Role packs**: `.claude/roles/` (product-manager, researcher, executive, founder)
 
-All surfaces follow this file's behavioral contract.
+This file is the portable behavioral contract for any future agent surfaces.
