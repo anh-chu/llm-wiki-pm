@@ -33,6 +33,10 @@ pages. Every query cites specific wiki entries. The wiki compounds.
 - **Privacy-first**: pre-ingest filter + `private:` frontmatter flag
 - **qmd search**: BM25 + vector + LLM rerank over your whole wiki
 - **Obsidian-compatible**: works as a vault out of the box
+- **Worker agents**: four subagents (indexer, fetcher, link-validator, lint)
+  handle expensive ops without bloating the lead session
+- **Role packs**: PM, researcher, executive, founder personas tune proactive
+  recall sensitivity, output format, and crystallize templates per session
 - **Next.js embed path** for platform deployments
 
 ## Install
@@ -100,21 +104,38 @@ Not a fit if you:
 
 - Want a zero-terminal SaaS → use NotebookLM
 - Need team collaboration out of the box → use Notion or a shared Obsidian vault
-- Don't use Claude Code → port the SKILL.md to your agent of choice
+- Don't use Claude Code → `AGENTS.md` is the portable reference if you want to port to another agent
 
 ## Layout
 
 ```
 llm-wiki-pm/
+├── AGENTS.md                        # Universal agent behavioral contract
+├── CONTRIBUTING.md
 ├── .claude-plugin/
-│   └── plugin.json
+│   ├── plugin.json
+│   └── marketplace.json
+├── .claude/
+│   ├── agents/                      # Worker subagents
+│   │   ├── worker-wiki-indexer.md
+│   │   ├── worker-source-fetcher.md
+│   │   ├── worker-link-validator.md
+│   │   └── worker-lint.md
+│   └── roles/                       # Role packs
+│       ├── _template.md
+│       ├── product-manager.md
+│       ├── researcher.md
+│       ├── executive.md
+│       └── founder.md
 ├── hooks/
 │   └── hooks.json
+├── scripts/
+│   └── update-safe.sh
 └── skills/llm-wiki-pm/
     ├── SKILL.md
     ├── hooks/         (session-start.sh, post-write.sh, session-stop.sh)
     ├── references/
-    ├── scripts/
+    ├── scripts/       (lint.py, backlinks.py)
     └── templates/
 ```
 

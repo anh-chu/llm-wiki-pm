@@ -110,6 +110,21 @@ Resolution: `.wiki-path` (project) → `CLAUDE_PLUGIN_OPTION_wiki_path` (global)
 
 The SessionStart hook's `additionalContext` states the active path each session.
 
+## Session Defaults
+
+**Wiki-first protocol:** Before answering any PM knowledge question, read the wiki. Don't synthesize from training data when wiki pages exist. Cite explicitly: "Per [[page]]..." If no page exists, say so and offer to create one or log an open question.
+
+**Session trust model:** Trust `.wiki-path` for location. Trust `SCHEMA.md` for taxonomy — new tags go there first. Trust `log.md` for recent activity. Deviate from any of these only with explicit user confirmation.
+
+**Model routing:**
+
+| Task | Model |
+|------|-------|
+| File reads, grep, web fetches, writing pages, log appends | Sonnet (I/O) |
+| Synthesis, crystallize, coverage audit, conflict resolution | Opus (reasoning) |
+
+Workers write output ≥ 2K tokens to `/tmp/{task}-{date}.md` and return short status + path. Never return large text as inline worker output.
+
 ## Architecture: Three Layers
 
 ```
@@ -137,6 +152,41 @@ wiki/
 **Layer 2 wiki pages**: agent-owned. Created, updated, cross-referenced.
 **Layer 3 SCHEMA.md**: governs structure and taxonomy.
 
+## Pre-Flight Check
+
+Run at session start before any operation.
+
+**① Wiki exists?**
+```bash
+WIKI=$(cat .wiki-path 2>/dev/null | tr -d '[:space:]')
+WIKI=${WIKI:-${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-$(pwd)}}}
+[ -d "$WIKI" ] || echo "MISSING"
+```
+If missing: "Wiki directory not found. Scaffold a new wiki or run `/llm-wiki-pm:set-wiki-path` to point to an existing one."
+
+**② SCHEMA.md exists?**
+If `$WIKI/SCHEMA.md` is absent: offer to scaffold it from `templates/SCHEMA.md`. Do not proceed with any write operation until SCHEMA.md exists.
+
+**③ Role pack detection (optional)**
+Check `.claude/roles/` for a matching role file based on how the user describes their role. If found, apply these behaviors for the session:
+
+| Field | Effect |
+|---|---|
+| `focus_tags` | Proactive Recall (§1) and Ambient Capture (§2) prioritize entities tagged with these. Surface them even on passing mentions. |
+| `preferred_output_format: brief` | Compress query answers to essentials. Full synthesis filed to `queries/` in background. |
+| `preferred_output_format: file` | Substantial answers always filed to `queries/<slug>/README.md`, not returned inline. |
+| `crystallize_template` | Use this template name when running Crystallize (§2 step ①①). |
+| `surface_confidence_threshold` | Proactive Recall (§1) only surfaces pages meeting this confidence level: `verified` = high-signal only, `likely` = default, `rumor` = always surface with warning. |
+
+No role pack = all defaults apply. Missing `.claude/roles/` is not an error.
+
+**④ Surface _status.md warnings**
+If `$WIKI/_status.md` exists, read it now. Surface any pre-computed staleness or lock warnings immediately.
+
+If all checks pass: proceed silently. No need to narrate the pre-flight to the user unless a problem is found.
+
+**Pre-Flight runs before Orient.** Once Pre-Flight completes, proceed to the Orient steps below.
+
 ## CRITICAL: Orient Every Session
 
 Before any ingest/query/update/lint, **always**:
@@ -158,9 +208,7 @@ Before any ingest/query/update/lint, **always**:
    For each result, check its `updated:` date. If older than 60 days, surface:
    > "⚠️ Confidence decay: [[page]] is 60+ days old. Verify before use."
 
-⑧ **Read `_status.md`**: if `$WIKI/_status.md` exists, read it. This file
-   contains pre-computed health data from the session-start hook. Surface any
-   warnings from it immediately before proceeding.
+⑧ **`_status.md` warnings**: already surfaced during Pre-Flight step ④. Skip if Pre-Flight completed this session. If Pre-Flight was skipped: read `$WIKI/_status.md` now and surface any warnings before proceeding.
 
 ⑨ **Orient gate (enforced):** if you have NOT completed steps ①-④ in THIS
    session, refuse any write operation (ingest, update, archive, supersede).

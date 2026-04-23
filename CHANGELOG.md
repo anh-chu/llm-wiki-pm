@@ -7,6 +7,60 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.6.0] - 2026-04-23
+
+COG-inspired architecture: worker agents, role packs, universal agent contract, and pre-flight hardening.
+
+### Added
+
+- **Worker agents** (`.claude/agents/`). Four specialized subagents for expensive
+  wiki operations: `worker-wiki-indexer` (rebuilds index.md/overview.md),
+  `worker-source-fetcher` (fetch + privacy-filter URLs/PDFs into raw/),
+  `worker-link-validator` (broken wikilinks, orphans, index gaps),
+  `worker-lint` (runs lint.py, returns severity summary). Workers write
+  large outputs to `/tmp/` and return short status, keeping the lead session lean.
+- **Role packs** (`.claude/roles/`). Four persona files — `product-manager`,
+  `researcher`, `executive`, `founder` — plus a `_template`. Each declares
+  `focus_tags`, `preferred_output_format`, `crystallize_template`, and
+  `surface_confidence_threshold`. Pre-Flight step ③ loads the matching pack
+  and applies it: boosts proactive recall for focus tags, compresses output
+  for executives, raises confidence bar for researchers.
+- **AGENTS.md** universal agent contract. Single source of truth for wiki path
+  resolution, orient protocol, source attribution, core operation summary, and
+  behavioral constraints. Claude Code reads SKILL.md; AGENTS.md is the portable
+  reference for any future agent surface.
+- **Pre-Flight Check** section in SKILL.md. Runs before Orient: verifies wiki
+  directory exists, SCHEMA.md present, loads role pack, surfaces `_status.md`
+  warnings. Explicit sequencing: Pre-Flight → Orient → operation.
+- **Session Defaults** section in SKILL.md. Codifies wiki-first protocol
+  (read wiki before answering from training data), session trust model (.wiki-path
+  / SCHEMA.md / log.md are authoritative), and model routing table
+  (Sonnet for I/O, Opus for reasoning/synthesis).
+- **`scripts/update-safe.sh`**. Upgrade helper: detects uncommitted customizations
+  in user-editable files, offers keep/backup/overwrite per file, copies safe-to-
+  overwrite files from an upstream clone. Supports `--check`, `--dry-run`, `--force`.
+- **`CONTRIBUTING.md`**. Contributor guide: how to add operations and workers,
+  version bump protocol (semver table), testing checklist, protected conventions.
+
+### Changed
+
+- `plugin.json`: version 2.6.0, expanded keywords (15 total), added `metadata`
+  block (skillCount, workerCount, rolePackCount, supportedAgents, directoryLayout)
+  and `hooks` declaration.
+- `marketplace.json`: version 2.6.0, expanded tags.
+- README: layout diagram updated, new Architecture section documents worker
+  agents and role packs.
+- Orient step ⑧ (`_status.md`): deduped — now defers to Pre-Flight step ④
+  rather than reading twice.
+
+### Removed
+
+- Kiro (`.kiro/`) and Gemini CLI (`.gemini/`) surface stubs. Thin wrappers
+  with no real content. AGENTS.md is the portable reference if other agent
+  surfaces are added later.
+
+---
+
 ## [2.5.0] - 2026-04-21
 
 Behavioral trust hardening. Eight features to make the wiki a reliable second brain.
