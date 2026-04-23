@@ -34,10 +34,6 @@
 		"skillArchitecture": "main skill (llm-wiki-pm) + set-wiki-path utility + 4 worker agents + 4 role packs",
 		"directoryLayout": "skills/llm-wiki-pm/ (SKILL.md, templates/, references/, scripts/) | .claude/agents/ (workers) | .claude/roles/ (role packs)"
 	},
-	"hooks": [
-		{"event": "SessionStart", "purpose": "scaffold wiki if missing, compute _status.md, resolve wiki path"},
-		{"event": "SessionStop", "purpose": "release .wiki-lock"}
-	],
 	"userConfig": {
 		"wiki_path": {
 			"type": "directory",
