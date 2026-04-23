@@ -7,6 +7,17 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.7.1] - 2026-04-23
+
+### Changed
+
+- **worker-wiki-indexer**: auto-regenerate `overview.md` when stale (>7 days with
+  recent activity) instead of only flagging. Synthesizes theme clusters, coverage
+  summary, recent activity, known gaps, and stats from page frontmatter. Preserves
+  any hand-written intro paragraph.
+
+---
+
 ## [2.7.0] - 2026-04-23
 
 Sub-skill architecture, MY-INTEGRATIONS learned routing, worker-people-updater, CRM layer.
