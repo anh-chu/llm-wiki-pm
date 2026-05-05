@@ -5,17 +5,18 @@
 
 set -euo pipefail
 
-# ── Resolve WIKI path ──────────────────────────────────────────────────────────
-WIKI="${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-}}"
+# ── Resolve WIKI path (must match session-start.sh) ──────────────────────────
+FILE_WIKI=$(cat "$(pwd)/.wiki-path" 2>/dev/null | tr -d '[:space:]' || true)
+WIKI="${FILE_WIKI:-${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-$(pwd)}}}"
 
 # ① Exit silently if wiki not initialized yet
 if [[ ! -d "$WIKI" ]]; then
   exit 0
 fi
 
-# ①b Release session lock
 LOCKFILE="$WIKI/.wiki-lock"
-rm -f "$LOCKFILE" 2>/dev/null || true
+# Release lock on any exit path (early returns, errors, normal completion)
+trap 'rm -f "$LOCKFILE" 2>/dev/null || true' EXIT
 
 LOG_FILE="$WIKI/log.md"
 

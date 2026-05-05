@@ -7,6 +7,23 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.7.2] - 2026-05-05
+
+### Fixed
+
+- **session-stop.sh**: wiki path resolution now reads `.wiki-path` file and falls
+  back to cwd, matching `session-start.sh`. Previously the lock was never released
+  for projects using `.wiki-path` (the default project-level config).
+- **session-stop.sh**: lock release moved to an `EXIT` trap so it fires on all
+  exit paths (early returns, errors, normal completion). Previously early exits
+  skipped lock cleanup.
+- **session-stop.sh**: lock is now held through log rotation instead of being
+  released before the `mv`, closing a race window with concurrent sessions.
+- **post-write.sh**: wiki path resolution now reads `.wiki-path` file, matching
+  `session-start.sh`. Wikilink checks were silently skipped for `.wiki-path` users.
+
+---
+
 ## [2.7.1] - 2026-04-23
 
 ### Changed
