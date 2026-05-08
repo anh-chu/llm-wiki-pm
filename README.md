@@ -54,7 +54,22 @@ claude plugin marketplace add anh-chu/llm-wiki-pm
 claude plugin install llm-wiki-pm@anh-chu-plugins
 ```
 
-### Option B: Symlink from a clone
+### Option B: Standalone skill via `npx skills`
+
+```bash
+npx skills add anh-chu/llm-wiki-pm --skill llm-wiki-pm -a claude-code -g
+```
+
+Install individual sub-skills the same way:
+
+```bash
+npx skills add anh-chu/llm-wiki-pm --skill llm-wiki-crm -a claude-code -g
+npx skills add anh-chu/llm-wiki-pm --skill llm-wiki-brief -a claude-code -g
+```
+
+This installs the skill with all its scripts, templates, and references. **What you don't get** without the full plugin: session hooks (auto-scaffold, wikilink validation, log rotation), worker agents, and role packs. Core wiki operations (ingest, query, update, lint) work fine — you just need to create the wiki directory structure manually on first use.
+
+### Option C: Symlink from a clone
 
 ```bash
 git clone https://github.com/anh-chu/llm-wiki-pm ~/llm-wiki-pm
@@ -62,7 +77,7 @@ mkdir -p ~/.claude/skills
 ln -s ~/llm-wiki-pm/skills/llm-wiki-pm ~/.claude/skills/llm-wiki-pm
 ```
 
-The symlink makes the skill available to Claude Code but does not install the plugin. Without the plugin, the `SessionStart` health-check hook and the `PostToolUse` link-check hook do not run, and the wiki is not auto-scaffolded. For hook automation and auto-scaffold, also install the plugin:
+Same trade-offs as Option B. For hook automation and auto-scaffold, also install the plugin:
 
 ```bash
 claude plugin install llm-wiki-pm@anh-chu-plugins
