@@ -39,8 +39,8 @@ Append notes briefly after your response. Don't interrupt the main answer.
 **Limits:** max 1 suggestion per turn; skip during code/debug tasks; only trigger for PM-domain facts not already addressed.
 ### 1. Proactive Recall
 
-When the user mentions a named entity (company, person, product), grep the wiki
-for that name. If a page exists, surface it inline:
+When the user mentions a named entity (company, person, product), search the wiki
+for that name — prefer qmd `query` over grep. If a page exists, surface it inline:
 
 > "Wiki has [[page]] (updated YYYY-MM-DD, confidence: verified, coverage: partial). Want a summary?"
 
@@ -54,9 +54,7 @@ decisions, people, companies, roadmap, competitors, customers), flag it:
 > "That sounds wikifiable. Want me to add it?"
 Only flag PM-domain facts. Skip casual chat, opinions without specifics, and
 hypotheticals. Use judgment.
-**Dedup gate (mandatory):** before offering to capture, grep the wiki for the
-key noun phrases in the statement. If an existing page already contains the
-claim (same entity + same fact), respond instead:
+**Dedup gate (mandatory):** before offering to capture, search the wiki (qmd `query` preferred, grep fallback) for the key noun phrases in the statement. If an existing page already contains the claim (same entity + same fact), respond instead:
 
 > "Already in [[page]] (updated YYYY-MM-DD). Want me to update it?"
 
@@ -64,8 +62,7 @@ Don't create duplicate facts. Update existing pages when the claim overlaps.
 
 ### 3. Contradiction Alert
 
-When the user states a fact about a known entity, grep the wiki for that entity
-and check for conflicting claims. If a conflict exists, surface it:
+When the user states a fact about a known entity, search the wiki (qmd `query` preferred, grep fallback) for that entity and check for conflicting claims. If a conflict exists, surface it:
 
 > "This may conflict with [[page]] from YYYY-MM-DD. Which is current?"
 
@@ -112,9 +109,27 @@ The SessionStart hook's `additionalContext` states the active path each session.
 
 ## Session Defaults
 
-**Wiki-first protocol:** Before answering any PM knowledge question, read the wiki. Don't synthesize from training data when wiki pages exist. Cite explicitly: "Per [[page]]..." If no page exists, say so and offer to create one or log an open question.
+**Wiki-first protocol:** Before answering any PM knowledge question, search the wiki using connected tools. Don't synthesize from training data when wiki pages exist. Cite explicitly: "Per [[page]]..." If no page exists, say so and offer to create one or log an open question.
 
 **Session trust model:** Trust `.wiki-path` for location. Trust `SCHEMA.md` for taxonomy — new tags go there first. Trust `log.md` for recent activity. Deviate from any of these only with explicit user confirmation.
+
+## Tool Selection Hierarchy
+
+**Use ALL connected tools eagerly.** At session start, inventory every MCP tool and integration available to you. Use them throughout the session. Don't default to reading files when a connected tool can find the answer faster and more completely.
+
+| Priority | Examples | When |
+|----------|----------|------|
+| 1 | **MCP search tools** (qmd `query`/`get`/`multi_get`, or any connected search/knowledge MCP) | Any "what do we know about X", entity lookup, semantic search. Default for all wiki queries. |
+| 2 | **MCP integrations** (Gmail, Slack, calendar, CRM, or any connected comms/data MCP) | When user mentions emails, threads, messages, events, or when enriching entity pages with recent comms. |
+| 3 | **WebFetch / WebSearch** | External enrichment, competitor intel, public info. Delegate source capture to worker-source-fetcher. |
+| 4 | **grep** | Exact token match only (dollar figures, codenames, frontmatter field values). Last resort for search. |
+| 5 | **Read** (file reads) | When you already know the exact file and need its full content. Not for discovery. |
+
+This is not exhaustive — if the user has other MCP tools connected, use them when relevant. The principle: **connected tools first, file reads last.**
+
+**Rule: search before read.** Use search/query tools to find which pages are relevant BEFORE reading files. Don't scan files sequentially hoping to find what you need.
+
+**Rule: use all available tools.** If a connected tool would answer the question faster than reading files, use it. Check what's available and use it.
 
 **Model routing:**
 
@@ -198,16 +213,13 @@ Before any ingest/query/update/lint, **always**:
 ② Read `index.md`, what pages exist
 ③ Read last 20-30 lines of `log.md`, recent activity
 ④ Read `overview.md`, current synthesis state
-⑤ For 100+ page wikis: `grep -r "topic" $WIKI --include="*.md"` before creating
+⑤ For 100+ page wikis: search before creating — use qmd `query "topic"` (preferred) or `grep -r "topic" $WIKI --include="*.md"` (fallback)
 ⑥ **Staleness warning**: if any page has `updated:` older than 14 days
    (overview/index) or 30 days (entity/concept pages) AND log.md shows recent
    activity touching that area, surface: "Warning: [[page]] may be stale.
    Last updated YYYY-MM-DD. Recent log activity: [date, action]."
 
-⑦ **Confidence decay check**: after reading `log.md`, run:
-   ```bash
-   grep -r "competitive" $WIKI/entities $WIKI/concepts --include="*.md" -l
-   ```
+⑦ **Confidence decay check**: after reading `log.md`, search for competitive pages — use qmd `query "competitive"` (preferred) or `grep -r "competitive" $WIKI/entities $WIKI/concepts --include="*.md" -l` (fallback).
    For each result, check its `updated:` date. If older than 60 days, surface:
    > "⚠️ Confidence decay: [[page]] is 60+ days old. Verify before use."
 
@@ -337,11 +349,9 @@ After initialization, confirm domain scope with the user and customize
      (see §8 Persona Pages).
 
 ### 3. Query
-② **Primary search: qmd MCP tools** (`query`, `get`, `multi_get`). Use qmd
-   for any "what do we know about X" question. Falls back to grep + index.md
-   only if qmd unavailable. See `references/qmd-search.md`.
+② **Search first** (per Tool Selection Hierarchy above): qmd `query` → grep → file read. Never start by reading files hoping to find the answer.
 ③ Read `index.md` to confirm page catalog for top hits
-④ Read relevant pages via file reads or `qmd get`
+④ Read relevant pages via `qmd get` or file reads (only after search identified them)
 ⑤ Synthesize. Cite pages: "Per [[tricentis]] and [[test-automation-mq]]..."
 ⑥ **Select output format** based on question and audience:
    - Plain markdown answer inline → most queries
