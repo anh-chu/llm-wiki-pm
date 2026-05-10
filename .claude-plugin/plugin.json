@@ -1,6 +1,6 @@
 {
 	"name": "llm-wiki-pm",
-	"version": "2.8.0",
+	"version": "2.9.0",
 	"description": "PM knowledge base skill implementing Karpathy's LLM Wiki pattern. Ingest sources, query a compounding markdown wiki, supersede with auto-link rewrite, crystallize transcripts into decision digests, and search with qmd hybrid BM25 + vector + rerank.",
 	"author": {
 		"name": "Anh Chu",
@@ -36,6 +36,44 @@
 		"supportedAgents": ["claude-code"],
 		"skillArchitecture": "core (llm-wiki-pm) + 4 sub-skills (brief, prd, research, crm) + set-wiki-path utility",
 		"directoryLayout": "skills/llm-wiki-{pm,brief,prd,research,crm}/ | .claude/agents/ (workers) | .claude/roles/ (role packs)"
+	},
+	"mcpServers": {
+		"rss": {
+			"command": "npx",
+			"args": ["-y", "rss-mcp"]
+		},
+		"youtube-transcript": {
+			"command": "npx",
+			"args": ["-y", "@kimtaeyoon83/mcp-server-youtube-transcript"]
+		},
+		"read-website": {
+			"command": "npx",
+			"args": ["-y", "@just-every/mcp-read-website-fast"]
+		},
+		"wayback-machine": {
+			"command": "npx",
+			"args": ["-y", "mcp-wayback-machine"]
+		},
+		"web-search": {
+			"command": "npx",
+			"args": ["-y", "@zhafron/mcp-web-search"]
+		},
+		"wikipedia": {
+			"command": "npx",
+			"args": ["-y", "@shelm/wikipedia-mcp-server"]
+		},
+		"arxiv": {
+			"command": "npx",
+			"args": ["-y", "arxiv-mcp-server"]
+		},
+		"news": {
+			"command": "npx",
+			"args": ["-y", "@newsmcp/server"]
+		},
+		"app-insight": {
+			"command": "npx",
+			"args": ["-y", "@jeromyfu/app-insight-mcp"]
+		}
 	},
 	"userConfig": {
 		"wiki_path": {

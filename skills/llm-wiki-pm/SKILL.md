@@ -117,6 +117,29 @@ If uncaptured learnings exist, offer a one-line summary:
 - Never auto-write. Always offer first.
 - Don't count facts the user stated in passing or hypothetically.
 
+### 8. Tool Discovery
+
+At session start, inventory all connected MCP tools. When a user's query would
+benefit from a tool they haven't connected, suggest it:
+
+> "This query would be richer with [tool]. Setup: `[install command]`.
+> See references/recommended-tools.md for details."
+
+**Trigger examples:**
+- User asks about a public company's financials → suggest SEC EDGAR if not connected
+- User wants competitor LinkedIn profiles → suggest LinkedIn MCP
+- User wants site traffic data → suggest SimilarWeb
+- User needs semantic wiki search → suggest qmd
+- User mentions reading lists or highlights → suggest Readwise
+
+**Guardrails:**
+- Max 1 tool suggestion per session. Don't nag.
+- Only suggest tools from `references/recommended-tools.md`. Don't invent.
+- Skip if the user has explicitly declined a tool before.
+- Bundled tools should "just work" — only suggest setup for key-required tools.
+- Frame as enhancement, not blocker: answer the query with available tools first,
+  then mention the upgrade path.
+
 ## Wiki Location
 Before running any bash command that uses `$WIKI`, resolve it with:
 ```bash
@@ -136,21 +159,34 @@ The SessionStart hook's `additionalContext` states the active path each session.
 
 ## Tool Selection Hierarchy
 
-**Use ALL connected tools eagerly.** At session start, inventory every MCP tool and integration available to you. Use them throughout the session. Don't default to reading files when a connected tool can find the answer faster and more completely.
+**Use ALL connected tools eagerly.** At session start, inventory every MCP tool
+and integration available to you. The plugin bundles 9 MCP servers out of the
+box (no API keys needed). Use them alongside any user-connected tools.
 
-| Priority | Examples | When |
-|----------|----------|------|
-| 1 | **MCP search tools** (qmd `query`/`get`/`multi_get`, or any connected search/knowledge MCP) | Any "what do we know about X", entity lookup, semantic search. Default for all wiki queries. |
-| 2 | **MCP integrations** (Gmail, Slack, calendar, CRM, or any connected comms/data MCP) | When user mentions emails, threads, messages, events, or when enriching entity pages with recent comms. |
-| 3 | **WebFetch / WebSearch** | External enrichment, competitor intel, public info. Delegate source capture to worker-source-fetcher. |
-| 4 | **grep** | Exact token match only (dollar figures, codenames, frontmatter field values). Last resort for search. |
-| 5 | **Read** (file reads) | When you already know the exact file and need its full content. Not for discovery. |
+| Priority | Tools | When |
+|----------|-------|------|
+| 1 | **MCP search** — qmd (if installed), bundled `web-search` (DuckDuckGo/Bing/SearXNG), `wikipedia`, `arxiv` | Entity lookup, semantic search, general research, academic papers |
+| 2 | **MCP integrations** — Gmail, Slack, calendar, CRM, or any user-connected MCP | Emails, threads, messages, events, enriching entity pages with comms |
+| 3 | **Bundled intel tools** — `news` (real-time events), `rss` (feeds), `youtube-transcript`, `app-insight` (App Store/Google Play), `wayback-machine` | Competitive monitoring, source capture, product research, historical intel |
+| 4 | **Bundled content tools** — `read-website` (URL → markdown) | Fetching web pages for wiki ingest. Delegate source saving to worker-source-fetcher |
+| 5 | **WebFetch / WebSearch** | Fallback when bundled tools don't cover a source |
+| 6 | **grep** | Exact token match only (dollar figures, codenames, frontmatter values) |
+| 7 | **Read** (file reads) | When you already know the exact file and need full content |
 
-This is not exhaustive — if the user has other MCP tools connected, use them when relevant. The principle: **connected tools first, file reads last.**
+**Bundled MCP servers** (zero-setup, no API keys):
+`rss`, `youtube-transcript`, `read-website`, `wayback-machine`, `web-search`,
+`wikipedia`, `arxiv`, `news`, `app-insight`
 
-**Rule: search before read.** Use search/query tools to find which pages are relevant BEFORE reading files. Don't scan files sequentially hoping to find what you need.
+**Optional key-required tools** that enhance these capabilities are listed in
+`references/recommended-tools.md`. Suggest them via Proactive Behavior #8
+when the user's query would benefit.
 
-**Rule: use all available tools.** If a connected tool would answer the question faster than reading files, use it. Check what's available and use it.
+**Rules:**
+- **Connected tools first, file reads last.** If a tool answers faster than
+  reading files, use it.
+- **Search before read.** Use search/query tools to find relevant pages before
+  reading files. Don't scan sequentially.
+- **Use all available tools.** Inventory at session start. Don't overlook tools.
 
 **Model routing:**
 

@@ -7,6 +7,26 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.9.0] - 2026-05-10
+
+### Added
+
+- **9 bundled MCP servers** — zero-setup, no API keys: RSS feeds (`rss-mcp`),
+  YouTube transcripts, web reader, Wayback Machine, multi-engine web search
+  (DuckDuckGo/Bing/SearXNG), Wikipedia, arXiv papers, real-time news with
+  event clustering, App Store + Google Play reviews/rankings.
+- **Proactive Behavior #8: Tool Discovery** — agent suggests useful tools when
+  user's query would benefit from an integration they haven't connected. Max 1
+  suggestion per session. References recommended-tools guide.
+- **`references/recommended-tools.md`** — curated guide for key-required tools
+  (Brave Search, Exa, Firecrawl, LinkedIn, SEC EDGAR, SimilarWeb, qmd,
+  Readwise, G2/Capterra, Twitter/X, NotebookLM) with install commands and
+  when-to-suggest triggers.
+- **Rewritten Tool Selection Hierarchy** — 7-tier priority table reflecting
+  bundled tools, user integrations, and fallbacks.
+
+---
+
 ## [2.8.0] - 2026-05-10
 
 ### Added
