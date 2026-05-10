@@ -7,6 +7,17 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.10.1] - 2026-05-10
+
+### Fixed
+
+- **wiki-search startup 35s → ~4s** — replaced `npx -y` invocation with a
+  wrapper script (`hooks/wiki-search.sh`) that resolves the cached binary
+  directly, skipping npx's 9s package resolution overhead. Falls back to npx
+  on first run. Session-start hook pre-caches the package in the background.
+
+---
+
 ## [2.10.0] - 2026-05-10
 
 ### Changed

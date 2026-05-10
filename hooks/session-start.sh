@@ -34,6 +34,13 @@ elif [[ -z "$FILE_WIKI" ]]; then
   GLOBAL_WARNING="llm-wiki-pm: using global wiki path ($WIKI). Run /llm-wiki-pm:set-wiki-path ~/your-path from your project directory to set a project-specific path."
 fi
 
+# ①b Ensure wiki-search package is in npx cache (background, non-blocking)
+# First session after install will use npx (slow); this ensures the cache
+# exists for wiki-search.sh's fast path on subsequent runs.
+if ! find "${HOME}/.npm/_npx" -path "*/@wirux/mcp-markdown-vault/dist/index.js" -print -quit 2>/dev/null | grep -q .; then
+  npx -y @wirux/mcp-markdown-vault --version &>/dev/null &
+fi
+
 # ② Scaffold wiki on first run — only if dir is new or truly empty
 # Never overwrite files in an existing non-empty directory.
 SCAFFOLD=false

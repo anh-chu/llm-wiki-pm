@@ -1,6 +1,6 @@
 {
 	"name": "llm-wiki-pm",
-	"version": "2.10.0",
+	"version": "2.10.1",
 	"description": "PM knowledge base skill implementing Karpathy's LLM Wiki pattern. Ingest sources, query a compounding markdown wiki, supersede with auto-link rewrite, crystallize transcripts into decision digests. Bundles semantic wiki search.",
 	"author": {
 		"name": "Anh Chu",
@@ -40,7 +40,7 @@
 	"mcpServers": {
 		"wiki-search": {
 			"command": "sh",
-			"args": ["-c", "VAULT_PATH=${CLAUDE_PLUGIN_OPTION_wiki_path:-$(pwd)} npx -y @wirux/mcp-markdown-vault"]
+			"args": ["${CLAUDE_PLUGIN_ROOT}/hooks/wiki-search.sh"]
 		}
 	},
 	"userConfig": {
