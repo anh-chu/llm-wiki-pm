@@ -31,7 +31,7 @@ pages. Every query cites specific wiki entries. The wiki compounds.
 - **Supersession** with auto-redirect of inbound links
 - **Crystallize** pattern: transcripts become structured decision digests
 - **Privacy-first**: pre-ingest filter + `private:` frontmatter flag
-- **qmd search**: BM25 + vector + LLM rerank over your whole wiki
+- **Bundled wiki-search**: semantic + TF-IDF search over your whole wiki (auto-indexes on startup)
 - **Obsidian-compatible**: works as a vault out of the box
 - **Worker agents**: five subagents (indexer, fetcher, link-validator, lint, people-updater)
   handle expensive ops without bloating the lead session
@@ -91,7 +91,7 @@ If you used Option B without installing the plugin, set `WIKI_PATH` before start
 echo 'export WIKI_PATH=$HOME/pm-wiki' >> ~/.bashrc && source ~/.bashrc
 ```
 
-Full setup, including qmd search and mobile Obsidian sync, in
+Full setup, including mobile Obsidian sync, in
 [GETTING_STARTED.md](GETTING_STARTED.md).
 
 ## How it compares
@@ -100,13 +100,13 @@ Full setup, including qmd search and mobile Obsidian sync, in
 |---|---|---|---|---|---|
 | **Shape** | Single skill | 5 skills | Skill + plugin + server | Full web app | SaaS |
 | **Storage** | Plain markdown | Plain markdown | Plain markdown | Supabase + S3 | Cloud |
-| **Search** | qmd (BM25+vector+rerank) + backlinks | grep + index | grep + index | PGroonga | Proprietary |
+| **Search** | Bundled semantic + TF-IDF (wiki-search) + backlinks | grep + index | grep + index | PGroonga | Proprietary |
 | **Update discipline** | Diffs + supersession fields + auto-link rewrite | Diffs + source cite | Human-in-loop audit | None explicit | N/A |
 | **Privacy** | Pre-ingest filter + `private:` flag | None | None | User-scoped | SaaS ToS |
 | **Transcript support** | `crystallize` flow (decisions + actions) | Generic ingest | Generic ingest | Generic ingest | Source-only |
 | **Install target** | Claude Code | Claude Code | OpenClaw / Codex | Self-host web | SaaS |
 | **Ops burden** | None (local files) | None | Obsidian plugin + Node server | Supabase + S3 + OCR | Zero |
-| **Scales to 1000+ pages** | Yes (qmd) | Degrades | Degrades | Yes | Yes |
+| **Scales to 1000+ pages** | Yes (wiki-search, bundled) | Degrades | Degrades | Yes | Yes |
 | **PM-tuned taxonomy** | Yes (competitive, customer, strategy, roadmap, ai) | No | No | No | No |
 
 For a deeper breakdown of which Karpathy and Rohit v2 ideas this implements,
@@ -188,28 +188,15 @@ On the first session start, the `SessionStart` hook creates:
 `~/pm-wiki/` with SCHEMA.md, index.md, log.md, overview.md, and
 the raw/entities/concepts/comparisons/queries/_archive subdirectories.
 
-### 1b. Install qmd (recommended, upfront)
+### 1b. Wiki search (bundled, automatic)
 
-PM wikis grow fast with frequent meetings. Install qmd for hybrid search:
+Semantic + TF-IDF search over your wiki is bundled via `wiki-search`
+(`@wirux/mcp-markdown-vault`). It auto-indexes on startup — no setup needed.
+~80MB model downloads on first use, cached in `.markdown_vault_mcp/` inside
+your wiki directory. Add `.markdown_vault_mcp/` to `.gitignore`.
 
-```bash
-# Claude Code plugin
-claude plugin marketplace add tobi/qmd
-claude plugin install qmd@qmd
-
-# CLI for shell + systemd
-npm install -g @tobilu/qmd
-
-# Wire wiki as collections
-qmd collection add "$WIKI_PATH"      --name wiki
-qmd collection add "$WIKI_PATH/raw"  --name raw
-qmd context add qmd://wiki "PM knowledge base: entities, concepts, comparisons, queries"
-qmd context add qmd://raw  "Immutable source docs: analyst reports, transcripts"
-qmd embed
-```
-
-See `references/qmd-search.md` for daemon mode, systemd auto-reindex, and
-privacy collection patterns.
+For advanced hybrid search (BM25 + vector + LLM rerank), see
+`references/qmd-search.md` for optional [qmd](https://github.com/tobi/qmd) setup.
 
 ### 2. Review SCHEMA.md
 
@@ -312,7 +299,7 @@ Built on prior art from:
 - **[lewislulu/llm-wiki-skill](https://github.com/lewislulu/llm-wiki-skill)**
  , audit/feedback loop design (inspiration for future team-mode support).
 - **[tobi/qmd](https://github.com/tobi/qmd)**: on-device hybrid search engine
-  that makes this skill scale past a few hundred pages.
+  (optional upgrade for advanced BM25 + vector + LLM rerank search).
 
 ## Design notes
 
@@ -328,7 +315,7 @@ How this skill maps to Karpathy's original gist and Rohit's v2 extensions:
 - Obsidian compatibility (Graph, Dataview, frontmatter)
 - Schema as key configuration, co-evolved
 - Ingests touch 10-15 pages routinely
-- Optional CLI search via [qmd](references/qmd-search.md)
+- Bundled semantic wiki-search; optional [qmd](references/qmd-search.md) upgrade
 - Multi-format outputs: [Marp, matplotlib, CSV, Mermaid, Canvas](references/output-formats.md)
 
 ### v2 cherry-picks (7/16)

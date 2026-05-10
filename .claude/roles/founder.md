@@ -14,7 +14,7 @@ surface_confidence_threshold: likely
 
 | Integration | Why it matters for you |
 |---|---|
-| qmd hybrid search | Find the investor question you answered 3 months ago before your next pitch |
+| wiki-search (bundled) | Find the investor question you answered 3 months ago before your next pitch |
 | WebFetch | Track competitor pricing pages, press releases, and job listings |
 | Gmail MCP | Ingest investor and customer email threads with provenance |
 

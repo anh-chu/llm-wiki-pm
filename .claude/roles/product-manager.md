@@ -14,7 +14,7 @@ surface_confidence_threshold: likely
 
 | Integration | Why it matters for you |
 |---|---|
-| qmd hybrid search | Semantic recall across hundreds of pages — find the customer insight you heard 6 months ago |
+| wiki-search (bundled) | Semantic recall across hundreds of pages — find the customer insight you heard 6 months ago |
 | Obsidian sync | Live graph view of competitive relationships, customer clusters, and strategy threads |
 | Gmail MCP | Ingest customer email chains directly into raw/internal/ without copy-paste |
 | Slack MCP | Pull Slack threads into wiki as internal sources with thread provenance |

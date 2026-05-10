@@ -39,7 +39,7 @@ The page's frontmatter `sources:` field lists all sources for the page. Inline m
 | Operation | Trigger | Key constraint |
 |-----------|---------|----------------|
 | **Ingest** | New source to add to wiki | Orient first. Surface takeaways before writing pages. Privacy filter on raw. Inline provenance on every claim. |
-| **Query** | "What do we know about X?" | qmd first (semantic). Grep as fallback. Cite pages explicitly. |
+| **Query** | "What do we know about X?" | wiki-search first (semantic). Grep as fallback. Cite pages explicitly. |
 | **Update** | New info revises existing claim | Snapshot to _archive/ before destructive write. Show diff. Sweep all stale variants. |
 | **Lint** | Health check | Use worker-lint agent. Report only — no auto-fixes without user confirmation. |
 | **Crystallize** | Meeting transcript or research chain | Produces decision-digest page under queries/. Confirm private: flag with user. |

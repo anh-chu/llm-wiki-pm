@@ -42,7 +42,7 @@ Append notes briefly after your response. Don't interrupt the main answer.
 ### 1. Proactive Recall
 
 When the user mentions a named entity (company, person, product), search the wiki
-for that name — prefer qmd `query` over grep. If a page exists, surface it inline:
+for that name — prefer wiki-search `semantic_search` over grep. If a page exists, surface it inline:
 
 > "Wiki has [[page]] (updated YYYY-MM-DD, confidence: verified, coverage: partial). Want a summary?"
 
@@ -56,7 +56,7 @@ decisions, people, companies, roadmap, competitors, customers), flag it:
 > "That sounds wikifiable. Want me to add it?"
 Only flag PM-domain facts. Skip casual chat, opinions without specifics, and
 hypotheticals. Use judgment.
-**Dedup gate (mandatory):** before offering to capture, search the wiki (qmd `query` preferred, grep fallback) for the key noun phrases in the statement. If an existing page already contains the claim (same entity + same fact), respond instead:
+**Dedup gate (mandatory):** before offering to capture, search the wiki (wiki-search `semantic_search` preferred, grep fallback) for the key noun phrases in the statement. If an existing page already contains the claim (same entity + same fact), respond instead:
 
 > "Already in [[page]] (updated YYYY-MM-DD). Want me to update it?"
 
@@ -64,7 +64,7 @@ Don't create duplicate facts. Update existing pages when the claim overlaps.
 
 ### 3. Contradiction Alert
 
-When the user states a fact about a known entity, search the wiki (qmd `query` preferred, grep fallback) for that entity and check for conflicting claims. If a conflict exists, surface it:
+When the user states a fact about a known entity, search the wiki (wiki-search `semantic_search` preferred, grep fallback) for that entity and check for conflicting claims. If a conflict exists, surface it:
 
 > "This may conflict with [[page]] from YYYY-MM-DD. Which is current?"
 
@@ -129,7 +129,7 @@ benefit from a tool they haven't connected, suggest it:
 - User asks about a public company's financials → suggest SEC EDGAR if not connected
 - User wants competitor LinkedIn profiles → suggest LinkedIn MCP
 - User wants site traffic data → suggest SimilarWeb
-- User needs semantic wiki search → suggest qmd
+- User needs advanced hybrid search (BM25 + vector + LLM rerank) → suggest qmd
 - User mentions reading lists or highlights → suggest Readwise
 
 **Guardrails:**
@@ -165,7 +165,7 @@ box (no API keys needed). Use them alongside any user-connected tools.
 
 | Priority | Tools | When |
 |----------|-------|------|
-| 1 | **MCP search** — bundled `wiki-search` (semantic + TF-IDF over wiki), qmd (if installed), `web-search` (DuckDuckGo/Bing/SearXNG), `wikipedia`, `arxiv` | Wiki queries, entity lookup, semantic search, general research, academic papers |
+| 1 | **MCP search** — bundled `wiki-search` (semantic + TF-IDF over wiki), `web-search` (DuckDuckGo/Bing/SearXNG), `wikipedia`, `arxiv` | Wiki queries, entity lookup, semantic search, general research, academic papers |
 | 2 | **MCP integrations** — Gmail, Slack, calendar, CRM, or any user-connected MCP | Emails, threads, messages, events, enriching entity pages with comms |
 | 3 | **Bundled intel tools** — `news` (real-time events), `rss` (feeds), `youtube-transcript`, `app-insight` (App Store/Google Play), `wayback-machine` | Competitive monitoring, source capture, product research, historical intel |
 | 4 | **Bundled content tools** — `read-website` (URL → markdown) | Fetching web pages for wiki ingest. Delegate source saving to worker-source-fetcher |
@@ -271,13 +271,13 @@ Before any ingest/query/update/lint, **always**:
 ② Read `index.md`, what pages exist
 ③ Read last 20-30 lines of `log.md`, recent activity
 ④ Read `overview.md`, current synthesis state
-⑤ For 100+ page wikis: search before creating — use qmd `query "topic"` (preferred) or `grep -r "topic" $WIKI --include="*.md"` (fallback)
+⑤ For 100+ page wikis: search before creating — use wiki-search `semantic_search` (preferred) or `grep -r "topic" $WIKI --include="*.md"` (fallback)
 ⑥ **Staleness warning**: if any page has `updated:` older than 14 days
    (overview/index) or 30 days (entity/concept pages) AND log.md shows recent
    activity touching that area, surface: "Warning: [[page]] may be stale.
    Last updated YYYY-MM-DD. Recent log activity: [date, action]."
 
-⑦ **Confidence decay check**: after reading `log.md`, search for competitive pages — use qmd `query "competitive"` (preferred) or `grep -r "competitive" $WIKI/entities $WIKI/concepts --include="*.md" -l` (fallback).
+⑦ **Confidence decay check**: after reading `log.md`, search for competitive pages — use wiki-search `semantic_search` with query "competitive" (preferred) or `grep -r "competitive" $WIKI/entities $WIKI/concepts --include="*.md" -l` (fallback).
    For each result, check its `updated:` date. If older than 60 days, surface:
    > "⚠️ Confidence decay: [[page]] is 60+ days old. Verify before use."
 
@@ -407,9 +407,9 @@ After initialization, confirm domain scope with the user and customize
      (see §8 Persona Pages).
 
 ### 3. Query
-② **Search first** (per Tool Selection Hierarchy above): qmd `query` → grep → file read. Never start by reading files hoping to find the answer.
+② **Search first** (per Tool Selection Hierarchy above): wiki-search `semantic_search` → grep → file read. Never start by reading files hoping to find the answer.
 ③ Read `index.md` to confirm page catalog for top hits
-④ Read relevant pages via `qmd get` or file reads (only after search identified them)
+④ Read relevant pages via wiki-search `read` or file reads (only after search identified them)
 ⑤ Synthesize. Cite pages: "Per [[tricentis]] and [[test-automation-mq]]..."
 ⑥ **Select output format** based on question and audience:
    - Plain markdown answer inline → most queries
@@ -419,8 +419,7 @@ After initialization, confirm domain scope with the user and customize
 ⑦ **File valuable answers back**: substantial comparisons, deep dives,
    novel synthesis. Skip trivial lookups.
 ⑧ Append to `log.md`: `## [YYYY-MM-DD] query | <question> (filed: yes/no)`
-⑨ After filing a new page: `qmd update && qmd embed` (or rely on systemd
-   watcher if configured) so the next query sees it.
+⑨ After filing a new page, wiki-search auto-reindexes on next query.
 
 ### 4. Update (revise existing pages)
 
@@ -434,7 +433,7 @@ last change" trivial. Skip snapshots only for trivial edits (typo fix, date bump
 ① **Identify all affected pages**: three-way search:
    - `python3 "${CLAUDE_SKILL_DIR}/scripts/backlinks.py" "$WIKI" <slug>` for structural backlinks (pages
      linking to the entity being revised)
-   - `qmd query` for semantic variants (paraphrases of the stale claim)
+   - wiki-search `semantic_search` for semantic variants (paraphrases of the stale claim)
    - `grep -r` for exact token match (dollar figures, codenames)
    Don't update one page and leave 3 others with the stale version.
 
@@ -444,7 +443,7 @@ last change" trivial. Skip snapshots only for trivial edits (typo fix, date bump
 ③ **Cite source**: every update must include the raw source that justifies
    the change in the page body and in the log entry.
 
-④ **Stale-claim sweep**: after update, re-search (qmd query + grep for
+④ **Stale-claim sweep**: after update, re-search (wiki-search semantic_search + grep for
    exact variants) across the wiki. Fix all instances in the same pass.
 
 ⑤ **Bump `updated:` date** on every page touched.
@@ -639,7 +638,7 @@ we learn?", "capture learnings", "record what we found", "save what we discussed
    specifics, hypotheticals, and casual asides.
 
 ② **Dedup against wiki** — for each candidate learning, search existing pages
-   (qmd `query` preferred, grep fallback). Drop anything already recorded.
+   (wiki-search `semantic_search` preferred, grep fallback). Drop anything already recorded.
    If a fact exists but needs updating (newer info), mark it as an update
    rather than a new capture.
 
@@ -720,7 +719,7 @@ frontmatter powers Dataview. See `references/obsidian-sync.md` for headless sync
   When in doubt, mark private. Exports/shares respect the flag.
 - **Supersede, don't silently rewrite**: materially replacing a page needs
   explicit `supersedes:` / `superseded_by:` fields. Old page archived, not deleted.
-- **Use qmd first**: grep misses semantic matches. At dozens of meetings/week
+- **Use wiki-search first**: grep misses semantic matches. At dozens of meetings/week
   the wiki grows fast; grep + index alone will silently degrade quality.
 - **Snapshot before destructive writes**: copy page to `_archive/<slug>-<date>.md`
   before overwrite, archive, or supersede. Makes rollback trivial.
@@ -746,7 +745,7 @@ frontmatter powers Dataview. See `references/obsidian-sync.md` for headless sync
 - `references/obsidian-sync.md`, headless sync deep dive
 - `references/privacy-guide.md`, pre-ingest filter + `private:` flag
 - `references/crystallize-guide.md`, transcript → decision digest pattern
-- `references/qmd-search.md`, primary search engine setup and use
+- `references/qmd-search.md`, optional qmd upgrade for advanced hybrid search
 - `references/output-formats.md`, Marp, matplotlib, CSV, Mermaid, Canvas
 - `references/nextjs-integration.md`, embed graph + page viewer in a Next.js app
 

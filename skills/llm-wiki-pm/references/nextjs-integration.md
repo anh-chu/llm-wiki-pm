@@ -569,14 +569,14 @@ Liveblocks. Out of scope for read-only graph.
 - Click: open side panel with page body + backlinks
 - Legend: small box showing type → color mapping
 
-## Integration with qmd search
+## Integration with wiki search
 
 Add a search box above the graph:
 
 ```tsx
 const [filter, setFilter] = useState("");
 
-// Debounced qmd query via your API
+// Debounced search query via your API
 useEffect(() => {
   if (!filter) return setHighlightedIds(new Set());
   fetch(`/api/wikis/${wikiId}/search?q=${encodeURIComponent(filter)}`)

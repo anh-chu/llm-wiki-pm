@@ -26,13 +26,14 @@ Three-way search for completeness:
 python3 "${CLAUDE_SKILL_DIR}/scripts/backlinks.py" "$WIKI" <slug>
 
 # Semantic, paraphrases of the stale claim
-qmd query "old claim phrased in various ways"
+# Use wiki-search semantic_search (bundled) or qmd query (if installed)
+wiki-search semantic_search "old claim phrased in various ways"
 
 # Exact token, numbers, codenames, specific quotes
 grep -r "claim keyword" "$WIKI" --include="*.md"
 ```
 
-Use all three. Backlinks catches structural references, qmd catches
+Use all three. Backlinks catches structural references, wiki-search catches
 paraphrases, grep catches literals. Miss any and you leave stale variants.
 
 Don't update one page and leave stale variants. If the claim appears in:

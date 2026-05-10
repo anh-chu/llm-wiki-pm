@@ -14,7 +14,7 @@ surface_confidence_threshold: verified
 
 | Integration | Why it matters for you |
 |---|---|
-| qmd hybrid search | Fast recall across large wikis without needing to remember exact page names |
+| wiki-search (bundled) | Fast recall across large wikis without needing to remember exact page names |
 | Obsidian sync | Board prep: export wiki sections to readable format |
 
 ## Suggested Agent Mode

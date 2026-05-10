@@ -97,30 +97,15 @@ Open `~/pm-wiki/SCHEMA.md`. Edit three sections:
 
 Skipping this step = generic wiki that doesn't fit your domain.
 
-### 3. Install qmd (strongly recommended upfront)
+### 3. Wiki search (bundled, automatic)
 
-Your wiki will grow fast with frequent meetings. Grep alone degrades past
-~200 pages. Install qmd now:
+Semantic + TF-IDF search is bundled via `wiki-search` and starts automatically.
+~80MB model downloads on first use, cached in `.markdown_vault_mcp/` inside
+your wiki. No setup needed.
 
-```bash
-# Claude Code plugin (recommended)
-claude plugin marketplace add tobi/qmd
-claude plugin install qmd@qmd
-
-# CLI for shell use
-npm install -g @tobilu/qmd
-
-# Wire your wiki as qmd collections
-qmd collection add "$WIKI_PATH"      --name wiki
-qmd collection add "$WIKI_PATH/raw"  --name raw
-qmd context add qmd://wiki "PM knowledge base, entities, concepts, comparisons, queries"
-qmd context add qmd://raw  "Immutable source docs, analyst reports, transcripts"
-qmd embed
-qmd status   # confirm everything is indexed
-```
-
-Optional, auto-reindex on file change (see `references/qmd-search.md` for
-systemd setup).
+For advanced hybrid search (BM25 + vector + LLM rerank), see
+`references/qmd-search.md` for optional [qmd](https://github.com/tobi/qmd)
+setup.
 
 ### 4. First ingest
 
@@ -131,7 +116,7 @@ In Claude Code, open a session in any directory. Drop a source:
 
 Claude will:
 - Read SKILL.md, orient on SCHEMA + index + log + overview
-- Run qmd to check existing pages
+- Search wiki for existing pages on the topic
 - Surface takeaways, ask what to emphasize
 - Save raw source to `raw/articles/`
 - Create/update 5-15 wiki pages with cross-references
@@ -142,7 +127,7 @@ Claude will:
 
 > What do we know about Tricentis pricing?
 
-Claude reads overview.md, qmd-queries the wiki, synthesizes with citations,
+Claude reads overview.md, searches the wiki semantically, synthesizes with citations,
 offers to file the answer as a new page if it's substantial.
 
 ### 6. Mobile access (optional, 10 minutes)
@@ -164,7 +149,7 @@ Then install Obsidian on your phone, pair with the synced vault.
 ### 7. Weekly rhythm (after a few ingests)
 
 - **Daily-ish**: ingest meeting transcripts and articles as they arrive
-- **Weekly**: quick `qmd update && qmd embed` if you don't have the watcher
+- **Weekly**: wiki-search auto-reindexes; no manual step needed
 - **Bi-weekly**: `python3 ~/llm-wiki-pm/skills/llm-wiki-pm/scripts/lint.py $WIKI_PATH --auto-fix`
 - **Monthly**: skim the overview.md, refresh if synthesis has drifted
 - **Quarterly**: review SCHEMA.md tag taxonomy, archive dead pages
@@ -174,8 +159,8 @@ Then install Obsidian on your phone, pair with the synced vault.
 - **Skill doesn't activate** → confirm symlink exists, restart Claude Code,
   run `/skills`. Check SKILL.md frontmatter is intact.
 - **Claude can't find the wiki** → The skill resolves the wiki path in this order: `CLAUDE_PLUGIN_OPTION_wiki_path` (set at plugin enable time), then `WIKI_PATH`, then a built-in default. If you installed via plugin, check the path you entered when enabling it. For skill-only installs, run `echo $WIKI_PATH` and confirm it is set in the shell that launched Claude Code. Export in your rc file and re-launch.
-- **qmd returns nothing** → `qmd status` shows collection health. Run
-  `qmd update && qmd embed` if files exist but aren't indexed.
+- **wiki-search returns nothing** → wiki-search auto-indexes on startup.
+  If issues persist, check that `VAULT_PATH` points to your wiki directory.
 - **Pages multiplying on same entity** → you're skipping orientation.
   Tell Claude explicitly "read SCHEMA, index, log, overview first" at
   session start until it becomes habit.
@@ -361,47 +346,15 @@ def render_schema(domain: str, taxonomy: dict, thresholds: dict) -> str:
 
 Store domain presets as JSON/YAML in your app, render per-user on provision.
 
-### qmd provisioning
+### Search provisioning
 
-If your platform provisions qmd too:
+Wiki-search (`@wirux/mcp-markdown-vault`) is bundled and auto-configures per
+wiki. Each wiki gets its own `.markdown_vault_mcp/` index directory — no
+shared state between users.
 
-```python
-def setup_qmd(wiki_path: Path, user_id: str) -> None:
-    # Each user gets their own qmd db, isolated indexes, isolated search
-    db_path = Path(f"/var/lib/yourapp/qmd/{user_id}.sqlite")
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-
-    env = {**os.environ, "QMD_DB": str(db_path)}
-
-    subprocess.run(["qmd", "collection", "add", str(wiki_path),
-                    "--name", "wiki"], env=env, check=True)
-    subprocess.run(["qmd", "collection", "add", str(wiki_path / "raw"),
-                    "--name", "raw"], env=env, check=True)
-    subprocess.run(["qmd", "context", "add", "qmd://wiki",
-                    "PM knowledge base"], env=env, check=True)
-    subprocess.run(["qmd", "embed"], env=env, check=True)
-```
-
-For multi-tenant platforms, strongly prefer the qmd SDK:
-
-```ts
-import { createStore } from "@tobilu/qmd";
-
-const store = await createStore({
-  dbPath: `/var/lib/yourapp/qmd/${userId}.sqlite`,
-  config: {
-    collections: {
-      wiki: { path: wikiPath, pattern: "**/*.md" },
-      raw:  { path: `${wikiPath}/raw`, pattern: "**/*.md" },
-    },
-  },
-});
-await store.update();
-await store.embed();
-await store.close();
-```
-
-Isolated per-user DB, no CLI subprocess overhead.
+For platforms needing advanced search (BM25 + vector + LLM rerank), see
+`references/qmd-search.md` for optional qmd provisioning with per-user
+isolated SQLite databases.
 
 ### Lifecycle hooks your app should implement
 
@@ -409,21 +362,21 @@ Isolated per-user DB, no CLI subprocess overhead.
 | -------------------------------| ----------------------| -------------------------------------------------|
 | User signup / wiki provision  | `scaffold()`         | Create dir structure + templates                |
 | Source uploaded               | ingest pipeline      | Save to `raw/`, trigger re-index                |
-| Page created/updated by agent | re-index             | `qmd update && qmd embed` or SDK call           |
+| Page created/updated by agent | re-index             | wiki-search auto-reindexes on next query        |
 | Nightly                       | `lint.py --auto-fix` | Keep wiki healthy                               |
 | Monthly                       | export private audit | `grep -rl "^private: true"` report              |
-| User deletion                 | GDPR delete          | Remove wiki dir + qmd DB + S3 backup            |
+| User deletion                 | GDPR delete          | Remove wiki dir + `.markdown_vault_mcp/` + S3 backup |
 | Session start                 | inject context       | Load overview.md + recent log into agent prompt |
 
 ### Multi-tenant hardening
 
 - **Filesystem isolation**: each wiki in its own dir, no shared paths
-- **qmd isolation**: per-user db file (never share `dbPath`)
+- **Search isolation**: per-wiki `.markdown_vault_mcp/` index (never shared)
 - **Privacy enforcement**: server-side `grep "^private: true"` filter before
   any export, not just client-side. Don't trust the agent to remember.
 - **Audit log persistence**: ship `log.md` lines to your central logging for
   compliance
-- **Backup**: `raw/` and wiki `.md` files are the data. qmd DB is
+- **Backup**: `raw/` and wiki `.md` files are the data. Search index is
   regeneratable, don't need to back it up, just rebuild on restore
 - **Versioning**: consider making each wiki a git repo under the hood ,
   automatic history, blame, rollback
@@ -484,7 +437,7 @@ Metrics worth emitting:
 - Ingests per week per user
 - Lint 🔴 errors per wiki (target: 0)
 - Orphan page ratio (target: <10%)
-- qmd index freshness (staleness in hours)
+- Search index freshness (staleness in hours)
 - Private page ratio (governance signal)
 - Archive ratio (healthy pruning signal)
 
@@ -500,7 +453,7 @@ agent is skipping orientation.
 | Install              | symlink to ~/.claude/skills/ | copy/symlink per-user                    |
 | Scaffold             | embed scaffold logic         | create dirs + copy templates (see Scenario 2) |
 | Env                  | `WIKI_PATH` in rc            | pass per-request                         |
-| qmd                  | `qmd collection add`, CLI    | per-user DB via SDK                      |
+| Search               | wiki-search (bundled, auto)   | per-wiki `.markdown_vault_mcp/` index    |
 | SCHEMA               | edit by hand                 | render from presets                      |
 | Lint                 | manual, bi-weekly            | nightly cron with `--auto-fix`           |
 | Privacy              | trust user                   | server-side enforcement                  |

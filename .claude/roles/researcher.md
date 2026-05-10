@@ -14,7 +14,7 @@ surface_confidence_threshold: verified
 
 | Integration | Why it matters for you |
 |---|---|
-| qmd hybrid search | BM25 + vector + rerank — critical for finding nuanced thematic connections across sources |
+| wiki-search (bundled) | Semantic + TF-IDF search — critical for finding nuanced thematic connections across sources |
 | WebFetch | Ingest analyst reports, papers, and press directly into raw/articles/ and raw/papers/ |
 
 ## Suggested Agent Mode

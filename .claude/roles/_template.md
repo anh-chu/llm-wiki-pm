@@ -21,7 +21,7 @@ surface_confidence_threshold: likely
 
 | Integration | Why it matters for this role |
 |---|---|
-| qmd search | [Explain relevance] |
+| wiki-search (bundled) | [Explain relevance] |
 | Obsidian sync | [Explain relevance] |
 
 ## Suggested Agent Mode
