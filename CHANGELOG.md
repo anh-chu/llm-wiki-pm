@@ -7,6 +7,21 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.8.0] - 2026-05-10
+
+### Added
+
+- **Proactive Behavior #7: Post-Task Capture** — agent self-audits after
+  completing PM-domain tasks for uncaptured facts, decisions, entity updates,
+  and open questions. Offers a one-line summary before writing anything.
+- **Core Operation #13: Learn** — full workflow for extracting and recording
+  post-task learnings. Scan → dedup → classify → propose → execute → log.
+  Learnings go into existing page types (entity, concept, query, decision).
+- New activation triggers: "what did we learn?", "capture learnings",
+  "record what we found"
+
+---
+
 ## [2.7.2] - 2026-05-05
 
 ### Fixed

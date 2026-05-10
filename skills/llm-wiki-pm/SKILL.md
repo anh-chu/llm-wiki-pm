@@ -31,6 +31,8 @@ The agent writes. You curate sources, ask questions, steer.
 - "What happened this week / last week / recently?" → triggers §10 Catch Me Up
 - "[tag] digest" or "catch me up on [topic]" → triggers §11 Tag Digest
 - "What am I missing?", "blind spots?", "coverage gaps?" → triggers §12 Coverage Audit
+- "What did we learn?", "capture learnings", "record what we found" → triggers §13 Learn
+- After completing a PM-domain task, Proactive Behavior #7 offers to capture uncaptured learnings
 
 ## Proactive Behaviors
 
@@ -95,6 +97,25 @@ When answering any question involving a named person, check for
 `entities/<name>-persona.md` and `concepts/relationship-map.md`. If found, fold
 in 1-2 lines of key traits alongside the factual answer. Don't pad. If persona
 data isn't relevant to the question, skip it.
+
+### 7. Post-Task Capture
+
+After completing a substantive PM-domain task (research, ingest, query,
+briefing, strategy discussion), self-audit: were any facts, decisions, entity
+updates, relationship changes, or open questions discussed but not yet captured
+in the wiki?
+
+If uncaptured learnings exist, offer a one-line summary:
+
+> "This task surfaced N uncaptured facts/decisions. Want me to record them? (§13 Learn)"
+
+**Guardrails:**
+- Only after tasks that touched PM-domain content. Skip code/debug tasks.
+- Skip if everything was already captured via other proactive behaviors (#2-#5).
+- Max 1 offer per task completion, not per turn. Don't repeat within the same
+  multi-turn task.
+- Never auto-write. Always offer first.
+- Don't count facts the user stated in passing or hypothetically.
 
 ## Wiki Location
 Before running any bash command that uses `$WIKI`, resolve it with:
@@ -569,6 +590,60 @@ we know?", "wiki completeness"
 ⑥ Offer to create stub pages for the biggest gaps.
 
 Log: `## [YYYY-MM-DD] coverage-audit | stubs: N | gaps: N | open-questions: N`
+
+### 13. Learn (Post-Task Capture)
+
+Trigger: user accepts Proactive Behavior #7 offer, or explicitly says "what did
+we learn?", "capture learnings", "record what we found", "save what we discussed"
+
+① **Scan conversation** — review the current task or discussion. Identify
+   uncaptured: facts, decisions, entity updates, relationship changes, open
+   questions, contradictions. Only PM-domain content. Skip opinions without
+   specifics, hypotheticals, and casual asides.
+
+② **Dedup against wiki** — for each candidate learning, search existing pages
+   (qmd `query` preferred, grep fallback). Drop anything already recorded.
+   If a fact exists but needs updating (newer info), mark it as an update
+   rather than a new capture.
+
+③ **Classify** — bucket each surviving learning:
+   - `entity-update`: new fact about an existing entity → update that page
+   - `new-entity`: entity discussed with 3+ attributes but no page → create
+   - `concept-update`: new insight about an existing concept → update
+   - `decision`: a decision was made → create/update decision-tagged page
+   - `open-question`: factual question raised but unanswered → log under queries/
+   - `contradiction`: conflicts with existing wiki content → flag with both claims
+
+④ **Propose changes** — show user a compact list before writing anything:
+   ```
+   Learnings from this task:
+   • Update [[entity-slug]] — added role change to VP Engineering
+   • Create entities/new-company.md — 4 attributes discussed
+   • Log decision: switched to vendor X for auth
+   • Open question: what's competitor Y's enterprise pricing?
+   ```
+   If 10+ changes, get explicit sign-off per pitfalls.
+
+⑤ **Execute** — on approval, apply changes using existing flows:
+   - Entity/concept updates: use §4 Update (show diffs, sweep stale variants)
+   - New entities: use §2 Ingest conventions (frontmatter, cross-refs, provenance)
+   - Decisions: use §5 Decision Journaling format
+   - Open questions: use §4 Open Question Backlog format
+   - Contradictions: surface both claims with dates and sources per pitfalls
+   - All pages: min 2 outbound `[[links]]`, inline provenance for non-obvious
+     claims, `coverage:` and `gaps:` fields set
+
+⑥ **Log** — append to `log.md`:
+
+```
+## [YYYY-MM-DD] learn | <task-summary>
+- Updated: entities/foo.md (added Q3 strategy shift)
+- Created: entities/new-company.md
+- Logged decision: auth-vendor-switch
+- Open question: competitor-y-pricing
+```
+
+Log: `## [YYYY-MM-DD] learn | <task-summary> | captured: N | updated: N | new: N`
 
 ## PM Workflow Patterns
 
