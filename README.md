@@ -195,9 +195,6 @@ Semantic + TF-IDF search over your wiki is bundled via `wiki-search`
 ~80MB model downloads on first use, cached in `.markdown_vault_mcp/` inside
 your wiki directory. Add `.markdown_vault_mcp/` to `.gitignore`.
 
-For advanced hybrid search (BM25 + vector + LLM rerank), see
-`references/qmd-search.md` for optional [qmd](https://github.com/tobi/qmd) setup.
-
 ### 2. Review SCHEMA.md
 
 Open `~/pm-wiki/SCHEMA.md`. Adjust:
@@ -298,8 +295,8 @@ Built on prior art from:
   `overview.md` synthesis.
 - **[lewislulu/llm-wiki-skill](https://github.com/lewislulu/llm-wiki-skill)**
  , audit/feedback loop design (inspiration for future team-mode support).
-- **[tobi/qmd](https://github.com/tobi/qmd)**: on-device hybrid search engine
-  (optional upgrade for advanced BM25 + vector + LLM rerank search).
+- **[@wirux/mcp-markdown-vault](https://github.com/Wirux/mcp-markdown-vault)**:
+  semantic + TF-IDF search engine for markdown vaults (bundled as wiki-search).
 
 ## Design notes
 
@@ -315,7 +312,7 @@ How this skill maps to Karpathy's original gist and Rohit's v2 extensions:
 - Obsidian compatibility (Graph, Dataview, frontmatter)
 - Schema as key configuration, co-evolved
 - Ingests touch 10-15 pages routinely
-- Bundled semantic wiki-search; optional [qmd](references/qmd-search.md) upgrade
+- Bundled semantic wiki-search via `@wirux/mcp-markdown-vault`
 - Multi-format outputs: [Marp, matplotlib, CSV, Mermaid, Canvas](references/output-formats.md)
 
 ### v2 cherry-picks (7/16)

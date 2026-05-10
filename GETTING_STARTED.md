@@ -103,10 +103,6 @@ Semantic + TF-IDF search is bundled via `wiki-search` and starts automatically.
 ~80MB model downloads on first use, cached in `.markdown_vault_mcp/` inside
 your wiki. No setup needed.
 
-For advanced hybrid search (BM25 + vector + LLM rerank), see
-`references/qmd-search.md` for optional [qmd](https://github.com/tobi/qmd)
-setup.
-
 ### 4. First ingest
 
 In Claude Code, open a session in any directory. Drop a source:
@@ -351,10 +347,6 @@ Store domain presets as JSON/YAML in your app, render per-user on provision.
 Wiki-search (`@wirux/mcp-markdown-vault`) is bundled and auto-configures per
 wiki. Each wiki gets its own `.markdown_vault_mcp/` index directory — no
 shared state between users.
-
-For platforms needing advanced search (BM25 + vector + LLM rerank), see
-`references/qmd-search.md` for optional qmd provisioning with per-user
-isolated SQLite databases.
 
 ### Lifecycle hooks your app should implement
 

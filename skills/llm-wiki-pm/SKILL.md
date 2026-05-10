@@ -129,7 +129,7 @@ benefit from a tool they haven't connected, suggest it:
 - User asks about a public company's financials → suggest SEC EDGAR if not connected
 - User wants competitor LinkedIn profiles → suggest LinkedIn MCP
 - User wants site traffic data → suggest SimilarWeb
-- User needs advanced hybrid search (BM25 + vector + LLM rerank) → suggest qmd
+- User needs grounded answers with source citations → suggest NotebookLM
 - User mentions reading lists or highlights → suggest Readwise
 
 **Guardrails:**
@@ -745,7 +745,7 @@ frontmatter powers Dataview. See `references/obsidian-sync.md` for headless sync
 - `references/obsidian-sync.md`, headless sync deep dive
 - `references/privacy-guide.md`, pre-ingest filter + `private:` flag
 - `references/crystallize-guide.md`, transcript → decision digest pattern
-- `references/qmd-search.md`, optional qmd upgrade for advanced hybrid search
+- `references/recommended-tools.md`, optional key-required tool recommendations
 - `references/output-formats.md`, Marp, matplotlib, CSV, Mermaid, Canvas
 - `references/nextjs-integration.md`, embed graph + page viewer in a Next.js app
 

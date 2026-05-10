@@ -26,7 +26,7 @@ Three-way search for completeness:
 python3 "${CLAUDE_SKILL_DIR}/scripts/backlinks.py" "$WIKI" <slug>
 
 # Semantic, paraphrases of the stale claim
-# Use wiki-search semantic_search (bundled) or qmd query (if installed)
+# Use wiki-search semantic_search (bundled)
 wiki-search semantic_search "old claim phrased in various ways"
 
 # Exact token, numbers, codenames, specific quotes

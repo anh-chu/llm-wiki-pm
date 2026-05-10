@@ -106,17 +106,6 @@ npm install -g @xpoz/sdk
 
 ## Knowledge Management
 
-**qmd**
-Hybrid BM25 + vector + LLM rerank search for the wiki. All local, free.
-Three models auto-download on first use: embeddings (~300MB), reranker (~640MB),
-query expansion (~1.1GB). Total ~2GB cached in `~/.cache/qmd/models/`.
-```
-npm install -g @tobilu/qmd
-qmd add wiki --path /path/to/wiki --glob "**/*.md"
-qmd embed wiki
-```
-*When to suggest:* wiki grows beyond ~50 pages and grep-based search degrades.
-
 **Readwise MCP**
 Highlights, annotations, and read-later library integration.
 ```
