@@ -11,10 +11,12 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- **9 bundled MCP servers** — zero-setup, no API keys: RSS feeds (`rss-mcp`),
-  YouTube transcripts, web reader, Wayback Machine, multi-engine web search
-  (DuckDuckGo/Bing/SearXNG), Wikipedia, arXiv papers, real-time news with
-  event clustering, App Store + Google Play reviews/rankings.
+- **10 bundled MCP servers** — zero-setup, no API keys: `wiki-search`
+  (semantic + TF-IDF search over wiki via `@wirux/mcp-markdown-vault`, ~80MB
+  model auto-downloaded on first use), RSS feeds, YouTube transcripts, web
+  reader, Wayback Machine, multi-engine web search (DuckDuckGo/Bing/SearXNG),
+  Wikipedia, arXiv papers, real-time news with event clustering, App Store +
+  Google Play reviews/rankings.
 - **Proactive Behavior #8: Tool Discovery** — agent suggests useful tools when
   user's query would benefit from an integration they haven't connected. Max 1
   suggestion per session. References recommended-tools guide.
@@ -24,6 +26,13 @@ Versions follow [Semantic Versioning](https://semver.org/).
   when-to-suggest triggers.
 - **Rewritten Tool Selection Hierarchy** — 7-tier priority table reflecting
   bundled tools, user integrations, and fallbacks.
+
+### Fixed
+
+- **RSS MCP** — replaced broken `rss-mcp` (uncompiled ESM) with
+  `@0xquinto/rss-mcp` (11 tools: feeds, digests, OPML import).
+- **arXiv MCP** — replaced `arxiv-mcp-server` (Python/poetry dependency) with
+  `@cyanheads/arxiv-mcp-server` (pure Node.js, 4 tools).
 
 ---
 

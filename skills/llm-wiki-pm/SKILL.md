@@ -160,12 +160,12 @@ The SessionStart hook's `additionalContext` states the active path each session.
 ## Tool Selection Hierarchy
 
 **Use ALL connected tools eagerly.** At session start, inventory every MCP tool
-and integration available to you. The plugin bundles 9 MCP servers out of the
+and integration available to you. The plugin bundles 10 MCP servers out of the
 box (no API keys needed). Use them alongside any user-connected tools.
 
 | Priority | Tools | When |
 |----------|-------|------|
-| 1 | **MCP search** — qmd (if installed), bundled `web-search` (DuckDuckGo/Bing/SearXNG), `wikipedia`, `arxiv` | Entity lookup, semantic search, general research, academic papers |
+| 1 | **MCP search** — bundled `wiki-search` (semantic + TF-IDF over wiki), qmd (if installed), `web-search` (DuckDuckGo/Bing/SearXNG), `wikipedia`, `arxiv` | Wiki queries, entity lookup, semantic search, general research, academic papers |
 | 2 | **MCP integrations** — Gmail, Slack, calendar, CRM, or any user-connected MCP | Emails, threads, messages, events, enriching entity pages with comms |
 | 3 | **Bundled intel tools** — `news` (real-time events), `rss` (feeds), `youtube-transcript`, `app-insight` (App Store/Google Play), `wayback-machine` | Competitive monitoring, source capture, product research, historical intel |
 | 4 | **Bundled content tools** — `read-website` (URL → markdown) | Fetching web pages for wiki ingest. Delegate source saving to worker-source-fetcher |
@@ -174,8 +174,9 @@ box (no API keys needed). Use them alongside any user-connected tools.
 | 7 | **Read** (file reads) | When you already know the exact file and need full content |
 
 **Bundled MCP servers** (zero-setup, no API keys):
-`rss`, `youtube-transcript`, `read-website`, `wayback-machine`, `web-search`,
-`wikipedia`, `arxiv`, `news`, `app-insight`
+`wiki-search` (semantic + TF-IDF over wiki), `rss`, `youtube-transcript`,
+`read-website`, `wayback-machine`, `web-search`, `wikipedia`, `arxiv`, `news`,
+`app-insight`
 
 **Optional key-required tools** that enhance these capabilities are listed in
 `references/recommended-tools.md`. Suggest them via Proactive Behavior #8

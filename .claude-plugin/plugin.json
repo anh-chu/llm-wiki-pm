@@ -1,7 +1,7 @@
 {
 	"name": "llm-wiki-pm",
 	"version": "2.9.0",
-	"description": "PM knowledge base skill implementing Karpathy's LLM Wiki pattern. Ingest sources, query a compounding markdown wiki, supersede with auto-link rewrite, crystallize transcripts into decision digests, and search with qmd hybrid BM25 + vector + rerank.",
+	"description": "PM knowledge base skill implementing Karpathy's LLM Wiki pattern. Ingest sources, query a compounding markdown wiki, supersede with auto-link rewrite, crystallize transcripts into decision digests. Bundles semantic wiki search, web search, RSS, news, and 6 more MCP servers.",
 	"author": {
 		"name": "Anh Chu",
 		"email": "anhdchu@gmail.com"
@@ -40,7 +40,7 @@
 	"mcpServers": {
 		"rss": {
 			"command": "npx",
-			"args": ["-y", "rss-mcp"]
+			"args": ["-y", "@0xquinto/rss-mcp"]
 		},
 		"youtube-transcript": {
 			"command": "npx",
@@ -64,7 +64,7 @@
 		},
 		"arxiv": {
 			"command": "npx",
-			"args": ["-y", "arxiv-mcp-server"]
+			"args": ["-y", "@cyanheads/arxiv-mcp-server"]
 		},
 		"news": {
 			"command": "npx",
@@ -73,6 +73,10 @@
 		"app-insight": {
 			"command": "npx",
 			"args": ["-y", "@jeromyfu/app-insight-mcp"]
+		},
+		"wiki-search": {
+			"command": "sh",
+			"args": ["-c", "VAULT_PATH=${CLAUDE_PLUGIN_OPTION_wiki_path:-$(pwd)} npx -y @wirux/mcp-markdown-vault"]
 		}
 	},
 	"userConfig": {

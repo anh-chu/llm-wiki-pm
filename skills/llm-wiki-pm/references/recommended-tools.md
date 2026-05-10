@@ -108,7 +108,8 @@ npm install -g @xpoz/sdk
 
 **qmd**
 Hybrid BM25 + vector + LLM rerank search for the wiki. All local, free.
-~2GB model download on first run.
+Three models auto-download on first use: embeddings (~300MB), reranker (~640MB),
+query expansion (~1.1GB). Total ~2GB cached in `~/.cache/qmd/models/`.
 ```
 npm install -g @tobilu/qmd
 qmd add wiki --path /path/to/wiki --glob "**/*.md"
