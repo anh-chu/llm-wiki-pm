@@ -1,14 +1,81 @@
-# Recommended Tools (Key Required)
+# Recommended Tools
 
-Optional integrations that enhance the wiki when connected. All require an API
-key, account, or system dependency. None are needed for basic wiki operation —
-the plugin bundles 9 zero-setup MCP servers out of the box.
+Optional MCP servers that enhance the wiki when connected. The plugin bundles
+only `wiki-search` (semantic + TF-IDF over your wiki). Everything below is
+opt-in — install what you need.
 
 Suggest these to users via Proactive Behavior #8 when their query would benefit.
 
 ---
 
-## Search
+## Research & Content (zero-setup, no API keys)
+
+**RSS Feed Reader**
+RSS/Atom parsing, digests, OPML import. 11 tools.
+```
+claude mcp add rss -- npx -y @0xquinto/rss-mcp
+```
+*When to suggest:* user wants to monitor competitor blogs or industry feeds.
+
+**YouTube Transcript**
+Extract transcripts from YouTube videos for wiki ingest.
+```
+claude mcp add youtube-transcript -- npx -y @kimtaeyoon83/mcp-server-youtube-transcript
+```
+*When to suggest:* user shares a YouTube URL to ingest.
+
+**Web Reader**
+URL → clean markdown. Faster than WebFetch for large pages.
+```
+claude mcp add read-website -- npx -y @just-every/mcp-read-website-fast
+```
+*When to suggest:* user ingests many web pages and WebFetch is too slow.
+
+**Wayback Machine**
+Internet Archive search, retrieve archived pages, compare snapshots.
+```
+claude mcp add wayback-machine -- npx -y mcp-wayback-machine
+```
+*When to suggest:* user wants historical versions of competitor pages.
+
+**Web Search (DuckDuckGo/Bing/SearXNG)**
+Multi-engine search, no API key. Alternative to built-in WebSearch.
+```
+claude mcp add web-search -- npx -y @zhafron/mcp-web-search
+```
+*When to suggest:* user needs search beyond Claude Code's built-in WebSearch.
+
+**Wikipedia**
+Article lookup, "on this day", image retrieval.
+```
+claude mcp add wikipedia -- npx -y @shelm/wikipedia-mcp-server
+```
+*When to suggest:* user researches a public entity and wants Wikipedia context.
+
+**arXiv Papers**
+Search, metadata, full-text paper reading, category listing.
+```
+claude mcp add arxiv -- npx -y @cyanheads/arxiv-mcp-server
+```
+*When to suggest:* user researches academic/AI topics.
+
+**News**
+Real-time news, event clustering, topic filtering.
+```
+claude mcp add news -- npx -y @newsmcp/server
+```
+*When to suggest:* user asks about recent events or industry news.
+
+**App Store / Google Play**
+App reviews, rankings, version history, similar apps. 20 tools.
+```
+claude mcp add app-insight -- npx -y @jeromyfu/app-insight-mcp
+```
+*When to suggest:* user researches mobile apps or competitor app ratings.
+
+---
+
+## Search (API key required)
 
 **Brave Search MCP**
 Independent search index. 2,000 free queries/month, then $3/1K.
@@ -16,7 +83,7 @@ Independent search index. 2,000 free queries/month, then $3/1K.
 npm install -g @anthropic/brave-search-mcp
 # Set BRAVE_API_KEY from https://brave.com/search/api/
 ```
-*When to suggest:* user needs deeper web search beyond bundled DuckDuckGo/SearXNG.
+*When to suggest:* user needs deeper web search beyond DuckDuckGo/SearXNG.
 
 **Exa MCP**
 Semantic search — finds results keyword engines miss. $7/1K searches.

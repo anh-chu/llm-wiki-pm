@@ -1,7 +1,7 @@
 {
 	"name": "llm-wiki-pm",
-	"version": "2.9.0",
-	"description": "PM knowledge base skill implementing Karpathy's LLM Wiki pattern. Ingest sources, query a compounding markdown wiki, supersede with auto-link rewrite, crystallize transcripts into decision digests. Bundles semantic wiki search, web search, RSS, news, and 6 more MCP servers.",
+	"version": "2.10.0",
+	"description": "PM knowledge base skill implementing Karpathy's LLM Wiki pattern. Ingest sources, query a compounding markdown wiki, supersede with auto-link rewrite, crystallize transcripts into decision digests. Bundles semantic wiki search.",
 	"author": {
 		"name": "Anh Chu",
 		"email": "anhdchu@gmail.com"
@@ -38,42 +38,6 @@
 		"directoryLayout": "skills/llm-wiki-{pm,brief,prd,research,crm}/ | .claude/agents/ (workers) | .claude/roles/ (role packs)"
 	},
 	"mcpServers": {
-		"rss": {
-			"command": "npx",
-			"args": ["-y", "@0xquinto/rss-mcp"]
-		},
-		"youtube-transcript": {
-			"command": "npx",
-			"args": ["-y", "@kimtaeyoon83/mcp-server-youtube-transcript"]
-		},
-		"read-website": {
-			"command": "npx",
-			"args": ["-y", "@just-every/mcp-read-website-fast"]
-		},
-		"wayback-machine": {
-			"command": "npx",
-			"args": ["-y", "mcp-wayback-machine"]
-		},
-		"web-search": {
-			"command": "npx",
-			"args": ["-y", "@zhafron/mcp-web-search"]
-		},
-		"wikipedia": {
-			"command": "npx",
-			"args": ["-y", "@shelm/wikipedia-mcp-server"]
-		},
-		"arxiv": {
-			"command": "npx",
-			"args": ["-y", "@cyanheads/arxiv-mcp-server"]
-		},
-		"news": {
-			"command": "npx",
-			"args": ["-y", "@newsmcp/server"]
-		},
-		"app-insight": {
-			"command": "npx",
-			"args": ["-y", "@jeromyfu/app-insight-mcp"]
-		},
 		"wiki-search": {
 			"command": "sh",
 			"args": ["-c", "VAULT_PATH=${CLAUDE_PLUGIN_OPTION_wiki_path:-$(pwd)} npx -y @wirux/mcp-markdown-vault"]

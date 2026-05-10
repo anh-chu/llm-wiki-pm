@@ -7,25 +7,35 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.10.0] - 2026-05-10
+
+### Changed
+
+- **Slim bundled MCP to wiki-search only** — removed 9 bundled servers (RSS,
+  YouTube, web reader, Wayback Machine, web search, Wikipedia, arXiv, news,
+  app-insight) that caused ~3.5 min startup timeout on first run. Moved all to
+  `references/recommended-tools.md` with `claude mcp add` install commands.
+  Plugin now bundles only `wiki-search` (`@wirux/mcp-markdown-vault`).
+- **Removed qmd dependency** — wiki-search fully replaces qmd as default
+  search. Deleted `references/qmd-search.md`.
+
+---
+
 ## [2.9.0] - 2026-05-10
 
 ### Added
 
-- **10 bundled MCP servers** — zero-setup, no API keys: `wiki-search`
-  (semantic + TF-IDF search over wiki via `@wirux/mcp-markdown-vault`, ~80MB
-  model auto-downloaded on first use), RSS feeds, YouTube transcripts, web
-  reader, Wayback Machine, multi-engine web search (DuckDuckGo/Bing/SearXNG),
-  Wikipedia, arXiv papers, real-time news with event clustering, App Store +
-  Google Play reviews/rankings.
+- **Bundled wiki-search MCP** — semantic + TF-IDF search over wiki via
+  `@wirux/mcp-markdown-vault` (~80MB model auto-downloaded on first use).
 - **Proactive Behavior #8: Tool Discovery** — agent suggests useful tools when
   user's query would benefit from an integration they haven't connected. Max 1
   suggestion per session. References recommended-tools guide.
-- **`references/recommended-tools.md`** — curated guide for key-required tools
-  (Brave Search, Exa, Firecrawl, LinkedIn, SEC EDGAR, SimilarWeb, qmd,
-  Readwise, G2/Capterra, Twitter/X, NotebookLM) with install commands and
-  when-to-suggest triggers.
-- **Rewritten Tool Selection Hierarchy** — 7-tier priority table reflecting
-  bundled tools, user integrations, and fallbacks.
+- **`references/recommended-tools.md`** — curated guide for 20+ optional tools
+  (RSS, YouTube, arXiv, news, app-insight, Brave, Exa, Firecrawl, LinkedIn,
+  SEC EDGAR, SimilarWeb, Readwise, NotebookLM, and more) with install commands
+  and when-to-suggest triggers.
+- **Rewritten Tool Selection Hierarchy** — 5-tier priority table with
+  wiki-search first, connected tools second, WebFetch/WebSearch as fallback.
 
 ### Fixed
 

@@ -160,25 +160,21 @@ The SessionStart hook's `additionalContext` states the active path each session.
 ## Tool Selection Hierarchy
 
 **Use ALL connected tools eagerly.** At session start, inventory every MCP tool
-and integration available to you. The plugin bundles 10 MCP servers out of the
-box (no API keys needed). Use them alongside any user-connected tools.
+and integration available to you. The plugin bundles `wiki-search` for semantic
+wiki search. Use it alongside any user-connected tools.
 
 | Priority | Tools | When |
 |----------|-------|------|
-| 1 | **MCP search** — bundled `wiki-search` (semantic + TF-IDF over wiki), `web-search` (DuckDuckGo/Bing/SearXNG), `wikipedia`, `arxiv` | Wiki queries, entity lookup, semantic search, general research, academic papers |
+| 1 | **wiki-search** (bundled) — semantic + TF-IDF over wiki | Wiki queries, entity lookup, semantic recall |
 | 2 | **MCP integrations** — Gmail, Slack, calendar, CRM, or any user-connected MCP | Emails, threads, messages, events, enriching entity pages with comms |
-| 3 | **Bundled intel tools** — `news` (real-time events), `rss` (feeds), `youtube-transcript`, `app-insight` (App Store/Google Play), `wayback-machine` | Competitive monitoring, source capture, product research, historical intel |
-| 4 | **Bundled content tools** — `read-website` (URL → markdown) | Fetching web pages for wiki ingest. Delegate source saving to worker-source-fetcher |
-| 5 | **WebFetch / WebSearch** | Fallback when bundled tools don't cover a source |
-| 6 | **grep** | Exact token match only (dollar figures, codenames, frontmatter values) |
-| 7 | **Read** (file reads) | When you already know the exact file and need full content |
+| 3 | **WebFetch / WebSearch** | External research, fetching web pages for wiki ingest |
+| 4 | **grep** | Exact token match only (dollar figures, codenames, frontmatter values) |
+| 5 | **Read** (file reads) | When you already know the exact file and need full content |
 
-**Bundled MCP servers** (zero-setup, no API keys):
-`wiki-search` (semantic + TF-IDF over wiki), `rss`, `youtube-transcript`,
-`read-website`, `wayback-machine`, `web-search`, `wikipedia`, `arxiv`, `news`,
-`app-insight`
+**Bundled MCP server:** `wiki-search` (semantic + TF-IDF over wiki via
+`@wirux/mcp-markdown-vault`, ~80MB model on first use).
 
-**Optional key-required tools** that enhance these capabilities are listed in
+**Optional tools** that enhance these capabilities are listed in
 `references/recommended-tools.md`. Suggest them via Proactive Behavior #8
 when the user's query would benefit.
 
