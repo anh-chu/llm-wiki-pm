@@ -18,6 +18,19 @@ WIKILINK_RE = re.compile(r"\[\[([^\]|#]+)(?:[|#][^\]]*)?\]\]")
 FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
 TAG_LINE_RE = re.compile(r"tags:\s*\[(.*?)\]")
 TAXONOMY_TAG_RE = re.compile(r"^- `([a-z0-9\-]+)`", re.MULTILINE)
+INLINE_PROVENANCE_RE = re.compile(r"\[source:", re.IGNORECASE)
+
+# Grounding / freshness (anti-self-reinforcement). A wiki that only cites its own
+# pages drifts from reality. Sources pointing back into these dirs are secondhand;
+# a knowledge page needs at least one PRIMARY source (raw/, external/, web,
+# conversation, slack, gmail, granola, etc.).
+WIKI_PAGE_PREFIXES = ("entities/", "concepts/", "comparisons/", "queries/")
+# Factual pages must be grounded in a primary source (🔴 if self-referential).
+# Synthesis pages legitimately summarize other wiki pages (🟡 only).
+FACTUAL_TYPES = {"entity", "concept", "comparison", "persona"}
+# Structural / generated pages are exempt from grounding (they carry no world-claims).
+GROUNDING_EXEMPT_STEMS = {"index", "log", "_status", "SCHEMA", "MY-INTEGRATIONS", "overview"}
+LAST_VERIFIED_STALE_DAYS = 120
 
 
 def parse_frontmatter(text):
@@ -62,6 +75,29 @@ def get_superseded_by(fm):
     if v in ("", "null", "none", "~"):
         return None
     return v.strip("'\"")
+
+
+def extract_sources(text):
+    """Return source entries from frontmatter, handling both inline
+    `sources: [a, b]` and the multiline `sources:\\n  - a\\n  - b` YAML forms."""
+    m = FRONTMATTER_RE.match(text)
+    if not m:
+        return []
+    lines = m.group(1).splitlines()
+    out = []
+    for i, line in enumerate(lines):
+        if re.match(r"^sources:", line):
+            _, _, rest = line.partition(":")
+            rest = rest.strip()
+            if rest.startswith("["):
+                out += [s.strip().strip("'\"") for s in rest.strip("[]").split(",")]
+            for nxt in lines[i + 1:]:
+                if re.match(r"^\s*-\s+", nxt):
+                    out.append(re.sub(r"^\s*-\s+", "", nxt).strip().strip("'\""))
+                elif re.match(r"^\S", nxt):
+                    break
+            break
+    return [s for s in out if s]
 
 
 def main():
@@ -131,6 +167,45 @@ def main():
                 errors.append(
                     f"tag '{t}' not in SCHEMA.md taxonomy: {p.relative_to(wiki)}"
                 )
+
+        # ── grounding / freshness (anti-self-reinforcement) ──
+        stem = p.stem
+        if not stem.startswith("lint-") and stem not in GROUNDING_EXEMPT_STEMS:
+            ptype = (fm.get("type") or "").strip().strip("'\"")
+            srcs = extract_sources(text)
+            primary_srcs = [s for s in srcs if not s.startswith(WIKI_PAGE_PREFIXES)]
+            wiki_srcs = [s for s in srcs if s.startswith(WIKI_PAGE_PREFIXES)]
+            # self-referential: every source points back into the wiki, none primary
+            if srcs and not primary_srcs and wiki_srcs:
+                msg = (
+                    f"self-referential sources (no primary source, only wiki pages): "
+                    f"{p.relative_to(wiki)} — verify against live tools, add a raw/ source"
+                )
+                (errors if ptype in FACTUAL_TYPES else warnings).append(msg)
+            # factual page with body but no inline provenance markers
+            fm_m = FRONTMATTER_RE.match(text)
+            body = text[fm_m.end():] if fm_m else text
+            if (
+                ptype in FACTUAL_TYPES
+                and body.count("\n") > 15
+                and not INLINE_PROVENANCE_RE.search(body)
+            ):
+                warnings.append(
+                    f"no inline [source:] provenance markers: {p.relative_to(wiki)}"
+                )
+            # provenance gone stale — re-check against live sources
+            lv = (fm.get("last_verified") or "").strip().strip("'\"")
+            if lv:
+                try:
+                    lv_dt = datetime.fromisoformat(lv).replace(tzinfo=timezone.utc)
+                    lv_age = (datetime.now(timezone.utc) - lv_dt).days
+                    if lv_age > LAST_VERIFIED_STALE_DAYS:
+                        warnings.append(
+                            f"provenance unverified for {lv_age}d (last_verified {lv}): "
+                            f"{p.relative_to(wiki)} — re-check live sources"
+                        )
+                except Exception:
+                    pass
 
         # wikilinks
         for link in WIKILINK_RE.findall(text):

@@ -1,6 +1,17 @@
 {
-	"description": "Wiki health check, wikilink validation, and log rotation hooks for llm-wiki-pm",
+	"description": "Wiki health check, wikilink validation, freshness gate, and log rotation hooks for llm-wiki-pm",
 	"hooks": {
+		"PreToolUse": [
+			{
+				"matcher": "Write|Edit|MultiEdit",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "${CLAUDE_PLUGIN_ROOT}/hooks/pre-write.sh"
+					}
+				]
+			}
+		],
 		"SessionStart": [
 			{
 				"hooks": [

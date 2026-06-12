@@ -32,6 +32,9 @@ updated: YYYY-MM-DD
 type: entity | concept | comparison | query | summary | persona
 tags: [from taxonomy below]
 sources: [raw/articles/example.md, raw/transcripts/call-YYYY-MM-DD.md]
+last_verified: YYYY-MM-DD  # optional, date the page was last checked against a
+                           #   live primary source (Slack/Gmail/Granola/CRM/web).
+                           #   Lint warns when this goes stale (>120 days).
 contradictions: []        # optional, pages with conflicting claims
 supersedes: []            # optional, page slugs this page replaces
 superseded_by: null       # optional, slug of the page that replaces this one
@@ -287,3 +290,24 @@ provenance because the agent can't tell which source backs which claim.
 
 Format: `[source: <raw-slug>, <location>]` where location is a page number,
 section name, or timestamp.
+
+### Grounding (anti-self-reinforcement)
+
+A wiki is only as good as the fresh information fed into it. Every knowledge
+page must trace to at least one **primary source** — `raw/`, `external/`, web,
+or a captured conversation/Slack/Gmail/meeting note. A page whose `sources:`
+point only to *other wiki pages* is self-referential: it launders secondhand
+mentions into false confidence (e.g. a person mislabeled by role because that's
+all the linked pages happened to say). Lint flags this:
+
+- 🔴 **self-referential factual page** (`entity` / `concept` / `comparison` /
+  `persona` with no primary source) — verify against live tools and add a `raw/`
+  source before trusting it.
+- 🟡 **self-referential synthesis page** (`query` / `summary`) — synthesis may
+  cite wiki pages, but a synthesis of ungrounded pages is still ungrounded.
+- 🟡 **no inline `[source:]` markers** on a substantive factual page.
+- 🟡 **stale `last_verified`** (>120 days) — re-check live sources.
+
+Before creating or materially updating any page, sweep connected tools for newer
+primary sources (see the Freshness-first protocol in the skill). Stamp
+`last_verified:` when you confirm a page against a live source.

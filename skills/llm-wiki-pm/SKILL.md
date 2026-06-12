@@ -155,6 +155,13 @@ The SessionStart hook's `additionalContext` states the active path each session.
 
 **Wiki-first protocol:** Before answering any PM knowledge question, search the wiki using connected tools. Don't synthesize from training data when wiki pages exist. Cite explicitly: "Per [[page]]..." If no page exists, say so and offer to create one or log an open question.
 
+**Freshness-first protocol (counterweight to wiki-first):** The wiki is only as good as the information fed into it. Wiki-first must not become a self-reinforcing loop where the wiki only ever cites itself and slowly drifts from reality. For ANY substantive operation — answering, creating, OR updating, on any page type, not just people/companies — proactively pull fresh primary information from connected tools (Slack, Gmail, Granola/meetings, CRM, web) rather than relying solely on what the wiki already records. Specifically:
+- **Before writing or updating a page**, sweep connected tools for newer primary sources on the topic. Ingest what you find to `raw/` and anchor claims with inline provenance. Don't build or revise a page purely from the prose of other wiki pages — that launders secondhand mentions into false confidence (e.g. mislabeling a CTO as a "vendor cost owner" because that's all the linked pages happened to say).
+- **When answering**, if the most relevant wiki pages are thinly sourced, stale (past the staleness thresholds), or single-source, run a quick live search to corroborate or refresh before relying on them. Surface what changed and offer to update the page.
+- **Default to ingest, not just recall.** When a connected tool surfaces something the wiki doesn't have, treat it as a candidate ingest, not a throwaway lookup. The goal is a wiki that constantly absorbs new signal, not one that re-serves old signal.
+- **Be honest about provenance age.** Distinguish "the wiki says X (as of <date>)" from "live sources confirm X today." If you couldn't verify against a live source, say so.
+- **Respect cost.** Proportional to stakes: a quick lookup needn't trigger a full sweep, but anything written, updated, or decision-bearing should be checked against live sources.
+
 **Session trust model:** Trust `.wiki-path` for location. Trust `SCHEMA.md` for taxonomy — new tags go there first. Trust `log.md` for recent activity. Deviate from any of these only with explicit user confirmation.
 
 ## Tool Selection Hierarchy
@@ -338,6 +345,14 @@ After initialization, confirm domain scope with the user and customize
    - **People specifically**: create a person entity page when a person appears
      in 2+ sources, has a named role, or is central to a relationship being mapped.
      Don't wait for the user to ask. Apply the same 2+ threshold proactively.
+   - **Enrich from connected tools BEFORE writing** (per the Freshness-first
+     protocol in Session Defaults — applies to every page type, not just people).
+     Don't build a page by inferring from the prose of other wiki pages alone.
+     Run a live sweep of connected tools — Slack (`slack_search`), Gmail
+     (`search_threads`), Granola/meeting notes, CRM — for the topic and any
+     names/emails/handles. Capture findings to `raw/internal/<topic>-<source>-<date>.md`
+     and anchor each claim with inline provenance. If no tools are connected,
+     write `coverage: stub` and list unknowns in `gaps:` rather than guessing.
    - Passing mentions in footnotes don't warrant pages
    - Update existing pages rather than duplicating
 
@@ -526,8 +541,13 @@ exist about their communication style.
    source material. Don't fabricate tiers you have no data for.
    Typical tiers: Slack DM, Slack channel, Email internal, Email external.
 
-② **Gather source material**: ingest any Slack threads, email chains, or
-   conversation content via §2 ingest flow before writing the persona page.
+② **Gather source material**: proactively search connected comms tools first
+   (Slack `slack_search`, Gmail `search_threads`, Granola/meeting notes) for the
+   person's name and email/handle, THEN confirm tiers with the user. Don't ask
+   the user to hand you material you can retrieve yourself. Ingest the threads
+   via §2 ingest flow before writing the persona page. A persona built only from
+   secondhand mentions on other wiki pages is not a persona — pull primary
+   communication samples.
 
 ③ **Write persona page** at `entities/<name>-persona.md`:
    - Type: `persona`. Link to `[[<name>]]` entity in frontmatter `sources:`.
