@@ -83,10 +83,11 @@ any operation not handled by an installed sub-skill.
 
 | Sub-skill | Handles | Core fallback |
 |-----------|---------|---------------|
-| `llm-wiki-brief` | Daily/weekly briefs, tag digests, coverage brief | §10, §11 |
+| `llm-wiki-brief` | Daily/weekly briefs, tag digests, coverage brief | §10, §11, §12 |
 | `llm-wiki-prd` | PRD drafts, user stories, release notes | — |
 | `llm-wiki-research` | Research sprints, competitive deep dives, stub enrichment | — |
 | `llm-wiki-crm` | Relationship health, auto-enrichment, feature ask tracking | — |
+| `llm-wiki-persona` | Communication persona pages, relationship maps | — |
 
 Sub-skills are additive. Install only what you need. The core skill works standalone.
 

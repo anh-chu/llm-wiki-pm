@@ -1,7 +1,7 @@
 ---
 name: llm-wiki-pm
-description: Persistent PM knowledge base, competitive intel, customer notes, strategy, roadmap, AI market. Markdown wiki with entities, concepts, comparisons. Ingest sources, query, update with diffs, lint with tiered reports.
-when_to_use: Use when user wants to ingest a source, query the wiki, update pages, lint/audit, bootstrap a new wiki, build persona pages, map relationships, audit coverage gaps, or says "remember that / note that / don't forget / what am I missing / blind spots".
+description: Persistent PM knowledge base, competitive intel, customer notes, strategy, roadmap, AI market. Markdown wiki with entities, concepts, comparisons. Ingest sources, query, update with diffs, lint. Fires on "remember that / note that / don't forget / what do we know about X / what am I missing / blind spots".
+when_to_use: Use when user wants to ingest a source, query the wiki, update pages, lint/audit, bootstrap a new wiki, audit coverage gaps, capture learnings, or says "remember that / note that / don't forget / what am I missing / blind spots". For persona/relationship-map pages use llm-wiki-persona; for briefs/digests use llm-wiki-brief; for CRM use llm-wiki-crm; for PRDs/user-stories/release-notes use llm-wiki-prd; for research sprints/deep dives use llm-wiki-research.
 allowed-tools: Read Grep Write Edit Bash WebFetch
 ---
 
@@ -19,8 +19,6 @@ The agent writes. You curate sources, ask questions, steer.
 - User asks to lint, audit, or health-check the wiki
 - User asks to create or bootstrap a PM wiki
 - User references "my wiki", "the wiki", "knowledge base", "notes" in a PM context
-- User asks to build a persona or communication profile for a person
-- User asks to map relationships or org hierarchy in the wiki
 - **Natural memory phrases** (no other memory system assumed): "remember that",
   "note that", "don't forget", "keep in mind", "save this", "log this",
   "make a note", "record that", "I want to remember" → treat as a wiki ingest.
@@ -34,111 +32,82 @@ The agent writes. You curate sources, ask questions, steer.
 - "What did we learn?", "capture learnings", "record what we found" → triggers §13 Learn
 - After completing a PM-domain task, Proactive Behavior #7 offers to capture uncaptured learnings
 
+## Sub-skills (route to these)
+
+These capabilities live in separate, independently-installable sub-skills, each
+with its own triggers. Route to them — including **mid-flow**, when a core operation
+surfaces one of these needs (don't try to do them from the core skill):
+
+| Need | Sub-skill | Triggers |
+|------|-----------|----------|
+| Communication persona pages, relationship maps, org charts | `llm-wiki-persona` | "build a persona", "communication profile", "map relationships" |
+| Daily/weekly briefs, tag digests, coverage briefs | `llm-wiki-brief` | "daily/weekly brief", "catch me up", "[tag] digest" |
+| PRDs, user stories, release notes | `llm-wiki-prd` | "write a PRD", "user stories", "release notes" |
+| Research sprints, competitive deep dives, stub enrichment | `llm-wiki-research` | "research [topic]", "deep dive", "auto-research [entity]" |
+| Relationship/account health, CRM context, touchpoints | `llm-wiki-crm` | "relationship health", "account health", "who haven't I talked to" |
+
+If a sub-skill isn't installed, the core skill's matching fallback operation
+handles it where one exists (§10/§11/§12); persona, PRD, research, and CRM have no
+core fallback — they require their sub-skill.
+
 ## Proactive Behaviors
 
-These fire whenever the skill is loaded. Not tied to explicit wiki commands.
-Append notes briefly after your response. Don't interrupt the main answer.
-**Limits:** max 1 suggestion per turn; skip during code/debug tasks; only trigger for PM-domain facts not already addressed.
+These fire whenever the skill is loaded, not tied to explicit commands. Append
+notes briefly *after* your answer, never before; don't interrupt it. All searches
+below: wiki-search `semantic_search` preferred, grep fallback.
+**Limits:** max 1 suggestion per turn; skip during code/debug tasks; only for PM-domain facts not already addressed.
+
 ### 1. Proactive Recall
-
-When the user mentions a named entity (company, person, product), search the wiki
-for that name — prefer wiki-search `semantic_search` over grep. If a page exists, surface it inline:
-
+User mentions a named entity (company, person, product) → search the wiki; if a
+page exists, surface it inline (one line), including `confidence:`/`coverage:` from
+frontmatter:
 > "Wiki has [[page]] (updated YYYY-MM-DD, confidence: verified, coverage: partial). Want a summary?"
 
-Include `confidence:` and `coverage:` when present in frontmatter. If confidence
-is `rumor`, always surface it: "Wiki has [[page]] (rumor, unverified). Treat with caution."
-Append after your answer, not before. One line. Don't ask if the entity clearly
-came up only in passing.
+Always flag `rumor` confidence: "Wiki has [[page]] (rumor, unverified). Treat with caution." Skip entities that came up only in passing.
 
 ### 2. Ambient Fact Capture
-decisions, people, companies, roadmap, competitors, customers), flag it:
-> "That sounds wikifiable. Want me to add it?"
-Only flag PM-domain facts. Skip casual chat, opinions without specifics, and
-hypotheticals. Use judgment.
-**Dedup gate (mandatory):** before offering to capture, search the wiki (wiki-search `semantic_search` preferred, grep fallback) for the key noun phrases in the statement. If an existing page already contains the claim (same entity + same fact), respond instead:
-
+User states a wikifiable PM fact (decision, person, company, roadmap, competitor,
+customer) → offer to add it: *"That sounds wikifiable. Want me to add it?"* Skip
+casual chat, unspecific opinions, hypotheticals.
+**Dedup gate (mandatory):** search the wiki for the statement's key noun phrases first. If a page already holds the claim (same entity + same fact), offer an update instead, don't duplicate:
 > "Already in [[page]] (updated YYYY-MM-DD). Want me to update it?"
 
-Don't create duplicate facts. Update existing pages when the claim overlaps.
-
 ### 3. Contradiction Alert
-
-When the user states a fact about a known entity, search the wiki (wiki-search `semantic_search` preferred, grep fallback) for that entity and check for conflicting claims. If a conflict exists, surface it:
-
+User states a fact about a known entity → search that entity, check for conflicts:
 > "This may conflict with [[page]] from YYYY-MM-DD. Which is current?"
 
 Best-effort. Don't surface false positives from vague matches.
 
 ### 4. Open Question Backlog
-
-When a factual question is raised in conversation that the wiki can't answer,
-offer to log it:
-
-> "Want me to log that as an open question in the wiki?"
-
-Create a `question`-tagged page under `queries/` with the question text and date.
-Don't log rhetorical questions or things the user is clearly about to answer
-themselves.
+A factual question the wiki can't answer → offer to log it (*"Want me to log that
+as an open question?"*) as a `question`-tagged page under `queries/` with text +
+date. Skip rhetorical questions or ones the user is about to answer themselves.
 
 ### 5. Decision Journaling
-
-When the user uses decision language ("we decided", "the call is", "going with X",
-"I've decided", "we're going to"), offer to crystallize it:
-
-> "Want me to log that decision in the wiki?"
-
-If yes, create or update a `decision`-tagged page. Include who decided, when,
-and the rationale if stated.
+Decision language ("we decided", "the call is", "going with X", "I've decided") →
+offer to log it (*"Want me to log that decision?"*). If yes, create/update a
+`decision`-tagged page with who decided, when, and the rationale if stated.
 
 ### 6. Relationship-Aware Answers
-
-When answering any question involving a named person, check for
-`entities/<name>-persona.md` and `concepts/relationship-map.md`. If found, fold
-in 1-2 lines of key traits alongside the factual answer. Don't pad. If persona
-data isn't relevant to the question, skip it.
+Question involves a named person → check `entities/<name>-persona.md` and
+`concepts/relationship-map.md`; if found and relevant, fold in 1-2 lines of key
+traits. Don't pad; skip if persona data isn't relevant.
 
 ### 7. Post-Task Capture
-
-After completing a substantive PM-domain task (research, ingest, query,
-briefing, strategy discussion), self-audit: were any facts, decisions, entity
-updates, relationship changes, or open questions discussed but not yet captured
-in the wiki?
-
-If uncaptured learnings exist, offer a one-line summary:
-
+After a substantive PM-domain task (research, ingest, query, briefing, strategy),
+self-audit for uncaptured facts/decisions/entity-updates/relationship-changes/
+open-questions and offer a one-line summary:
 > "This task surfaced N uncaptured facts/decisions. Want me to record them? (§13 Learn)"
 
-**Guardrails:**
-- Only after tasks that touched PM-domain content. Skip code/debug tasks.
-- Skip if everything was already captured via other proactive behaviors (#2-#5).
-- Max 1 offer per task completion, not per turn. Don't repeat within the same
-  multi-turn task.
-- Never auto-write. Always offer first.
-- Don't count facts the user stated in passing or hypothetically.
+**Guardrails:** PM-domain tasks only (skip code/debug); skip if already captured via #2-#5; max 1 offer per task (not per turn), no repeats within a multi-turn task; never auto-write; ignore passing/hypothetical mentions.
 
 ### 8. Tool Discovery
+At session start, inventory connected MCP tools. When a query would be richer with
+an unconnected tool, suggest it once:
+> "This query would be richer with [tool]. Setup: `[install command]`. See references/recommended-tools.md."
 
-At session start, inventory all connected MCP tools. When a user's query would
-benefit from a tool they haven't connected, suggest it:
-
-> "This query would be richer with [tool]. Setup: `[install command]`.
-> See references/recommended-tools.md for details."
-
-**Trigger examples:**
-- User asks about a public company's financials → suggest SEC EDGAR if not connected
-- User wants competitor LinkedIn profiles → suggest LinkedIn MCP
-- User wants site traffic data → suggest SimilarWeb
-- User needs grounded answers with source citations → suggest NotebookLM
-- User mentions reading lists or highlights → suggest Readwise
-
-**Guardrails:**
-- Max 1 tool suggestion per session. Don't nag.
-- Only suggest tools from `references/recommended-tools.md`. Don't invent.
-- Skip if the user has explicitly declined a tool before.
-- Bundled tools should "just work" — only suggest setup for key-required tools.
-- Frame as enhancement, not blocker: answer the query with available tools first,
-  then mention the upgrade path.
+Examples: public-company financials → SEC EDGAR; competitor LinkedIn → LinkedIn MCP; site traffic → SimilarWeb; cited grounded answers → NotebookLM; reading lists/highlights → Readwise.
+**Guardrails:** max 1 suggestion per session (don't nag); only tools from `references/recommended-tools.md` (don't invent); skip tools the user declined; bundled tools should just work, so only flag key-required ones; frame as enhancement — answer with available tools first, then mention the upgrade path.
 
 ## Wiki Location
 Before running any bash command that uses `$WIKI`, resolve it with:
@@ -161,6 +130,13 @@ The SessionStart hook's `additionalContext` states the active path each session.
 - **Default to ingest, not just recall.** When a connected tool surfaces something the wiki doesn't have, treat it as a candidate ingest, not a throwaway lookup. The goal is a wiki that constantly absorbs new signal, not one that re-serves old signal.
 - **Be honest about provenance age.** Distinguish "the wiki says X (as of <date>)" from "live sources confirm X today." If you couldn't verify against a live source, say so.
 - **Respect cost.** Proportional to stakes: a quick lookup needn't trigger a full sweep, but anything written, updated, or decision-bearing should be checked against live sources.
+
+**Source-completeness guard (anti-premature-closure):** A thin, empty, or errored result from a requested source is NOT permission to stop. It is a signal that your search, not the source, may be the problem. "Enough captured", "that's sufficient", or moving on while a requested source returned nothing is a defect, not a judgment call. Specifically:
+- **Empty ≠ done.** Before concluding a source has nothing, run at least 2-3 query variations: broaden/narrow terms, widen the time window, try aliases/synonyms/handles/scope variants, and switch search syntax to whatever the tool supports (sender/author filters, channel/folder/label scopes, bare keyword). Keyword-based search tools commonly miss on first phrasing — vary before you quit, whatever the source.
+- **Distinguish the three states.** For each requested source, classify the outcome as: `hits` (returned content), `empty-after-retries` (genuinely nothing after ≥2 varied queries), or `failed` (auth error, not connected, timeout, rate limit). Never silently collapse `failed` or `empty-after-retries` into "covered."
+- **Make voids visible.** When a multi-source task (e.g. "ingest all sources", daily brief) is asked to cover N sources, you MUST report the status of every requested source — including the ones that came back empty or failed. Surface: which source, what queries you tried, and the most likely reason (genuinely quiet vs. wrong query vs. not connected vs. unauthorized). A void you report is honest; a void you hide reads as false completeness.
+- **No closure language over an unresolved void.** Do not say a sweep is complete while any requested source is in `failed` state or was abandoned after a single query. Either resolve it, or explicitly flag it as an unresolved gap and offer the next step (reconnect tool, confirm channel name, widen range).
+- **Proportional, not infinite.** This is not a mandate to loop forever. ≥2 varied queries per source, then report state. The bar is: tried honestly, reported truthfully — not "searched until found."
 
 **Session trust model:** Trust `.wiki-path` for location. Trust `SCHEMA.md` for taxonomy — new tags go there first. Trust `log.md` for recent activity. Deviate from any of these only with explicit user confirmation.
 
@@ -311,126 +287,44 @@ After initialization, confirm domain scope with the user and customize
 
 ### 2. Ingest a source
 
-① **Capture raw** (choose source type):
-   - URL → `web_fetch` → save markdown to `raw/articles/<slug>.md`
-   - PDF → extract text → `raw/papers/<slug>.md` (keep PDF in `raw/assets/`)
-   - Paste/transcript → `raw/transcripts/<slug>.md`
-   - **Slack thread**: copy thread messages → `raw/internal/<channel>-<date>.md`.
-     Add frontmatter: `source_channel: "#channel-name"`, `source_date_range: "YYYY-MM-DD"`,
-     `source_thread_id: "<thread_ts>"`. Dedup: before saving, grep wiki for same
-     thread_ts to avoid double-ingest. Strip @mentions to initials if private.
-   - **Gmail chain**: export thread text → `raw/internal/email-<subject-slug>-<date>.md`.
-     Add frontmatter: `source_channel: "Gmail"`, `source_date_range: "YYYY-MM-DD/YYYY-MM-DD"`,
-     `source_thread_id: "<gmail-thread-id>"`. Strip external email addresses if sensitive.
-   - **Current conversation**: when user says "from this conversation" or "use what
-     we discussed", treat the session as a source. Save a summary to
-     `raw/internal/conversation-<YYYY-MM-DD>.md`. Distinguish:
-       - User-stated facts: attribute as `user, <date>`
-       - Tool-retrieved (Slack, Gmail, web_fetch): attribute to original source
-     Do not collapse these. Keep provenance separate in the raw file.
-   - Name descriptively: `raw/articles/gartner-test-automation-mq-2026.md`
-   - **Privacy filter (mandatory)**: strip API keys, tokens, passwords from raw.
-     If the source contains customer-identifying info, deal sizes, 1:1 content,
-     or internal-only strategy, set `private: true` on resulting wiki pages.
+**Read `references/ingest-guide.md` before ingesting** — it carries the full
+step-by-step (raw-capture conventions, page thresholds, inline provenance, the
+mandatory privacy filter, crystallize, entity-promotion scan). Skipping it
+produces orphan pages, missing cross-refs, and laundered secondhand claims. In brief:
 
-② **Surface takeaways to user BEFORE writing wiki pages.** What's interesting?
-   What matters for the PM domain? Which entities/concepts does this touch?
-   (Skip in automated/batch contexts.)
-
-③ **Check existing pages**: `grep -r` for every entity/concept mentioned.
-   Read existing pages before deciding create vs update.
-
-④ **Apply Page Thresholds** (from SCHEMA.md):
-   - Create entity page only if 2+ sources mention OR central to current source
-   - **People specifically**: create a person entity page when a person appears
-     in 2+ sources, has a named role, or is central to a relationship being mapped.
-     Don't wait for the user to ask. Apply the same 2+ threshold proactively.
-   - **Enrich from connected tools BEFORE writing** (per the Freshness-first
-     protocol in Session Defaults — applies to every page type, not just people).
-     Don't build a page by inferring from the prose of other wiki pages alone.
-     Run a live sweep of connected tools — Slack (`slack_search`), Gmail
-     (`search_threads`), Granola/meeting notes, CRM — for the topic and any
-     names/emails/handles. Capture findings to `raw/internal/<topic>-<source>-<date>.md`
-     and anchor each claim with inline provenance. If no tools are connected,
-     write `coverage: stub` and list unknowns in `gaps:` rather than guessing.
-   - Passing mentions in footnotes don't warrant pages
-   - Update existing pages rather than duplicating
-
-⑤ **Write/update pages:**
-   - Required frontmatter (title, created, updated, type, tags, sources)
-   - Tags MUST come from SCHEMA.md taxonomy, add new tags there first
-   - Minimum 2 outbound `[[wikilinks]]` per page
-   - Contradictions → note both positions with dates + sources, add
-     `contradictions: [page-name]` to frontmatter, flag in log
-   - Supersession: if a new page materially *replaces* (not just revises) an
-     old one, set `supersedes: [old-slug]` on new page, `superseded_by: new-slug`
-     on old page. Archive the old page. `lint --auto-fix` rewrites inbound links.
-   - **Inline provenance (mandatory):** every non-obvious factual claim must
-     have an inline source marker: `[source: raw-slug, p.N]` or
-     `[source: raw-slug, section-name]`. Frontmatter `sources:` lists all
-     sources for the page; inline markers anchor specific claims to specific
-     sources. Without inline markers, updates silently corrupt provenance.
-   - **Coverage marker:** set `coverage: stub | partial | comprehensive` in
-     frontmatter. `stub` = bare entity with minimal facts. `partial` = some
-     sections filled but known gaps. `comprehensive` = all known sections
-     covered. Add `gaps:` list for partial/stub pages.
-   - **Confidence level:** set `confidence: verified | likely | rumor` when
-     source quality varies. See SCHEMA.md for definitions.
-
-⑥ **Backlink audit**: after creating a page, scan related pages and add
-   inbound `[[links]]` so the new page isn't an orphan.
-
-
-⑦ **Update `overview.md`**: if the source shifts the domain synthesis, edit
-   the overview. Keep it under 200 lines. Link heavily.
-
-⑧ **Update navigation:**
-   - Add new pages to `index.md` under correct section, alphabetical
-   - Bump total page count + "Last updated" header
-   - Append to `log.md`: `## [YYYY-MM-DD] ingest | <source title>` with list
-     of every file created/updated
-
-⑨ **Update MY-INTEGRATIONS.md** (auto-log source routing):
-   After each ingest, append or update the source row in `$WIKI/MY-INTEGRATIONS.md`.
-   If the file doesn't exist, create it from `$CLAUDE_SKILL_DIR/templates/MY-INTEGRATIONS.md`.
-   Row format: `| <source-label> | <type> | <YYYY-MM-DD> | <N> | <notes> |`
-   Types: `web` | `slack` | `gmail` | `transcript` | `pdf` | `conversation` | `internal`
-   This is how the skill learns which integrations you actually use. No fabrication
-   — only log sources actually ingested this session.
-
-①⓪ **Report to user**: list every file touched. One source → 5-15 pages is
-   normal. Confirm before mass-updating (10+ pages).
-①① **Crystallize (for transcripts and research chains)**: when ingesting a
-    meeting transcript, 1:1 notes, or multi-source research, produce a digest page
-    under `queries/` with sections: Context, Decisions, Action Items, Open Questions,
-    Lessons/Patterns. Required frontmatter: title, type: query, tags, sources, private.
-    See `references/crystallize-guide.md`. Link affected entity pages back to it.
-
-①② **Entity promotion scan** (after every ingest): scan pages you just created
-   or updated for named people, companies, and products described with 3+ attributes
-   (role, style, concerns, position, history, etc.).
-   - If found in a concept page: prompt user, "X entities in [[page]] meet the
-     entity threshold. Create individual entity pages?"
-   - Don't silently promote. Always confirm.
-   - After splitting, update the concept page to link out: `[[entity-slug]]`
-     instead of the inline prose.
-   - Check whether a persona page is warranted for any promoted person entity
-     (see §8 Persona Pages).
+① **Capture raw** to `raw/` (immutable), behind a privacy filter — strip secrets;
+   mark `private: true` for customer/deal/1:1/internal-strategy content.
+② **Surface takeaways** to the user before writing (skip in batch contexts).
+③ **Check existing pages** (`grep -r`) — decide create vs update.
+④ **Apply page thresholds** (2+ sources or central) and **enrich from connected
+   tools BEFORE writing** per Freshness-first — never build a page from other
+   pages' prose alone.
+⑤ **Write/update** with required frontmatter, taxonomy tags, ≥2 `[[wikilinks]]`,
+   inline `[source: ...]` markers, and `coverage:`/`gaps:`/`confidence:` set.
+⑥–⑧ Backlink audit; refresh `overview.md` if synthesis shifts; update `index.md`;
+   append the `ingest` entry to `log.md` listing every file touched.
+⑨ Log the source row in `MY-INTEGRATIONS.md`.
+①⓪ Report every file touched; confirm before mass-updating (10+ pages).
+①① **Crystallize** transcripts/research chains into a `queries/` digest (see
+   `references/crystallize-guide.md`).
+①② **Entity promotion scan** — promote people/companies/products with 3+
+   attributes to their own pages (always confirm). Offer a persona page (the
+   `llm-wiki-persona` sub-skill) for any promoted person.
 
 ### 3. Query
-② **Search first** (per Tool Selection Hierarchy above): wiki-search `semantic_search` → grep → file read. Never start by reading files hoping to find the answer.
-③ Read `index.md` to confirm page catalog for top hits
-④ Read relevant pages via wiki-search `read` or file reads (only after search identified them)
-⑤ Synthesize. Cite pages: "Per [[tricentis]] and [[test-automation-mq]]..."
-⑥ **Select output format** based on question and audience:
+① **Search first** (per Tool Selection Hierarchy above): wiki-search `semantic_search` → grep → file read. Never start by reading files hoping to find the answer.
+② Read `index.md` to confirm page catalog for top hits
+③ Read relevant pages via wiki-search `read` or file reads (only after search identified them)
+④ Synthesize. Cite pages: "Per [[tricentis]] and [[test-automation-mq]]..."
+⑤ **Select output format** based on question and audience:
    - Plain markdown answer inline → most queries
    - File under `queries/<slug>/README.md` → substantial syntheses
    - Add artifacts (Marp deck / matplotlib chart / CSV / Mermaid) if the
      audience or question warrants it. See `references/output-formats.md`.
-⑦ **File valuable answers back**: substantial comparisons, deep dives,
+⑥ **File valuable answers back**: substantial comparisons, deep dives,
    novel synthesis. Skip trivial lookups.
-⑧ Append to `log.md`: `## [YYYY-MM-DD] query | <question> (filed: yes/no)`
-⑨ After filing a new page, wiki-search auto-reindexes on next query.
+⑦ Append to `log.md`: `## [YYYY-MM-DD] query | <question> (filed: yes/no)`
+⑧ After filing a new page, wiki-search auto-reindexes on next query.
 
 ### 4. Update (revise existing pages)
 
@@ -480,21 +374,11 @@ with severity tiers. Offers concrete fixes. Logs unconditionally.
 python3 ${CLAUDE_SKILL_DIR}/scripts/lint.py "$WIKI"
 ```
 
-Checks:
-1. 🔴 Broken `[[wikilinks]]` pointing to non-existent pages
-2. 🔴 Missing required frontmatter fields
-3. 🔴 Tags not in SCHEMA.md taxonomy
-4. 🟡 Orphan pages (zero inbound links)
-5. 🟡 Pages not in `index.md` (or vice versa)
-6. 🟡 Pages > 200 lines (split candidates)
-7. 🟡 Contradictions flagged in frontmatter but unresolved
-8. 🟡 Stale pages (updated > 90 days, no correlated log activity)
-9. 🟠 Stale overview/index (updated > 14 days, log shows recent activity)
-10. 🟠 Stale entity/concept/comparison (updated > 30 days, log shows recent activity)
-11. 🔵 Tag usage frequency (taxonomy tuning)
-12. 🔵 Log size > 500 entries (rotation due)
-
-Read the report, act on 🔴 items, investigate 🟠 stale pages, discuss 🟡 with user, note 🔵 for later.
+Checks span 🔴 (broken links, missing/invalid frontmatter, off-taxonomy tags),
+🟡 (orphans, index drift, oversized pages, unresolved contradictions, stale pages),
+🟠 (stale overview/index/entities with recent log activity), and 🔵 (tag-frequency,
+log rotation). Full check list and how to read the report: `references/lint-guide.md`.
+Act on 🔴, investigate 🟠, discuss 🟡 with the user, note 🔵 for later.
 
 ### 6. Archive
 
@@ -508,109 +392,46 @@ Superseded or out-of-scope content:
 ### 7. Staleness Check
 
 Run when: user asks "is the wiki up to date?", "what needs updating?", or after
-an extended gap in wiki activity. Also runs automatically during orient (step ⑥).
+an extended gap. Also runs automatically during orient (step ⑥).
 
-① **Scan frontmatter dates**: read `updated:` from all pages in `entities/`,
-   `concepts/`, `comparisons/`, `overview.md`, and `index.md`.
+Scan `updated:` across `entities/`, `concepts/`, `comparisons/`, `overview.md`,
+`index.md`. Stale thresholds: 14 days for overview/index, 30 days for entity/
+concept/comparison. Cross-reference `log.md` — a page with recent log activity
+but an unmoved `updated:` is behind, not dormant; flag those first. Surface
+findings grouped by type, suggest the 2-3 likeliest update candidates, and offer
+the Update flow (§4) per page. Log the check regardless of whether updates follow.
 
-② **Apply thresholds**:
-   - `overview.md`, `index.md`: stale if `updated:` > 14 days ago
-   - `entities/`, `concepts/`, `comparisons/`: stale if `updated:` > 30 days ago
+### 8. Persona Pages → `llm-wiki-persona` sub-skill
 
-③ **Cross-reference log.md**: for each stale page, check whether log.md has
-   entries in the past 30 days referencing that entity or topic. Log activity
-   with no page update means the page is likely behind, not just dormant.
-
-④ **Surface findings** to user:
-   - "X pages haven't been updated in Y+ days" (grouped by type)
-   - Highlight pages where log.md shows activity but `updated:` hasn't moved
-   - Suggest the 2-3 most likely candidates for updates based on log recency
-
-⑤ **Offer update flow**: for each flagged page, offer to run the Update flow (§4)
-   or open the page for manual review.
-
-⑥ **Log**: append staleness check to `log.md` regardless of whether updates follow.
-
-### 8. Persona Pages
-
-Build when: user asks for a communication profile, style analysis, or persona
-for a person. Also triggered after promoting a person entity when 3+ attributes
-exist about their communication style.
-
-① **Confirm data sources**: ask user which communication tiers have actual
-   source material. Don't fabricate tiers you have no data for.
-   Typical tiers: Slack DM, Slack channel, Email internal, Email external.
-
-② **Gather source material**: proactively search connected comms tools first
-   (Slack `slack_search`, Gmail `search_threads`, Granola/meeting notes) for the
-   person's name and email/handle, THEN confirm tiers with the user. Don't ask
-   the user to hand you material you can retrieve yourself. Ingest the threads
-   via §2 ingest flow before writing the persona page. A persona built only from
-   secondhand mentions on other wiki pages is not a persona — pull primary
-   communication samples.
-
-③ **Write persona page** at `entities/<name>-persona.md`:
-   - Type: `persona`. Link to `[[<name>]]` entity in frontmatter `sources:`.
-   - Core traits summary (3-5 sentences, no bullet spray).
-   - One section per tier (Slack DM, Slack channel, Email internal, Email external).
-     Fields per tier: formality, sentence length, humor, sign-off, notes.
-   - Cross-tier comparison table at the bottom. See `references/persona-guide.md` for templates.
-
-④ **Link persona to person entity**: add `[[<name>-persona]]` to the person
-   entity page under Relationships or a "Communication profile" section.
-
-⑤ **Relationship map**: when 3+ person entity pages exist, check whether
-   `concepts/relationship-map.md` exists. If not, offer to create it.
-   Format: markdown table with columns Name, Role, Reports to, Peers,
-   Interaction frequency. Update when new person entities are added.
-
-⑥ **Log**: `## [YYYY-MM-DD] persona | <name>-persona | tiers: [list]`
-
+Communication persona pages and relationship maps are handled by the
+**`llm-wiki-persona`** sub-skill (build a persona, style analysis, org chart,
+relationship map). It owns the channel model, the no-fabrication rule, and the
+relationship-map format. The entity-promotion scan (§2 ①②) offers a persona for
+any promoted person — route there.
 
 ### 9. Pre-Meeting Briefing
 
 Trigger: "I have a meeting/call/1:1 with X" or "brief me on X before my call"
 
-① grep wiki for entity name. Read entity page.
-② Read persona page if it exists: `entities/<name>-persona.md`
-③ grep `concepts/relationship-map.md` for relevant context.
-④ Read last 5 entries in `log.md` that mention that entity.
-⑤ grep for open `question`-tagged pages related to that entity.
-⑥ Synthesize into a short brief:
-   - **Who**: role, org, relationship to you
-   - **What we know**: key facts from entity page
-   - **Recent activity**: log entries from step ④
-   - **Open questions**: from step ⑤
-   - **Communication tips**: from persona page if available (1-2 lines)
-⑦ Log: `## [YYYY-MM-DD] brief | <entity> | pre-meeting`
+grep the entity name and read its page; read its persona page if one exists; pull
+relevant context from `concepts/relationship-map.md`; read the last 5 `log.md`
+entries mentioning the entity; grep open `question`-tagged pages for it. Synthesize
+a short brief: **Who** (role, org, relationship), **What we know** (key facts),
+**Recent activity**, **Open questions**, **Communication tips** (1-2 lines from the
+persona page if available). Log: `## [YYYY-MM-DD] brief | <entity> | pre-meeting`.
 
 ### 10. Catch Me Up
 
-> **If `llm-wiki-brief` is installed**, it handles this with richer output (daily brief, weekly
-> brief, coverage brief). This operation is the fallback when that sub-skill is not present.
-
-Trigger: "what happened this week", "catch me up", "what's new in the wiki",
-"what did I miss"
-
-① Read `log.md`. Filter entries from the last N days (default 7, user can specify).
-② List:
-   - New pages created
-   - Pages updated
-   - Decisions logged
-   - Open questions added
-③ Check `_status.md` if it exists. Surface any pre-computed staleness warnings.
-④ Surface the 2-3 most active areas based on log frequency.
-⑤ Offer to run a staleness check or tag digest if the summary warrants it.
-
-Log: `## [YYYY-MM-DD] catchup | last N days | X actions`
+**`llm-wiki-brief`** handles this with richer output (daily/weekly/coverage briefs)
+— route there when installed. Fallback when it isn't: read `log.md` for the last N
+days (default 7), list new/updated pages, decisions, and open questions; surface
+`_status.md` warnings and the 2-3 most active areas. Log:
+`## [YYYY-MM-DD] catchup | last N days | X actions`.
 
 ### 11. Tag Digest
 
-> **If `llm-wiki-brief` is installed**, it handles tag digests with cross-referencing and
-> file-to-queries output. This operation is the fallback when that sub-skill is not present.
-
-Trigger: "[tag] digest", "summarize [tag] pages", "what's new in
-[competitive/customer/roadmap/etc]"
+**`llm-wiki-brief`** handles tag digests with cross-referencing and file-to-queries
+output — route there when installed. Fallback when it isn't:
 
 ① grep wiki frontmatter for the requested tag.
 ② Read matching pages, newest first by `updated:` date.
@@ -626,76 +447,29 @@ Log: `## [YYYY-MM-DD] digest | tag: <tag> | X pages synthesized`
 ### 12. Coverage Audit
 
 Trigger: "what am I missing?", "blind spots?", "coverage gaps?", "what don't
-we know?", "wiki completeness"
+we know?", "wiki completeness". (`llm-wiki-brief`'s Coverage Brief gives richer
+output — route there when installed.)
 
-① Scan all `coverage:` frontmatter across entities/, concepts/, comparisons/.
-   Count: stub, partial, comprehensive, missing (no coverage field = missing).
-② Collect all `gaps:` lists from pages with partial/stub coverage.
-③ Read open `question`-tagged pages from queries/.
-④ Cross-reference: for every entity mentioned in 3+ pages but lacking its own
-   entity page, flag it as a coverage gap.
-⑤ Surface findings:
-   - "N entities have partial/stub coverage. Top gaps: [list]"
-   - "N open questions pending investigation"
-   - "N entities referenced across pages but have no wiki page"
-   - "Areas with no pages: [domains from SCHEMA.md tag taxonomy with zero pages]"
-⑥ Offer to create stub pages for the biggest gaps.
-
-Log: `## [YYYY-MM-DD] coverage-audit | stubs: N | gaps: N | open-questions: N`
+Scan `coverage:` frontmatter across entities/, concepts/, comparisons/ (count
+stub/partial/comprehensive/missing); collect `gaps:` lists; read open
+`question`-tagged pages. Cross-reference: any entity mentioned in 3+ pages without
+its own page is a gap. Surface partial/stub counts with top gaps, pending open
+questions, un-paged entities, and taxonomy domains with zero pages. Offer to create
+stub pages for the biggest gaps. Log:
+`## [YYYY-MM-DD] coverage-audit | stubs: N | gaps: N | open-questions: N`.
 
 ### 13. Learn (Post-Task Capture)
 
 Trigger: user accepts Proactive Behavior #7 offer, or explicitly says "what did
-we learn?", "capture learnings", "record what we found", "save what we discussed"
+we learn?", "capture learnings", "record what we found", "save what we discussed".
 
-① **Scan conversation** — review the current task or discussion. Identify
-   uncaptured: facts, decisions, entity updates, relationship changes, open
-   questions, contradictions. Only PM-domain content. Skip opinions without
-   specifics, hypotheticals, and casual asides.
-
-② **Dedup against wiki** — for each candidate learning, search existing pages
-   (wiki-search `semantic_search` preferred, grep fallback). Drop anything already recorded.
-   If a fact exists but needs updating (newer info), mark it as an update
-   rather than a new capture.
-
-③ **Classify** — bucket each surviving learning:
-   - `entity-update`: new fact about an existing entity → update that page
-   - `new-entity`: entity discussed with 3+ attributes but no page → create
-   - `concept-update`: new insight about an existing concept → update
-   - `decision`: a decision was made → create/update decision-tagged page
-   - `open-question`: factual question raised but unanswered → log under queries/
-   - `contradiction`: conflicts with existing wiki content → flag with both claims
-
-④ **Propose changes** — show user a compact list before writing anything:
-   ```
-   Learnings from this task:
-   • Update [[entity-slug]] — added role change to VP Engineering
-   • Create entities/new-company.md — 4 attributes discussed
-   • Log decision: switched to vendor X for auth
-   • Open question: what's competitor Y's enterprise pricing?
-   ```
-   If 10+ changes, get explicit sign-off per pitfalls.
-
-⑤ **Execute** — on approval, apply changes using existing flows:
-   - Entity/concept updates: use §4 Update (show diffs, sweep stale variants)
-   - New entities: use §2 Ingest conventions (frontmatter, cross-refs, provenance)
-   - Decisions: use §5 Decision Journaling format
-   - Open questions: use §4 Open Question Backlog format
-   - Contradictions: surface both claims with dates and sources per pitfalls
-   - All pages: min 2 outbound `[[links]]`, inline provenance for non-obvious
-     claims, `coverage:` and `gaps:` fields set
-
-⑥ **Log** — append to `log.md`:
-
-```
-## [YYYY-MM-DD] learn | <task-summary>
-- Updated: entities/foo.md (added Q3 strategy shift)
-- Created: entities/new-company.md
-- Logged decision: auth-vendor-switch
-- Open question: competitor-y-pricing
-```
-
-Log: `## [YYYY-MM-DD] learn | <task-summary> | captured: N | updated: N | new: N`
+**Read `references/learn-guide.md` before running a capture pass** — it carries the
+dedup gate and the classification buckets, and skipping it produces duplicate facts
+and unclassified captures. In brief: scan the conversation for uncaptured PM-domain
+facts/decisions/questions/contradictions → dedup against the wiki → classify each
+(entity-update, new-entity, concept-update, decision, open-question, contradiction)
+→ propose a compact change list (sign-off if 10+) → execute via §2/§4 conventions →
+log: `## [YYYY-MM-DD] learn | <task-summary> | captured: N | updated: N | new: N`.
 
 ## PM Workflow Patterns
 
@@ -706,9 +480,9 @@ batch entity updates → one log entry → overview.md refresh.
 `entities/<customer>.md` → check recent log entries for updates → offer to
 file post-meeting notes back into the customer page via update flow.
 
-**1:1 follow-up (Vu Lam monthly):** ingest transcript to
-`raw/transcripts/vu-lam-1-1-YYYY-MM.md` → extract decisions/themes → update
-`concepts/<theme>.md` pages → link from `entities/vu-lam.md`.
+**Recurring 1:1 follow-up:** ingest the transcript to
+`raw/transcripts/<person>-1-1-YYYY-MM.md` → extract decisions/themes → update
+`concepts/<theme>.md` pages → link from `entities/<person>.md`.
 
 **Quarterly lint:** run lint, triage 🔴, discuss 🟡 trends, rotate log if
 needed, refresh overview.md.
@@ -754,10 +528,11 @@ frontmatter powers Dataview. See `references/obsidian-sync.md` for headless sync
 
 ## References
 
+- `references/ingest-guide.md`, full §2 ingest procedure (read before ingesting)
+- `references/learn-guide.md`, full §13 post-task capture procedure
 - `references/schema-guide.md`, customizing SCHEMA.md for your domain
 - `references/update-guide.md`, diff discipline, stale-claim sweep patterns
-- `references/lint-guide.md`, interpreting tiered reports
-- `references/persona-guide.md`, building persona and relationship map pages
+- `references/lint-guide.md`, interpreting tiered reports + full check list
 - `references/obsidian-sync.md`, headless sync deep dive
 - `references/privacy-guide.md`, pre-ingest filter + `private:` flag
 - `references/crystallize-guide.md`, transcript → decision digest pattern

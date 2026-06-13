@@ -47,264 +47,57 @@ Every factual claim in a generated artifact must cite `[[page]]` from the wiki. 
 
 ## Operations
 
+Output structures for all three operations live in
+`references/prd-templates.md` — copy the matching template when drafting.
+
 ### 1. PRD Draft
 
 **Trigger:** "write a PRD", "draft PRD for [feature/topic]"
 
-**① Ground in wiki**
-
-Grep wiki for the feature/topic:
-
-```bash
-grep -ri "<feature>" "$WIKI" --include="*.md" -l
-```
-
-Read all relevant pages:
-- Entity pages (`entities/`) for companies, products, teams involved
-- Concept pages (`concepts/`) for strategy, themes, frameworks
-- Comparison pages (`comparisons/`) for competitive context
-- Customer pages for pain points and use cases
-- Decision pages (`tags: decision`) for prior choices
-- Roadmap pages (`tags: roadmap`) for proposed direction
-- Open question pages (`tags: question`) in `queries/`
-
-**② Surface gaps before drafting**
-
-If key sections have no wiki backing, flag before writing:
-
-> "Missing wiki coverage for: [X, Y, Z]. Draft with gaps flagged, or research first?"
-
-Common gaps to check:
-- No customer page for the target persona
-- No comparison/competitive page for the market context
-- No concept page for the core problem
-- No decision page for the key architectural or strategic choices
-
-Do not draft silently when major sections would be fabricated. Ask.
-
-**③ Draft PRD**
-
-File to `$WIKI/queries/prd-<feature-slug>-<YYYY-MM-DD>/README.md`.
-
-Structure:
-
-```markdown
----
-title: "PRD: <Feature Name>"
-created: YYYY-MM-DD
-updated: YYYY-MM-DD
-type: query
-tags: [roadmap, decision]
-sources: [<list of wiki pages cited>]
-gaps: [<list of sections with no wiki backing>]
-coverage: partial
----
-
-# PRD: <Feature Name>
-
-## Problem Statement
-<!-- From customer pages, concept pages. Cite: [[page]] -->
-
-## Goals & Success Metrics
-<!-- From strategy/roadmap pages, decision pages. Cite: [[page]] -->
-
-## User Personas
-<!-- From customer entity pages. Cite: [[page]] -->
-
-## Competitive Context
-<!-- From comparison/competitive pages. Cite: [[page]] -->
-
-## Proposed Solution
-<!-- From roadmap/concept pages. Cite: [[page]] -->
-
-## Out of Scope
-<!-- Call out explicitly. Note if absence of wiki pages is why something is out of scope. -->
-
-## Open Questions
-<!-- From open question-tagged pages. Cite: [[queries/open-question-slug]] -->
-```
-
-**④ Cite sources inline**
-
-Every factual claim cites its wiki source: "Per [[concept/ai-market-position]], the primary pain point is..."
-
-No citation = claim must be moved to Open Questions or flagged as a gap.
-
-**⑤ Flag coverage gaps in frontmatter**
-
-Populate the `gaps:` field with sections that had no wiki backing. This surfaces during Coverage Audit (§12 of llm-wiki-pm).
-
-Example:
-```yaml
-gaps:
-  - "Competitive Context: no comparison page for <Competitor X>"
-  - "User Personas: no customer entity page for Enterprise buyer"
-```
-
-**⑥ Update navigation**
-
-- Add to `$WIKI/index.md` under `queries/` section
-- Append to `$WIKI/log.md`:
-  ```
-  ## [YYYY-MM-DD] prd | prd-<feature-slug> | pages cited: [list] | gaps: [list]
-  ```
-
----
+① **Ground in wiki** — `grep -ri "<feature>" "$WIKI" --include="*.md" -l`, then read
+   every relevant page: entities, concepts, comparisons, customer pages, and
+   `decision`/`roadmap`/`question`-tagged pages.
+② **Surface gaps before drafting** — if a major section has no wiki backing
+   (target persona, competitive context, core problem, key decisions), flag it and
+   ask; never draft a fabricated section silently:
+   > "Missing wiki coverage for: [X, Y, Z]. Draft with gaps flagged, or research first?"
+③ **Draft** to `$WIKI/queries/prd-<feature-slug>-<YYYY-MM-DD>/README.md` using the
+   PRD template (`references/prd-templates.md`).
+④ **Cite inline** — every factual claim cites its source ("Per [[page]]..."); an
+   uncited claim moves to Open Questions or `gaps:`.
+⑤ **Populate `gaps:`** with unbacked sections — this surfaces in Coverage Audit.
+⑥ **Update navigation** — add to `index.md` under `queries/`, append the `prd` log line.
 
 ### 2. User Stories
 
 **Trigger:** "create user stories", "write user stories for [feature]", "acceptance criteria"
 
-**① Grep wiki for feature context**
-
-Same search as PRD step ①. Read entity, concept, roadmap, and customer pages for the feature.
-
-**② Read customer persona pages**
-
-```bash
-grep -ri "persona" "$WIKI/entities" --include="*.md" -l
-```
-
-Read `entities/<name>-persona.md` for each relevant customer segment. These provide the "As a [persona]" framing. If no customer pages exist, flag it:
-
-> "No customer entity pages found. Stories will use generic personas. Create customer pages first for grounded framing?"
-
-**③ Generate stories**
-
-Format:
-```
-As a [persona from wiki], I want [action] so that [outcome].
-```
-
-One story per distinct user need. Group by persona if multiple.
-
-**④ Add acceptance criteria**
-
-Per story, Given/When/Then format:
-
-```
-Given [precondition]
-When [action]
-Then [expected outcome]
-And [additional assertion if needed]
-```
-
-Base criteria on wiki facts where possible. Flag criteria that are assumptions (no wiki backing).
-
-**⑤ File the output**
-
-Save to `$WIKI/queries/user-stories-<feature-slug>-<YYYY-MM-DD>.md`:
-
-```markdown
----
-title: "User Stories: <Feature Name>"
-created: YYYY-MM-DD
-updated: YYYY-MM-DD
-type: query
-tags: [roadmap]
-sources: [<wiki pages cited>]
-gaps: [<assumptions with no wiki backing>]
-coverage: partial
----
-
-# User Stories: <Feature Name>
-
-## [Persona Name] — [[entities/persona-page]]
-
-### Story 1
-As a [persona], I want [action] so that [outcome].
-
-**Acceptance Criteria**
-- Given [X]
-- When [Y]
-- Then [Z]
-
-[source: [[wiki-page]]]
-```
-
-**⑥ Link back from concept or roadmap page**
-
-After filing, add a backlink from the relevant concept or roadmap page:
-
-> "User stories filed at [[queries/user-stories-<feature-slug>-<date>]]"
-
-Append to `$WIKI/log.md`:
-```
-## [YYYY-MM-DD] user-stories | user-stories-<feature-slug> | persona: [list] | gaps: [list]
-```
-
----
+① **Ground in wiki** — same search as PRD ①.
+② **Read persona pages** — `grep -ri "persona" "$WIKI/entities" -l`; read each
+   relevant `entities/<name>-persona.md` for "As a [persona]" framing. If none exist:
+   > "No customer entity pages found. Stories will use generic personas. Create customer pages first for grounded framing?"
+③ **Generate stories** — `As a [persona], I want [action] so that [outcome].` One
+   per distinct need, grouped by persona.
+④ **Add acceptance criteria** — Given/When/Then per story; flag any criterion
+   that's an assumption with no wiki backing.
+⑤ **File** to `$WIKI/queries/user-stories-<feature-slug>-<YYYY-MM-DD>.md` using the
+   template; append the `user-stories` log line.
+⑥ **Link back** from the relevant concept/roadmap page.
 
 ### 3. Release Notes
 
 **Trigger:** "generate release notes", "draft release notes", "what shipped"
 
-**① Identify the date range**
-
-If the user does not specify a date range, ask:
-
-> "What date range should I cover? (e.g., since last release on YYYY-MM-DD, or past N weeks)"
-
-If the user says "last release", check `$WIKI/log.md` for a previous `release-notes` entry to find the prior cutoff.
-
-**② Read log.md entries for the range**
-
-```bash
-grep -A5 "^## \[2" "$WIKI/log.md"
-```
-
-Filter for:
-- Pages created or updated with `tags: roadmap`
-- `decision` log entries
-- Any `supersedes:` changes (signals deprecations)
-- Any `type: query` entries from crystallize or PRD flows
-
-**③ Read the actual pages touched**
-
-Log summaries are brief. For each significant entry, read the full page to extract substance. Do not write release notes from log summaries alone.
-
-**④ Draft release notes**
-
-Group by category. Keep user-facing copy clean — no wiki jargon, no `[[wikilinks]]` in the final copy, no internal page references visible to users.
-
-```markdown
----
-title: "Release Notes: <date or version>"
-created: YYYY-MM-DD
-updated: YYYY-MM-DD
-type: query
-tags: [roadmap]
-sources: [<wiki pages referenced during drafting>]
----
-
-# Release Notes: <date or version>
-
-## New Features
-- <Feature>: <one-sentence description of user value>
-
-## Improvements
-- <What changed>: <why it matters>
-
-## Fixes
-- <What was broken>: <what it does now>
-
-## Deprecations
-- <What is going away>: <migration path or replacement>
-
----
-_Internal PM context: [links to relevant wiki pages for internal reference]_
-```
-
-The `_Internal PM context_` section at the bottom is for PM use — cite `[[pages]]` there so the artifact stays grounded but the user-facing sections read cleanly.
-
-**⑤ File the output**
-
-Save to `$WIKI/queries/release-notes-<YYYY-MM-DD>.md`.
-
-Append to `$WIKI/log.md`:
-```
-## [YYYY-MM-DD] release-notes | release-notes-<date> | range: YYYY-MM-DD to YYYY-MM-DD | items: N
-```
+① **Date range** — if unspecified, ask; "last release" → find the prior
+   `release-notes` entry in `log.md` for the cutoff.
+② **Read `log.md` for the range** — filter for `roadmap` pages, `decision` entries,
+   `supersedes:` changes (deprecations), and crystallize/PRD `query` entries.
+③ **Read the actual pages** — log summaries are thin; pull substance from the pages,
+   never write release notes from log lines alone.
+④ **Draft** by category using the template. User-facing copy stays clean — no wiki
+   jargon or `[[wikilinks]]`; citations go only in the internal-context section.
+⑤ **File** to `$WIKI/queries/release-notes-<YYYY-MM-DD>.md`; append the
+   `release-notes` log line.
 
 ---
 

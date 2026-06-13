@@ -12,7 +12,9 @@ CRM layer on top of the PM wiki. Tracks relationship health, account status, fea
 ## When This Skill Activates
 
 - "relationship health", "who haven't I talked to", "dormant accounts", "check relationships"
-- "enrich [entity]", "auto-enrich [person/company]", "fill in [entity] details"
+- "enrich [person/company]", "auto-enrich [person/company]", "fill in [person/company] details"
+  (This skill enriches *relationship/CRM context* — tier, touchpoint, feature asks.
+  For factual/web enrichment of a stub page, use llm-wiki-research's Auto-Research.)
 - "account health", "strategic accounts", "how are my accounts"
 - "what do customers want", "feature asks", "what are accounts asking for", "customer asks"
 - "log touchpoint with [person/company]", "update [entity] relationship", "set [entity] to strategic"
@@ -88,6 +90,13 @@ WIKI=${WIKI:-${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-$(pwd)}}}
 ### 2. Auto-Enrichment
 
 **Trigger:** "enrich [entity]", "auto-enrich [person/company]", "fill in [entity] details"
+
+**Scope — avoid overlap with `llm-wiki-research`:** this operation is a *lightweight*
+factual pass whose real job is populating **relationship/CRM fields** (`relationship_tier`,
+`last_touchpoint`, `account_health`, `key_asks`). For a deep factual/web sweep of a
+company or person, **defer to `llm-wiki-research`'s Auto-Research when it's installed**
+— run that first, then layer the CRM fields on top. The steps below are the
+standalone fallback when research isn't available.
 
 **Company enrichment:**
 ① WebSearch: company name + "about", funding, headcount, key products, recent news

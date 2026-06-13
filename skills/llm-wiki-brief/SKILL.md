@@ -33,6 +33,22 @@ This skill is read-only by default. Before any brief:
 
 Full orient (AGENTS.md 4-step protocol) only required if filing output as a wiki page.
 
+## Source-Completeness Guard (when briefs sweep live sources)
+
+When a brief is asked to pull from external sources (whatever the user's connected stack — issue trackers, mail, chat, CRM, meeting notes, web), the core llm-wiki-pm **Source-completeness guard** applies in full: an empty or errored source is a signal to vary the query, not to declare the sweep done.
+
+- Run ≥2 varied queries per source before calling it empty (broaden terms, widen the window, try aliases/handles/scope variants, switch syntax). Keyword search tools commonly miss on first phrasing.
+- Classify each requested source as `hits` / `empty-after-retries` / `failed`. Never collapse `failed` or `empty-after-retries` into "covered."
+- **Always emit a Source Coverage ledger** (see below) listing every requested source and its state. A source that returned nothing must appear in the brief, not vanish from it. No "enough captured" while a requested source is `failed` or was abandoned after one query.
+
+```markdown
+### Source Coverage
+- <source A>: hits (N items)
+- <source B>: hits (N threads)
+- <source C>: empty-after-retries — tried "X", "<scoped query> Y", "<author filter> Z"; quiet or query miss. Confirm scope/range?
+- <source D>: failed — not connected
+```
+
 ---
 
 ## Operations

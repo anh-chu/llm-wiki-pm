@@ -170,12 +170,13 @@ Type: `persona`. One page per person. Slug: `<name>-persona.md`.
 
 Fields:
 - Core traits summary (3-5 lines)
-- Communication tiers (one section per tier):
-  - **Slack DM**: formality, language, message length, humor, sign-off
-  - **Slack channel**: formality, language, message length, humor, sign-off
+- Communication channels (one section per channel the person actually uses —
+  substitute their stack; the labels below are common examples, not a fixed set):
+  - **Private chat** (Slack/Teams/Discord DM): formality, language, message length, humor, sign-off
+  - **Public chat channel**: formality, language, message length, humor, sign-off
   - **Email internal**: formality, language, message length, humor, sign-off
   - **Email external**: formality, language, message length, humor, sign-off
-- Cross-tier comparison table (auto-generated from tier sections)
+- Cross-channel comparison table (auto-generated from channel sections)
 - Vocabulary markers (hedging, humor style, sign-offs, code-switching)
 - Source notes (what conversations or messages informed this analysis)
 

@@ -7,6 +7,47 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.13.0] - 2026-06-13
+
+### Added
+
+- **Source-completeness guard (anti-premature-closure)** — new Session Default in
+  the core skill plus a Source Coverage ledger in `llm-wiki-brief`. An empty or
+  errored source is now treated as a search defect, not a stop signal: ≥2 varied
+  queries per source before declaring it empty, three-state classification
+  (`hits` / `empty-after-retries` / `failed`), and every requested source must
+  appear in multi-source output. No "enough captured" while a void is unresolved.
+- **`llm-wiki-persona` sub-skill** — communication persona pages and relationship
+  maps promoted out of the core skill into its own independently-installable
+  sub-skill (real standalone trigger, owns the channel model and relationship-map
+  format, no longer collides with crm's persona pointer).
+- **Sub-skill routing roster** in the core skill so agents reliably hand off
+  mid-flow to brief/prd/research/crm/persona.
+
+### Changed
+
+- **Vendor-agnostic generalization** across the plugin — source `type` enum
+  (`chat`/`email`/`other` instead of `slack`/`gmail`), ingest recipes, and persona
+  communication channels now state the model generically with Slack/Gmail/etc. as
+  labelled examples, not baked-in rules.
+- **Core skill slimmed 791 → ~560 lines** — ingest and learn procedures moved to
+  `references/ingest-guide.md` and `references/learn-guide.md` (gated reads), lint
+  checklist to `lint-guide.md`, fallback ops condensed to sub-skill pointers,
+  Proactive Behaviors prose tightened. Governance/safety rules kept resident.
+- **`llm-wiki-prd` slimmed 352 → 145 lines** — output templates moved to
+  `references/prd-templates.md`.
+- **crm/research enrichment boundary clarified** — crm's Auto-Enrichment defers
+  deep factual sweeps to `llm-wiki-research` when installed, focusing on
+  relationship/CRM fields.
+
+### Fixed
+
+- Core §3 Query step numbering (started at ②); §13 Learn ambiguous section refs;
+  `enrich [entity]` trigger collision between crm and research; truncated trigger
+  sentence in Proactive Behavior §2 (Ambient Fact Capture).
+
+---
+
 ## [2.10.1] - 2026-05-10
 
 ### Fixed

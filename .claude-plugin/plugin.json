@@ -1,6 +1,6 @@
 {
 	"name": "llm-wiki-pm",
-	"version": "2.12.0",
+	"version": "2.13.0",
 	"description": "PM knowledge base skill implementing Karpathy's LLM Wiki pattern. Ingest sources, query a compounding markdown wiki, supersede with auto-link rewrite, crystallize transcripts into decision digests. Bundles semantic wiki search.",
 	"author": {
 		"name": "Anh Chu",
@@ -30,12 +30,12 @@
 		"briefs"
 	],
 	"metadata": {
-		"skillCount": 5,
+		"skillCount": 6,
 		"workerCount": 5,
 		"rolePackCount": 4,
 		"supportedAgents": ["claude-code"],
-		"skillArchitecture": "core (llm-wiki-pm) + 4 sub-skills (brief, prd, research, crm) + set-wiki-path utility",
-		"directoryLayout": "skills/llm-wiki-{pm,brief,prd,research,crm}/ | .claude/agents/ (workers) | .claude/roles/ (role packs)"
+		"skillArchitecture": "core (llm-wiki-pm) + 5 sub-skills (brief, prd, research, crm, persona) + set-wiki-path utility",
+		"directoryLayout": "skills/llm-wiki-{pm,brief,prd,research,crm,persona}/ | .claude/agents/ (workers) | .claude/roles/ (role packs)"
 	},
 	"mcpServers": {
 		"wiki-search": {

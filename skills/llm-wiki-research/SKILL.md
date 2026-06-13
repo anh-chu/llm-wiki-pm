@@ -178,7 +178,9 @@ Update existing comparisons/ pages. Offer to create a new comparison page if the
 
 **Trigger:** "auto-research [entity]", "enrich [entity]", "fill in [entity] page"
 
-For entity pages with `coverage: stub`. Fast enrichment pass.
+For entity pages with `coverage: stub`. Fast enrichment pass. This is *factual/web*
+enrichment. If the user wants relationship/CRM context (tier, touchpoint, feature
+asks) rather than facts, route to llm-wiki-crm's enrich instead.
 
 **① Read the stub** — what do we already know? What's in `gaps:`?
 
