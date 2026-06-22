@@ -7,6 +7,29 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.14.0] - 2026-06-22
+
+### Added
+
+- **Source-depth guard (open what you found)** — new Session Default in the core
+  skill, complementing the source-completeness guard. Breadth of search is not
+  depth of source: a result that references/attaches a file/doc/image/canvas/URL
+  is an unresolved source, fetch and read it before synthesizing from surrounding
+  prose. Unfetchable artifacts are flagged unread (like a `failed` source), never
+  treated as covered. Closes the gap where thread prose was mistaken for an
+  unopened attachment.
+
+### Changed
+
+- **Harness-hook precedence** stated explicitly in the core skill. PM-facing/wiki
+  output keeps full natural prose regardless of session-level compression/style
+  hooks (e.g. caveman/terse modes) — brevity applies to chatter, not artifacts.
+  Bash-heavy orient/lint steps are not exempted by raw-output caps (e.g.
+  context-mode's Bash-length limit); run them and route bulky output through the
+  hook's preferred path rather than skipping the step.
+
+---
+
 ## [2.13.0] - 2026-06-13
 
 ### Added

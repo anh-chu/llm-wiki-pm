@@ -138,6 +138,11 @@ The SessionStart hook's `additionalContext` states the active path each session.
 - **No closure language over an unresolved void.** Do not say a sweep is complete while any requested source is in `failed` state or was abandoned after a single query. Either resolve it, or explicitly flag it as an unresolved gap and offer the next step (reconnect tool, confirm channel name, widen range).
 - **Proportional, not infinite.** This is not a mandate to loop forever. ≥2 varied queries per source, then report state. The bar is: tried honestly, reported truthfully — not "searched until found."
 
+**Source-depth guard (open what you found):** Breadth of search is not depth of source. A hit that *references* content is not the content. If a result links to, attaches, or names a file/doc/image/canvas/PDF/spreadsheet/URL, that artifact is an **unresolved source** — fetch and read it before synthesizing anything from the surrounding prose. Specifically:
+- **Referenced ≠ read.** A Slack thread saying "here's the 1-pager" with an attached image, a message linking a Drive doc, a ticket citing a spec — the prose around the artifact is a pointer, not a substitute. Drafting feedback, decisions, or page content from the pointer alone is a defect, even when the surrounding text sounds complete.
+- **Open before you write.** Before producing any analysis, review, or wiki page that depends on a referenced artifact, actually fetch it (read the image, download the doc, follow the link). Real tiers, prices, numbers, and matrices routinely live only inside the file and contradict the thread summary.
+- **Name what you couldn't open.** If an artifact can't be fetched (no access, unsupported type, dead link), treat it like a `failed` source: flag it explicitly as unread, do not synthesize over it, and offer the next step. Never let an unopened attachment read as covered.
+
 **Session trust model:** Trust `.wiki-path` for location. Trust `SCHEMA.md` for taxonomy — new tags go there first. Trust `log.md` for recent activity. Deviate from any of these only with explicit user confirmation.
 
 ## Tool Selection Hierarchy
@@ -270,6 +275,8 @@ Before any ingest/query/update/lint, **always**:
    operation that creates or modifies a wiki page requires orient.
 
 Skipping orientation → duplicate pages, missed cross-refs, schema drift.
+
+**Harness-hook precedence during orient.** The orient and lint steps are deliberately bash-heavy (`tail log.md`, `grep` frontmatter, `_status.md` reads). A session-level hook that caps raw output (e.g. context-mode's "no Bash >20 lines") does not exempt you from orienting — these reads are required correctness work, not casual output. Run them; route bulky output through whatever the hook prefers (a context-mode tool, or read the file directly) rather than skipping the step. When a harness hook and this skill conflict, this skill's correctness and tone rules govern wiki work; apply the hook to discretionary chatter only.
 
 ## Core Operations
 
@@ -505,6 +512,10 @@ frontmatter powers Dataview. See `references/obsidian-sync.md` for headless sync
 - **Confirm mass updates**: 10+ pages touched → get user sign-off first.
 - **Rotate log**: at 500 entries, rename `log-YYYY.md`, start fresh.
 - **Human tone**: PM-facing content. No AI tells. No em-dashes. Natural voice.
+  This wins over session-level compression/style hooks (e.g. caveman, terse modes):
+  wiki pages and PM-facing output always use full natural prose regardless of any
+  active output-shortening directive. Apply the hook's brevity to your own chatter,
+  never to the artifact.
 - **Privacy by default**: customer names, deal sizes, 1:1 content = `private: true`.
   When in doubt, mark private. Exports/shares respect the flag.
 - **Supersede, don't silently rewrite**: materially replacing a page needs
