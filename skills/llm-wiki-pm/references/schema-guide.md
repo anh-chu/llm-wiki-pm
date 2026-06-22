@@ -46,9 +46,38 @@ relevance: high | medium | low    # How much this matters to our strategy
 last_reviewed: YYYY-MM-DD         # When a human last eyeballed it
 owner: anh | vu | data-team       # Who owns verifying this
 confidence: verified | likely | rumor
+lifecycle: stub-intentional       # By-design thin page (see below)
 ```
 
 Add these to the "Frontmatter" section in SCHEMA.md when you adopt them.
+
+### `confidence` and `coverage` are independent axes
+
+These two fields measure different things and must not be collapsed:
+
+- **`confidence`** = *source reliability*. How trustworthy is the underlying
+  signal? `verified` (direct from an authoritative source — a source DB, a
+  signed contract, the person themselves), `likely` (corroborated but indirect),
+  `rumor` (single weak/unconfirmed mention).
+- **`coverage`** = *completeness*. How much of the page's subject is actually
+  filled in? `full`, `partial`, `stub`.
+
+A page can legitimately be **`confidence: verified` + `coverage: stub`** — e.g. a
+warehouse-sourced account page with hard ARR/usage numbers straight from the
+source DB (verified fact) but zero engagement/relationship context yet (stub
+coverage). Do NOT downgrade `confidence` to `likely` just because coverage is
+thin; that misreports authoritative data as shaky. Keep the axes orthogonal.
+
+### `lifecycle: stub-intentional`
+
+Daily ingest legitimately creates thin pages awaiting future signal — fresh
+warehouse/account stubs, escalation placeholders. These are correct, not
+oversights, but they instantly become zero-inbound orphans and pollute the
+health metrics, re-flagged every session (alarm fatigue).
+
+Mark such pages `lifecycle: stub-intentional`. `lint.py` exempts them from the
+orphan warning (counted as info instead). Drop the flag once the page earns
+real backlinks or grows past stub coverage.
 
 ## Domain pivots
 

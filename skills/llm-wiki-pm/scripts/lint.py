@@ -135,6 +135,7 @@ def main():
     tag_usage = Counter()
     superseded_pages = set()
     supersede_map = {}  # old-slug -> new-slug
+    intentional_stubs = set()  # lifecycle: stub-intentional — exempt from orphan nag
 
     for p in pages:
         text = p.read_text()
@@ -158,6 +159,12 @@ def main():
                 errors.append(
                     f"superseded_by points to unknown page '{sb}': {p.relative_to(wiki)}"
                 )
+
+        # intentional stubs: by-design thin pages awaiting signal (e.g. fresh
+        # warehouse/account/escalation stubs). Exempt from the orphan warning so
+        # health metrics don't punish correct behavior.
+        if (fm.get("lifecycle") or "").strip().strip("'\"") == "stub-intentional":
+            intentional_stubs.add(slug(p))
 
         # tags
         tags = extract_tags(fm)
@@ -279,14 +286,23 @@ def main():
                     f"redirected superseded links in {p.relative_to(wiki)}"
                 )
 
-    # orphans (superseded pages are allowed to be orphans)
+    # orphans (superseded pages are allowed to be orphans; intentional stubs too)
+    intentional_stub_orphans = 0
     for p in pages:
         s = slug(p)
         if s in superseded_pages:
             continue
         if s not in inbound:
+            if s in intentional_stubs:
+                intentional_stub_orphans += 1
+                continue
             warnings.append(f"orphan (zero inbound links): {p.relative_to(wiki)}")
             orphans_list.append(str(p.relative_to(wiki)))
+    if intentional_stub_orphans:
+        info.append(
+            f"{intentional_stub_orphans} intentional stub(s) exempt from orphan check "
+            f"(lifecycle: stub-intentional)"
+        )
 
     # index completeness → auto-fix by appending missing entries
     idx_path = wiki / "index.md"

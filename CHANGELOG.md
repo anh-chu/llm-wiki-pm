@@ -7,6 +7,32 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.15.0] - 2026-06-22
+
+### Added
+
+- **Connected-tool output bounding** (core skill, Tool Selection Hierarchy) —
+  broad chat/email/warehouse searches can return 100K+ chars and blow the token
+  budget. New rule: tightest useful query first (concise format, no context,
+  `limit`≤15, narrow scope before broad keyword); widen only on empty.
+- **Soft date-operator warning** (core skill) — `after:`/`before:` are advisory
+  on semantic-search backends (rank by relevance, not recency). Always verify a
+  result's actual timestamp before trusting it as in-window.
+- **`lifecycle: stub-intentional` frontmatter flag** — marks by-design thin pages
+  (fresh warehouse/account/escalation stubs). `lint.py` now exempts them from the
+  orphan warning (counted as info), ending the daily re-flagging of correct
+  behavior. Documented in schema-guide.
+
+### Changed
+
+- **schema-guide: `confidence` and `coverage` are independent axes** — source
+  reliability vs completeness must not be collapsed. A page can be
+  `confidence: verified` + `coverage: stub` (e.g. warehouse facts with no
+  engagement context yet); don't downgrade confidence just because coverage is
+  thin.
+
+---
+
 ## [2.14.0] - 2026-06-22
 
 ### Added

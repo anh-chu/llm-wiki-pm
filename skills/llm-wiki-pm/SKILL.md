@@ -172,6 +172,17 @@ when the user's query would benefit.
 - **Search before read.** Use search/query tools to find relevant pages before
   reading files. Don't scan sequentially.
 - **Use all available tools.** Inventory at session start. Don't overlook tools.
+- **Bound connected-tool output.** Broad searches against chat/email/warehouse
+  tools can return 100K+ chars and blow the token budget. Default to the
+  tightest useful query: concise/summary response format, no message context,
+  `limit`≤15, and **narrow scope (channel/author/label/folder/date) BEFORE
+  broad keyword**. Widen only if the narrow pass comes back empty. A sweep that
+  dumps everything then slices it after the fact is a defect, not thoroughness.
+- **Date operators are soft on semantic backends.** Many semantic-search tools
+  (incl. some chat search) treat `after:`/`before:` as advisory — ranking by
+  relevance, not recency — so a dated query can still return out-of-window hits.
+  Always verify each result's actual timestamp before trusting it as in-window;
+  don't assume the date filter was honored.
 
 **Model routing:**
 
