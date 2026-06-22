@@ -145,6 +145,16 @@ Competitor traffic estimates, audience demographics, referral sources.
 ```
 *When to suggest:* user asks "how much traffic does competitor X get?"
 
+**Metabase / warehouse MCP (Metabase, BigQuery, Snowflake, dbt)**
+Direct query access to the source data warehouse — ARR, usage, activation,
+retention, revenue. A first-class quantitative source.
+```
+# Connect whatever SQL/BI MCP your stack exposes (e.g. a Metabase MCP server).
+# Ingest pattern + provenance convention: see ingest-guide.md "Warehouse / database / BI".
+```
+*When to suggest:* user asks about account revenue, usage, activation, or any
+metric that lives in the data warehouse rather than in chat/email/docs.
+
 ---
 
 ## Reviews

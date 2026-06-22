@@ -22,6 +22,19 @@ and laundered secondhand claims.
   `source_channel: "<provider>"` (e.g. `"Gmail"`),
   `source_date_range: "YYYY-MM-DD/YYYY-MM-DD"`, `source_thread_id: "<thread-id>"`.
   Strip external email addresses if sensitive.
+- **Warehouse / database / BI (any SQL or analytics tool — Metabase, BigQuery,
+  Snowflake, dbt, a dashboard, etc.)**: a first-class source for quantitative
+  facts (ARR, usage, activation, retention). Save the result snapshot →
+  `raw/internal/<metric-slug>-<snapshot>.md`. Provenance is the **query plus the
+  snapshot identifier**, not just the tool name — a warehouse number is only
+  reproducible if you record *what* you ran and *which slice*. Add frontmatter:
+  `source_channel: "<tool>"` (e.g. `"Metabase"`), `source_query_ref:
+  "<question-id|saved-query-name|inline SQL>"`, `source_snapshot: "<period or run
+  id>"` (e.g. `month_id=202606`, `as_of=2026-06-22`). Inline-cite the same way:
+  `[source: <metric-slug>-<snapshot>, query <ref>]`. These are `confidence:
+  verified` facts (straight from the source DB) even when the page is
+  `coverage: stub` — see the two-axes note in `schema-guide.md`; do not downgrade
+  confidence for thin coverage.
 - **Current conversation**: when user says "from this conversation" or "use what
   we discussed", treat the session as a source. Save a summary to
   `raw/internal/conversation-<YYYY-MM-DD>.md`. Distinguish:
@@ -103,9 +116,11 @@ lines. Link heavily.
 After each ingest, append or update the source row in `$WIKI/MY-INTEGRATIONS.md`.
 If the file doesn't exist, create it from `$CLAUDE_SKILL_DIR/templates/MY-INTEGRATIONS.md`.
 Row format: `| <source-label> | <type> | <YYYY-MM-DD> | <N> | <notes> |`
-Types: `web` | `chat` | `email` | `transcript` | `pdf` | `conversation` | `internal` | `other`
+Types: `web` | `chat` | `email` | `transcript` | `pdf` | `conversation` | `warehouse` | `internal` | `other`
 (`chat` covers any messaging tool — Slack, Teams, Discord, etc.; `email` covers
-any mail provider. Record the specific tool in `<source-label>` / `source_channel`.)
+any mail provider; `warehouse` covers any SQL/BI/analytics source — Metabase,
+BigQuery, Snowflake, dbt, dashboards. Record the specific tool in
+`<source-label>` / `source_channel`.)
 This is how the skill learns which integrations you actually use. No fabrication —
 only log sources actually ingested this session.
 

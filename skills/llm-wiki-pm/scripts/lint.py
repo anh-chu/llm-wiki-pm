@@ -68,6 +68,51 @@ def is_private(fm):
     return fm and fm.get("private", "").lower() in ("true", "yes")
 
 
+_LINK_BULLET = re.compile(r"^\s*-\s*\[\[([^\]]+)\]\]")
+
+
+def merge_sort_index(idx_text, additions):
+    """Rebuild index.md so each `## ` section's `- [[slug]]` bullet run is
+    alpha-sorted, backfilling any missing slugs from `additions`
+    (header-line -> set of slugs). Non-bullet lines (sub-headers, comments,
+    prose) keep their position; the sorted bullet block is placed where the
+    section's first link bullet was, or right after the header if the section
+    had none. Returns (new_text, changed: bool)."""
+    lines = idx_text.split("\n")
+    # locate section header line indices
+    headers = [i for i, ln in enumerate(lines) if ln.startswith("## ")]
+    bounds = []
+    for n, h in enumerate(headers):
+        end = headers[n + 1] if n + 1 < len(headers) else len(lines)
+        bounds.append((lines[h].rstrip(), h, end))
+
+    out = list(lines)
+    changed = False
+    # process bottom-up so earlier indices stay valid as we splice
+    for header_text, start, end in reversed(bounds):
+        body = list(range(start + 1, end))
+        bullets = [(i, _LINK_BULLET.match(lines[i]).group(1)) for i in body
+                   if _LINK_BULLET.match(lines[i])]
+        if not bullets and header_text not in additions:
+            continue
+        existing = [b[1] for b in bullets]
+        merged = sorted(set(existing) | additions.get(header_text, set()),
+                        key=str.lower)
+        new_bullets = [f"- [[{s}]]" for s in merged]
+        if new_bullets == [lines[i] for i, _ in bullets]:
+            continue  # already sorted, nothing to add
+        changed = True
+        bullet_idx = [i for i, _ in bullets]
+        insert_at = bullet_idx[0] if bullet_idx else start + 1
+        # drop old bullet lines (descending so indices stay valid)
+        for i in sorted(bullet_idx, reverse=True):
+            del out[i]
+            if i < insert_at:
+                insert_at -= 1
+        out[insert_at:insert_at] = new_bullets
+    return "\n".join(out), changed
+
+
 def get_superseded_by(fm):
     if not fm:
         return None
@@ -317,36 +362,32 @@ def main():
                 missing_in_index.append(p)
                 warnings.append(f"not in index.md: {p.relative_to(wiki)}")
 
-        if auto_fix and missing_in_index:
-            # naive append: add under matching type section
-            by_type = defaultdict(list)
-            for p in missing_in_index:
-                fm = parse_frontmatter(p.read_text()) or {}
-                t = fm.get("type", "entity").strip()
-                by_type[t].append(slug(p))
-            section_map = {
-                "entity": "## Entities",
-                "concept": "## Concepts",
-                "comparison": "## Comparisons",
-                "query": "## Queries",
-                "summary": "## Entities",
-            }
-            new_idx = idx_text
-            for t, ss in by_type.items():
-                header = section_map.get(t, "## Entities")
-                for s in sorted(ss):
-                    entry = f"- [[{s}]]"
-                    # append entry right after the header line
-                    new_idx = re.sub(
-                        rf"({re.escape(header)}\n(?:<!--.*?-->\n)?)",
-                        rf"\1{entry}\n",
-                        new_idx,
-                        count=1,
-                    )
-            if new_idx != idx_text:
+        # map missing pages to their target section header
+        section_map = {
+            "entity": "## Entities",
+            "concept": "## Concepts",
+            "comparison": "## Comparisons",
+            "query": "## Queries",
+            "summary": "## Entities",
+        }
+        additions = defaultdict(set)
+        for p in missing_in_index:
+            fm = parse_frontmatter(p.read_text()) or {}
+            t = fm.get("type", "entity").strip().strip("'\"")
+            additions[section_map.get(t, "## Entities")].add(slug(p))
+
+        # detect/repair section drift: bullets out of alpha order or missing
+        new_idx, changed = merge_sort_index(idx_text, additions)
+        if changed:
+            if auto_fix:
                 idx_path.write_text(new_idx)
-                fixes_applied.append(
-                    f"added {len(missing_in_index)} missing entries to index.md"
+                note = "alpha-sorted index.md sections"
+                if missing_in_index:
+                    note += f" (+{len(missing_in_index)} missing entries)"
+                fixes_applied.append(note)
+            else:
+                warnings.append(
+                    "index.md sections need sorting/backfill — run lint --auto-fix"
                 )
 
     # log rotation

@@ -7,6 +7,26 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.16.0] - 2026-06-22
+
+### Added
+
+- **Warehouse / database / BI ingest pattern** (ingest-guide) — SQL/analytics
+  sources (Metabase, BigQuery, Snowflake, dbt, dashboards) are now first-class.
+  Provenance convention: cite the query ref + snapshot id (`source_query_ref`,
+  `source_snapshot`, e.g. `month_id=202606`), not just the tool name, so a
+  warehouse number is reproducible. New `warehouse` source type and a
+  recommended-tools entry. Warehouse facts are `confidence: verified` even at
+  `coverage: stub`.
+
+### Changed
+
+- **`lint --auto-fix` now alpha-sorts and backfills index.md sections.** Replaces
+  the old append-after-header behavior (which inserted out of order and never
+  touched existing entries). Each `## ` section's `- [[slug]]` bullet run is
+  merged with missing entries and sorted case-insensitively; non-bullet lines
+  keep their place. Without `--auto-fix`, drift is reported as a warning.
+
 ## [2.15.0] - 2026-06-22
 
 ### Added
