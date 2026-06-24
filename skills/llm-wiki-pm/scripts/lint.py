@@ -205,10 +205,15 @@ def main():
                     f"superseded_by points to unknown page '{sb}': {p.relative_to(wiki)}"
                 )
 
-        # intentional stubs: by-design thin pages awaiting signal (e.g. fresh
-        # warehouse/account/escalation stubs). Exempt from the orphan warning so
-        # health metrics don't punish correct behavior.
-        if (fm.get("lifecycle") or "").strip().strip("'\"") == "stub-intentional":
+        # orphan-by-design pages, exempt from the orphan warning so health
+        # metrics don't punish correct behavior:
+        #   stub-intentional — thin pages awaiting signal (fresh warehouse/
+        #                      account/escalation stubs)
+        #   dated-digest     — one-shot dated pages (daily briefs, synthesis
+        #                      digests) that never earn inbound links by design
+        if (fm.get("lifecycle") or "").strip().strip("'\"") in (
+            "stub-intentional", "dated-digest"
+        ):
             intentional_stubs.add(slug(p))
 
         # tags
@@ -345,8 +350,8 @@ def main():
             orphans_list.append(str(p.relative_to(wiki)))
     if intentional_stub_orphans:
         info.append(
-            f"{intentional_stub_orphans} intentional stub(s) exempt from orphan check "
-            f"(lifecycle: stub-intentional)"
+            f"{intentional_stub_orphans} page(s) exempt from orphan check "
+            f"(lifecycle: stub-intentional / dated-digest)"
         )
 
     # index completeness → auto-fix by appending missing entries

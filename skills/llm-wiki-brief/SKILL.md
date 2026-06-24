@@ -93,6 +93,11 @@ If 24h window is empty, expand to 48h and note it. If still empty, offer weekly 
 
 **Log:** Read-only — do not append to log.md unless user asks to file output.
 
+**If you file the brief as a page** (e.g. `briefings/YYYY-MM-DD.md`), stamp
+`lifecycle: dated-digest` in its frontmatter. These are orphans by design;
+the flag keeps them out of the lint orphan count (see schema-guide). Without
+it, every daily brief permanently inflates the orphan metric.
+
 ---
 
 ### 2. Weekly Brief / Check-in

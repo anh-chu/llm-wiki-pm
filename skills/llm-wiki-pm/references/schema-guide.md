@@ -79,6 +79,16 @@ Mark such pages `lifecycle: stub-intentional`. `lint.py` exempts them from the
 orphan warning (counted as info instead). Drop the flag once the page earns
 real backlinks or grows past stub coverage.
 
+### `lifecycle: dated-digest`
+
+Dated one-shot pages — daily briefs, synthesis digests, weekly-sync notes — are
+orphans *by design*: nothing links back to a `briefings/2026-06-24.md`. Without
+a flag they ratchet the orphan count up every single day you do the job
+(orphans climbing 7→14 over a few days of normal use is the symptom). Stamp
+these `lifecycle: dated-digest` when you create them; `lint.py` exempts them
+from the orphan warning the same way as intentional stubs. (Generated
+`lint-*.md` reports are already skipped by lint entirely.)
+
 ## Domain pivots
 
 If scope shifts (e.g., TruePlatform becomes the whole company focus):
