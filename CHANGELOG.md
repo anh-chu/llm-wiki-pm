@@ -7,6 +7,43 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.18.0] - 2026-06-24
+
+### Added
+
+- **`llm-wiki-maintain` sub-skill** — the recurring daily-maintenance loop as a
+  defined operation: orient → registry-driven multi-source sweep → ingest →
+  daily brief → brief rotation → health check → consolidated report. Previously
+  improvised step-by-step. Explicit **interactive vs autonomous mode**:
+  autonomous/scheduled runs suppress interactive prompts, act on clear cases, and
+  queue human-decision items into a **Needs Review** section rather than
+  blocking. Defines the brief lifecycle (`briefings/` keeps 7 days, older →
+  `_archive/briefings/`). Orchestrates only — defers to the core skill and
+  `llm-wiki-brief`.
+- **Export-surface audit in lint** — `lint.py` lists the `shareable: true` set
+  (the export allowlist) so what would leave the wiki stays reviewable.
+
+### Changed
+
+- **Privacy model inverted to private-by-default (allowlist).** ⚠️ Behavioral
+  change. The old `private: true` flag had collapsed into always-on (nearly
+  every internal PM page qualified) and stopped carrying signal. Now **every
+  page is private and excluded from exports/shares unless it carries
+  `shareable: true`**; a forgotten flag fails safe instead of leaking. Migration:
+  pages built from public sources that you want to export must be marked
+  `shareable: true`; `private: true` is deprecated (now redundant, treated as
+  not-shareable). Updated privacy-guide, SCHEMA template, ingest/crystallize/
+  output-formats guides, and the core privacy guardrail.
+- **`lifecycle: dated-digest` orphan exemption** — extends the orphan-exemption
+  flag to dated one-shot pages (daily briefs, synthesis digests) alongside
+  `stub-intentional`, so normal daily use stops ratcheting the orphan count.
+- **`_status.md` snapshot warning** — header now states it is a session-start
+  snapshot; re-run lint for live counts after a bulk ingest.
+- **Freshness-first reconciled with batch ingest** — one batch sweep up front
+  satisfies freshness-first for a batch operation (sweep once, write many);
+  the per-page sweep applies only to standalone single-page writes. Removes the
+  contradiction with "Respect cost."
+
 ## [2.17.0] - 2026-06-24
 
 ### Added
