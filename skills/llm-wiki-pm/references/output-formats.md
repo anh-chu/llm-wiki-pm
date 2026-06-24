@@ -104,8 +104,9 @@ marp queries/<slug>/deck.md --pptx
 
 ### Privacy
 
-If the deck will leave your machine, check frontmatter for `private: true`
-pages referenced and strip those sections before exporting.
+If the deck will leave your machine, include only content from pages marked
+`shareable: true`. Pages are private by default — strip any section drawn from
+an unflagged (private) page before exporting. See privacy-guide.
 
 ## matplotlib Charts
 
@@ -177,7 +178,8 @@ customer-gamma,healthcare,mid-7,2027-Q1,high,<private>
 ### Always
 
 - Keep a `README.md` next to the CSV explaining columns and sources
-- If any real names appear, mark the parent page `private: true`
+- If any real names appear, leave the parent page unflagged (private by default);
+  never add `shareable: true` to it
 - Dataview can read CSVs in Obsidian via the Dataview CSV plugin
 
 ## Mermaid Diagrams
@@ -238,7 +240,7 @@ title: Brief, <Topic> (for <audience>)
 type: query
 tags: [brief, <domain>]
 sources: [entities/..., concepts/..., ...]
-private: true
+# private by default — no flag needed. lifecycle: dated-digest if it's a dated one-shot.
 ---
 
 # <Topic>

@@ -1,7 +1,7 @@
 ---
 name: llm-wiki-pm
 description: Persistent PM knowledge base, competitive intel, customer notes, strategy, roadmap, AI market. Markdown wiki with entities, concepts, comparisons. Ingest sources, query, update with diffs, lint. Fires on "remember that / note that / don't forget / what do we know about X / what am I missing / blind spots".
-when_to_use: Use when user wants to ingest a source, query the wiki, update pages, lint/audit, bootstrap a new wiki, audit coverage gaps, capture learnings, or says "remember that / note that / don't forget / what am I missing / blind spots". For persona/relationship-map pages use llm-wiki-persona; for briefs/digests use llm-wiki-brief; for CRM use llm-wiki-crm; for PRDs/user-stories/release-notes use llm-wiki-prd; for research sprints/deep dives use llm-wiki-research.
+when_to_use: Use when user wants to ingest a source, query the wiki, update pages, lint/audit, bootstrap a new wiki, audit coverage gaps, capture learnings, or says "remember that / note that / don't forget / what am I missing / blind spots". For persona/relationship-map pages use llm-wiki-persona; for briefs/digests use llm-wiki-brief; for CRM use llm-wiki-crm; for PRDs/user-stories/release-notes use llm-wiki-prd; for research sprints/deep dives use llm-wiki-research; for the daily-maintenance loop (sweep all sources → ingest → brief → tidy, incl. scheduled runs) use llm-wiki-maintain.
 allowed-tools: Read Grep Write Edit Bash WebFetch
 ---
 
@@ -45,10 +45,12 @@ surfaces one of these needs (don't try to do them from the core skill):
 | PRDs, user stories, release notes | `llm-wiki-prd` | "write a PRD", "user stories", "release notes" |
 | Research sprints, competitive deep dives, stub enrichment | `llm-wiki-research` | "research [topic]", "deep dive", "auto-research [entity]" |
 | Relationship/account health, CRM context, touchpoints | `llm-wiki-crm` | "relationship health", "account health", "who haven't I talked to" |
+| Daily-maintenance loop (sweep all sources → ingest → brief → tidy), incl. scheduled/autonomous runs | `llm-wiki-maintain` | "daily maintenance", "morning sweep", "ingest all sources and brief", "do the daily run" |
 
 If a sub-skill isn't installed, the core skill's matching fallback operation
-handles it where one exists (§10/§11/§12); persona, PRD, research, and CRM have no
-core fallback — they require their sub-skill.
+handles it where one exists (§10/§11/§12); persona, PRD, research, CRM, and
+maintain have no core fallback — they require their sub-skill. (You can still run
+the maintenance steps manually via the core ingest/brief/lint operations.)
 
 ## Proactive Behaviors
 
@@ -312,8 +314,9 @@ step-by-step (raw-capture conventions, page thresholds, inline provenance, the
 mandatory privacy filter, crystallize, entity-promotion scan). Skipping it
 produces orphan pages, missing cross-refs, and laundered secondhand claims. In brief:
 
-① **Capture raw** to `raw/` (immutable), behind a privacy filter — strip secrets;
-   mark `private: true` for customer/deal/1:1/internal-strategy content.
+① **Capture raw** to `raw/` (immutable), behind a privacy filter — strip secrets.
+   Pages are private by default; add `shareable: true` only to genuinely
+   public-safe pages (see privacy-guide).
 ② **Surface takeaways** to the user before writing (skip in batch contexts).
 ③ **Check existing pages** (`grep -r`) — decide create vs update.
 ④ **Apply page thresholds** (2+ sources or central) and **enrich from connected
@@ -529,8 +532,12 @@ frontmatter powers Dataview. See `references/obsidian-sync.md` for headless sync
   wiki pages and PM-facing output always use full natural prose regardless of any
   active output-shortening directive. Apply the hook's brevity to your own chatter,
   never to the artifact.
-- **Privacy by default**: customer names, deal sizes, 1:1 content = `private: true`.
-  When in doubt, mark private. Exports/shares respect the flag.
+- **Private by default (allowlist model)**: every page is private and excluded
+  from exports/shares unless it carries `shareable: true`. Do NOT mark pages
+  `private` — privacy is the default, so a per-page private flag is noise. Set
+  `shareable: true` only on pages that are genuinely safe to share externally
+  (built from public sources, no customer PII / deal terms / 1:1 content).
+  Exports include only `shareable: true` pages; forgetting a flag can never leak.
 - **Supersede, don't silently rewrite**: materially replacing a page needs
   explicit `supersedes:` / `superseded_by:` fields. Old page archived, not deleted.
 - **Use wiki-search first**: grep misses semantic matches. At dozens of meetings/week
@@ -558,7 +565,7 @@ frontmatter powers Dataview. See `references/obsidian-sync.md` for headless sync
 - `references/update-guide.md`, diff discipline, stale-claim sweep patterns
 - `references/lint-guide.md`, interpreting tiered reports + full check list
 - `references/obsidian-sync.md`, headless sync deep dive
-- `references/privacy-guide.md`, pre-ingest filter + `private:` flag
+- `references/privacy-guide.md`, pre-ingest filter + private-by-default `shareable:` allowlist
 - `references/crystallize-guide.md`, transcript → decision digest pattern
 - `references/recommended-tools.md`, optional key-required tool recommendations
 - `references/output-formats.md`, Marp, matplotlib, CSV, Mermaid, Canvas

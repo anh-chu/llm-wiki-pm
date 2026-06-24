@@ -44,7 +44,8 @@ and laundered secondhand claims.
 - Name descriptively: `raw/articles/gartner-test-automation-mq-2026.md`
 - **Privacy filter (mandatory)**: strip API keys, tokens, passwords from raw.
   If the source contains customer-identifying info, deal sizes, 1:1 content,
-  or internal-only strategy, set `private: true` on resulting wiki pages.
+  or internal-only strategy, leave the resulting wiki pages unflagged — they are
+  private by default; never add `shareable: true` to them (see privacy-guide).
 
 ## ② Surface takeaways to user BEFORE writing wiki pages
 
@@ -134,7 +135,9 @@ mass-updating (10+ pages).
 When ingesting a meeting transcript, 1:1 notes, or multi-source research, produce
 a digest page under `queries/` with sections: Context, Decisions, Action Items,
 Open Questions, Lessons/Patterns. Required frontmatter: title, type: query, tags,
-sources, private. See `crystallize-guide.md`. Link affected entity pages back to it.
+sources. (Digests are private by default — no flag needed; never mark a 1:1 or
+customer-call digest `shareable`.) See `crystallize-guide.md`. Link affected
+entity pages back to it.
 
 ## ①② Entity promotion scan (after every ingest)
 

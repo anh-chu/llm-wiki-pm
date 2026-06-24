@@ -68,6 +68,11 @@ def is_private(fm):
     return fm and fm.get("private", "").lower() in ("true", "yes")
 
 
+def is_shareable(fm):
+    # Private-by-default: a page is in the export set only if it opts in.
+    return bool(fm) and fm.get("shareable", "").strip().strip("'\"").lower() in ("true", "yes")
+
+
 _LINK_BULLET = re.compile(r"^\s*-\s*\[\[([^\]]+)\]\]")
 
 
@@ -181,6 +186,7 @@ def main():
     superseded_pages = set()
     supersede_map = {}  # old-slug -> new-slug
     intentional_stubs = set()  # lifecycle: stub-intentional — exempt from orphan nag
+    shareable_pages = []  # export allowlist (private-by-default model)
 
     for p in pages:
         text = p.read_text()
@@ -215,6 +221,11 @@ def main():
             "stub-intentional", "dated-digest"
         ):
             intentional_stubs.add(slug(p))
+
+        # export allowlist audit (private-by-default): surface what would leave
+        # the wiki on an export, so the shareable set stays reviewable.
+        if is_shareable(fm):
+            shareable_pages.append(str(p.relative_to(wiki)))
 
         # tags
         tags = extract_tags(fm)
@@ -352,6 +363,12 @@ def main():
         info.append(
             f"{intentional_stub_orphans} page(s) exempt from orphan check "
             f"(lifecycle: stub-intentional / dated-digest)"
+        )
+    if shareable_pages:
+        info.append(
+            f"export surface: {len(shareable_pages)} shareable page(s) (all others "
+            f"private by default) — review before any export: "
+            + ", ".join(sorted(shareable_pages))
         )
 
     # index completeness → auto-fix by appending missing entries

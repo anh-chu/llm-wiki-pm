@@ -35,7 +35,7 @@ updated: YYYY-MM-DD
 type: query
 tags: [decision, timeline, <domain tags>]
 sources: [raw/transcripts/<slug>.md]
-private: true      # default true for 1:1s, customer calls, internal meetings
+# private by default — no flag. NEVER add shareable: true to a 1:1/customer-call digest.
 ---
 
 # Crystallize: <Topic>
@@ -151,7 +151,7 @@ Then update:
 | Structure | Free-form | Context / Decisions / Actions / Questions / Lessons |
 | When | Articles, reports, docs | Transcripts, research chains, major syntheses |
 | Filed under | Entities, concepts | `queries/crystallize-*` |
-| Privacy default | Page-by-page | Usually `private: true` |
+| Privacy default | Private (all pages) | Private — never `shareable` |
 
 ## Querying Crystallize Pages
 

@@ -88,6 +88,7 @@ any operation not handled by an installed sub-skill.
 | `llm-wiki-research` | Research sprints, competitive deep dives, stub enrichment | — |
 | `llm-wiki-crm` | Relationship health, auto-enrichment, feature ask tracking | — |
 | `llm-wiki-persona` | Communication persona pages, relationship maps | — |
+| `llm-wiki-maintain` | Daily-maintenance loop (sweep all sources → ingest → brief → tidy), interactive/autonomous modes | run steps manually |
 
 Sub-skills are additive. Install only what you need. The core skill works standalone.
 
@@ -95,7 +96,7 @@ Sub-skills are additive. Install only what you need. The core skill works standa
 
 This plugin ships Claude Code support:
 - **Core skill**: `skills/llm-wiki-pm/SKILL.md`
-- **Sub-skills**: `skills/llm-wiki-{brief,prd,research,crm}/SKILL.md`
+- **Sub-skills**: `skills/llm-wiki-{brief,prd,research,crm,persona,maintain}/SKILL.md`
 - **Workers**: `.claude/agents/` (indexer, fetcher, link-validator, lint, people-updater)
 - **Role packs**: `.claude/roles/` (product-manager, researcher, executive, founder)
 

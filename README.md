@@ -43,6 +43,7 @@ pages. Every query cites specific wiki entries. The wiki compounds.
   - `llm-wiki-research` — research sprints, competitive deep dives, stub enrichment
   - `llm-wiki-crm` — relationship health, account health dashboard, feature ask tracker, auto-enrichment
   - `llm-wiki-persona` — communication persona pages and relationship maps, grounded in real message samples
+  - `llm-wiki-maintain` — the daily-maintenance loop (registry-driven sweep → ingest → brief → tidy → health check), with interactive vs autonomous modes
 - **MY-INTEGRATIONS.md**: learned source routing — auto-populated from actual ingest activity
 - **Next.js embed path** for platform deployments
 
@@ -172,7 +173,9 @@ llm-wiki-pm/
     │   ├── SKILL.md
     │   └── templates/
     │       └── SCHEMA-crm-fields.md
-    └── llm-wiki-persona/            # Optional: persona pages + relationship maps
+    ├── llm-wiki-persona/            # Optional: persona pages + relationship maps
+    │   └── SKILL.md
+    └── llm-wiki-maintain/           # Optional: daily-maintenance loop (sweep→ingest→brief→tidy)
         └── SKILL.md
 ```
 

@@ -38,7 +38,10 @@ last_verified: YYYY-MM-DD  # optional, date the page was last checked against a
 contradictions: []        # optional, pages with conflicting claims
 supersedes: []            # optional, page slugs this page replaces
 superseded_by: null       # optional, slug of the page that replaces this one
-private: false            # optional, true = exclude from exports/shares
+shareable: false          # optional. Pages are PRIVATE by default (excluded from
+                          #   exports/shares). Set true ONLY for public-safe pages
+                          #   (built from public sources, no PII/deal/1:1 content).
+                          #   lifecycle: stub-intentional | dated-digest (orphan-exempt)
 confidence: verified      # optional, verified | likely | rumor
 confidence_decay_days: null # optional, integer. Warn if updated: is older than N days.
                             #   Default 60 for competitive-tagged pages, null for others.
@@ -212,20 +215,23 @@ Revision (same page, new info) is NOT supersession, use Update flow instead.
 ## Privacy Policy
 
 PM sources contain sensitive data: customer names, account IDs, deal sizes,
-internal strategy, 1:1 content. Before ingesting:
+internal strategy, 1:1 content. **Every page is private by default** — excluded
+from any export/share unless it explicitly carries `shareable: true`. Before
+ingesting:
 
 1. Strip obvious PII (emails, phone numbers, customer employee names if not
    public) from raw source text if you're not comfortable with them in the wiki
-2. Flag sensitive pages with `private: true` in frontmatter
-3. Private pages stay in the wiki but are excluded from exports/shares
+2. Leave pages unflagged (private). Add `shareable: true` ONLY to pages that are
+   genuinely safe to share — built from public sources, no PII/deal/1:1 content.
+3. Exports include only `shareable: true` pages; an unflagged page can never leak.
 4. Customer names in competitive contexts: use internal codes
-   (e.g. `customer-alpha`) if the page might ever leave your machine
+   (e.g. `customer-alpha`) even on a shareable page if real names would be unsafe.
 
 Privacy filter checklist before every ingest:
 - [ ] Any API keys, tokens, passwords in the source? → strip before saving to raw/
-- [ ] Customer names tied to revenue/churn risk? → consider private: true
-- [ ] Internal strategy that would harm if leaked? → private: true
-- [ ] 1:1 content with named colleagues? → private: true
+- [ ] Is this page genuinely public-safe? → only then add `shareable: true`
+- [ ] Public-sourced competitor/market/framework page with no PII? → `shareable: true` candidate
+- [ ] Anything customer/deal/1:1/internal-strategy? → leave unflagged (stays private)
 
 ## Confidence Levels
 

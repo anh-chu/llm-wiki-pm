@@ -7,7 +7,16 @@ term. Treat privacy as a first-class concern, not an afterthought.
 ## Two Levers
 
 1. **Filter on ingest**: what never makes it into `raw/` can't leak
-2. **`private: true` frontmatter**: what's in the wiki but excluded from exports
+2. **Private-by-default exports (allowlist)**: every page is private and excluded
+   from exports/shares unless it explicitly carries `shareable: true`
+
+> **Model: private by default.** The old `private: true` flag collapsed into
+> always-on — nearly every internal PM page qualified, so the flag stopped
+> carrying signal and couldn't drive export decisions. The model is now
+> inverted: pages are private unless marked `shareable: true`. The rare positive
+> flag is the meaningful one, and a forgotten flag fails safe (stays private)
+> instead of leaking. `private: true` is deprecated; you no longer need to set
+> it (it's the default), and it is treated as "not shareable" for back-compat.
 
 ## Pre-Ingest Checklist
 
@@ -21,37 +30,39 @@ Before saving any source to `raw/`:
 
 If you're unsure, err on stripping. Raw sources are immutable once filed.
 
-## Private Frontmatter Flag
+## The `shareable` Flag
 
 ```yaml
 ---
-title: Customer Foo Renewal Risk
-private: true
+title: Gartner Test Automation MQ 2026
+shareable: true
 ---
 ```
 
-Pages with `private: true`:
-- Stay in the wiki and are used by the agent normally
-- Are excluded from any export/share operation
-- Are not sent to third-party tools that receive the wiki
-- Should be the default for: customer-specific pages, 1:1 summaries,
-  named-employee conduct notes, unreleased roadmap/pricing
+Default (no flag) = private:
+- Stays in the wiki and is used by the agent normally
+- Excluded from any export/share operation
+- Not sent to third-party tools that receive the wiki
 
-## What Should Be Private by Default
+`shareable: true` opts a page INTO exports. Set it only when the page is
+genuinely safe to share externally.
 
-Always `private: true`:
+## What May Be `shareable: true`
+
+Only pages with no sensitive content — typically:
+- Competitor pages built from public analyst reports
+- Market analysis from published sources
+- Concept pages (frameworks, themes) without customer PII
+- General strategy notes not tied to specific people/accounts
+
+Leave everything else unflagged (private). That includes — and these must NEVER
+get `shareable: true`:
 - Specific customer account pages with revenue/churn signals
 - 1:1 transcripts and crystallized digests
 - Named-employee performance/conduct notes
 - Pre-release pricing changes
 - Internal competitive moves (undisclosed acquisitions, hiring plans)
 - Any page with `type: query` derived from private sources
-
-Usually public (`private: false` or omitted):
-- Competitor pages built from public analyst reports
-- Market analysis from published sources
-- Concept pages (frameworks, themes) without customer PII
-- General strategy notes not tied to specific people/accounts
 
 ## Obfuscation Patterns
 
@@ -65,8 +76,8 @@ If a page must be referenced widely but contains sensitive specifics:
 - Risk: medium
 ```
 
-Keep the real mapping in a separate `_private/mappings.md` with `private: true`.
-Reference the codename in public pages.
+Keep the real mapping in a separate `_private/mappings.md` (private by default —
+never make it shareable). Reference the codename in public pages.
 
 **Redact numbers:**
 ```markdown
@@ -80,21 +91,22 @@ If the entire raw source shouldn't exist on the wiki at all (e.g., legally
 privileged material, pre-acquisition targets):
 
 - Don't ingest. Keep the source outside the wiki entirely.
-- If key facts must be captured, hand-write them into a `private: true` page
-  with no source link.
+- If key facts must be captured, hand-write them into an unflagged (private)
+  page with no source link.
 
 ## Exports and Shares
 
 When exporting wiki subsets (to share with a teammate, post in a doc, move
-to another system):
+to another system), export ONLY the allowlist:
 
 ```bash
-# Find private pages before any export
-grep -rl "^private: true" $WIKI --include="*.md"
+# The export set = pages explicitly marked shareable. Everything else stays private.
+grep -rl "^shareable: true" $WIKI --include="*.md"
 ```
 
-Review the list. Remove private pages from the export. Double-check the
-export for codenames vs real names.
+Export only those pages. Anything not on this list is private by default and
+must be left out. Double-check the shareable set for codenames vs real names
+before it leaves your machine.
 
 ## Audit
 
@@ -107,4 +119,5 @@ grep -rEn "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}" $WIKI --include="*.m
 grep -rEn "\b[0-9]{3}[-.][0-9]{3}[-.][0-9]{4}\b" $WIKI --include="*.md"
 ```
 
-Review hits. Either redact, pseudonymize, or mark the page private.
+Review hits. Either redact, pseudonymize, or ensure the page is not `shareable`
+(unflagged pages are already private).
