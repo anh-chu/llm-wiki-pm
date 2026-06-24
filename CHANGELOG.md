@@ -7,6 +7,20 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.17.0] - 2026-06-24
+
+### Added
+
+- **Canonical sweep registry (anti-omission).** The source-completeness guard
+  caught "you reported a source empty" but not "you forgot the source exists" —
+  the more dangerous failure (a daily brief silently omitted Slack and GitHub
+  while declaring the sweep complete). New `## Sweep Registry` section in
+  `MY-INTEGRATIONS.md` defines the canonical source set a full "ingest all
+  sources" / daily-brief sweep must iterate, with one ledger row per registered
+  source. The guard, Pre-Flight ③, and `llm-wiki-brief` now read the registry
+  instead of an implicit from-memory list; if absent it is built from connected
+  tools + Active Sources, confirmed with the user, and written before sweeping.
+
 ## [2.16.0] - 2026-06-22
 
 ### Added

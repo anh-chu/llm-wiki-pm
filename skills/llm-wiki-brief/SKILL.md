@@ -37,6 +37,7 @@ Full orient (AGENTS.md 4-step protocol) only required if filing output as a wiki
 
 When a brief is asked to pull from external sources (whatever the user's connected stack — issue trackers, mail, chat, CRM, meeting notes, web), the core llm-wiki-pm **Source-completeness guard** applies in full: an empty or errored source is a signal to vary the query, not to declare the sweep done.
 
+- **Get the source set from the registry, not from memory.** Before sweeping, read the `## Sweep Registry` in `$WIKI/MY-INTEGRATIONS.md` and cover every source listed; the ledger below must have one row per registered source. If no registry exists, build the set from connected tools + the `Active Sources` table, confirm it with the user, and write it to the registry. Forgetting a registered source (e.g. omitting Slack or GitHub from the sweep) is the worst failure — it reads as complete while a high-signal source went unread.
 - Run ≥2 varied queries per source before calling it empty (broaden terms, widen the window, try aliases/handles/scope variants, switch syntax). Keyword search tools commonly miss on first phrasing.
 - Classify each requested source as `hits` / `empty-after-retries` / `failed`. Never collapse `failed` or `empty-after-retries` into "covered."
 - **Always emit a Source Coverage ledger** (see below) listing every requested source and its state. A source that returned nothing must appear in the brief, not vanish from it. No "enough captured" while a requested source is `failed` or was abandoned after one query.
