@@ -2,19 +2,19 @@
 
 ## Domain
 
-Product management knowledge base. Scope:
-- Competitive landscape (test automation, DevOps, AI dev tools)
-- Customer relations (enterprise accounts, SE/sales insights)
-- Strategy (TruePlatform, Kai/AI, migrations, pricing)
+Product management knowledge base. Scope (customize to your space):
+- Competitive landscape (your market and adjacent categories)
+- Customer relations (accounts, sales/SE insights)
+- Strategy (your products, AI direction, migrations, pricing)
 - Internal org (people, teams, decisions, OKRs)
 - AI market intelligence (models, tools, vendors, trends)
 - Roadmap and product health signals
 
-Out of scope: code specifics (use Hindsight + code comments). Personal life.
+Out of scope: code specifics. Personal life.
 
 ## Conventions
 
-- Filenames: lowercase, hyphens, no spaces. E.g. `tricentis.md`, `trueplatform-launch.md`
+- Filenames: lowercase, hyphens, no spaces. E.g. `competitor-x.md`, `product-launch.md`
 - Every wiki page starts with YAML frontmatter (below)
 - `[[wikilinks]]` between pages, minimum 2 outbound per page
 - Bump `updated:` date on any edit
@@ -107,11 +107,11 @@ Every tag on a page must appear here. Add new tags here FIRST, then use.
 - `question`, open question to investigate
 - `prediction`, forward-looking claim with date
 
-### Katalon-specific
-- `trueplatform`, TruePlatform (formerly TestOps)
-- `studio`, Katalon Studio (not my scope but relevant)
-- `kai`, Kai AI product
-- `katalon-internal`, internal org/people
+### Domain-specific (replace these with your own products/orgs)
+- `product-a`, your primary product
+- `product-b`, an adjacent product (relevant but not your scope)
+- `ai-product`, your AI product line
+- `internal`, internal org/people
 
 Rule: tag sprawl kills wikis. Max ~40 tags. Consolidate quarterly.
 
@@ -130,7 +130,7 @@ Fields:
 - Overview (what it is, 1-2 paragraphs)
 - Key facts (dates, numbers, positions)
 - Relationships (`[[wikilinks]]` to related entities)
-- Relevance to our work (why this matters for Katalon PM)
+- Relevance to our work (why this matters for your PM work)
 - Source references
 
 Person entity additional fields (when available):
@@ -288,7 +288,7 @@ Every non-obvious factual claim in a wiki page must carry an inline source
 marker anchoring it to the specific raw source:
 
 ```markdown
-Katalon holds ~15% market share in SE Asia [source: gartner-mq-2026, p.12]
+Vendor X holds ~15% market share in region Y [source: gartner-mq-2026, p.12]
 ```
 
 The `sources:` frontmatter field lists all sources for the page. Inline markers

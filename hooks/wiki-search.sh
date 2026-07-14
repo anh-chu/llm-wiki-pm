@@ -7,7 +7,10 @@
 
 set -eu
 
-export VAULT_PATH="${CLAUDE_PLUGIN_OPTION_wiki_path:-$(pwd)}"
+# Resolve vault path with the same precedence as the other hooks:
+# .wiki-path (project) > CLAUDE_PLUGIN_OPTION_wiki_path (global) > WIKI_PATH > cwd
+FILE_WIKI=$(tr -d '[:space:]' < "$(pwd)/.wiki-path" 2>/dev/null || true)
+export VAULT_PATH="${FILE_WIKI:-${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-$(pwd)}}}"
 
 # Try cached binary first (npx caches here after first run)
 CACHED=$(find "${HOME}/.npm/_npx" -path "*/@wirux/mcp-markdown-vault/dist/index.js" -print -quit 2>/dev/null || true)

@@ -22,6 +22,7 @@ TEMPLATES_DIR = REPO_ROOT / "skills" / "llm-wiki-pm" / "templates"
 
 SESSION_START = HOOKS_DIR / "session-start.sh"
 POST_WRITE = HOOKS_DIR / "post-write.sh"
+PRE_WRITE = HOOKS_DIR / "pre-write.sh"
 SESSION_STOP = HOOKS_DIR / "session-stop.sh"
 
 
@@ -81,6 +82,21 @@ def session_end_payload() -> dict:
     return {
         "session_id": "test-session-123",
         "hook_event_name": "SessionEnd",
+        "cwd": "/tmp",
+    }
+
+
+def pre_write_payload(file_path: str, content=None, tool: str = "Write") -> dict:
+    """PreToolUse JSON input for a Write/Edit tool call. content=None omits it
+    (mimics Edit, which carries no full content — the hook reads disk)."""
+    ti = {"file_path": file_path}
+    if content is not None:
+        ti["content"] = content
+    return {
+        "session_id": "test-session-123",
+        "hook_event_name": "PreToolUse",
+        "tool_name": tool,
+        "tool_input": ti,
         "cwd": "/tmp",
     }
 
@@ -265,7 +281,7 @@ class TestSessionStart:
     def test_no_rescaffold_existing_wiki(self, tmp_path):
         """Existing wiki with SCHEMA.md: no scaffold, no file overwrite."""
         wiki = make_wiki(tmp_path)
-        (wiki / "entities" / "tricentis.md").write_text("# Tricentis\n")
+        (wiki / "entities" / "competitor-x.md").write_text("# Competitor X\n")
         original_schema_mtime = (wiki / "SCHEMA.md").stat().st_mtime
 
         run_hook(
@@ -486,7 +502,7 @@ class TestPostWrite:
         """File path extracted from stdin JSON using Python, not jq."""
         wiki = make_wiki(tmp_path)
         page = wiki / "entities" / "test.md"
-        page.write_text("# Test\n[[tricentis]]\n")
+        page.write_text("# Test\n[[competitor-x]]\n")
 
         # Run with PATH stripped of jq to confirm Python fallback works
         env = {
@@ -509,12 +525,17 @@ class TestPostWrite:
         assert result.returncode == 0
         assert (wiki / "_status.md").exists()
 
-    def test_clean_page_reports_clean(self, tmp_path):
-        """Page with valid wikilinks reports clean."""
+    def test_clean_page_leaves_status_untouched(self, tmp_path):
+        """A clean write (valid wikilinks) must NOT write _status.md.
+
+        Contract: post-write is silent on success — it only records actual
+        issues. A per-write 'clean' line grew _status.md unboundedly and raced
+        session-start.sh, so success writes nothing.
+        """
         wiki = make_wiki(tmp_path)
-        make_entity(wiki, "tricentis", updated=date.today())
+        make_entity(wiki, "competitor-x", updated=date.today())
         page = wiki / "entities" / "test.md"
-        page.write_text("# Test\n[[tricentis]]\n")
+        page.write_text("# Test\n[[competitor-x]]\n")
 
         run_hook(
             POST_WRITE,
@@ -524,9 +545,9 @@ class TestPostWrite:
             },
         )
 
-        status = (wiki / "_status.md").read_text()
-        assert "clean" in status.lower()
-        assert "broken wikilink" not in status
+        assert not (wiki / "_status.md").exists(), (
+            "clean write must not create _status.md"
+        )
 
     def test_broken_wikilink_reported(self, tmp_path):
         """Page with broken wikilink reports issue in _status.md."""
@@ -550,9 +571,9 @@ class TestPostWrite:
         """Wikilink to slug that exists only in raw/ is reported as broken."""
         wiki = make_wiki(tmp_path)
         # Create file only in raw/, not in entities/concepts/comparisons/queries
-        (wiki / "raw" / "articles" / "tricentis.md").write_text("# raw article")
+        (wiki / "raw" / "articles" / "competitor-x.md").write_text("# raw article")
         page = wiki / "entities" / "test.md"
-        page.write_text("# Test\n[[tricentis]]\n")
+        page.write_text("# Test\n[[competitor-x]]\n")
 
         run_hook(
             POST_WRITE,
@@ -568,9 +589,9 @@ class TestPostWrite:
     def test_entity_page_satisfies_wikilink(self, tmp_path):
         """Wikilink to entity page resolves as valid."""
         wiki = make_wiki(tmp_path)
-        make_entity(wiki, "databricks", updated=date.today())
+        make_entity(wiki, "acme", updated=date.today())
         page = wiki / "concepts" / "market.md"
-        page.write_text("# Market\n[[databricks]]\n")
+        page.write_text("# Market\n[[acme]]\n")
 
         run_hook(
             POST_WRITE,
@@ -580,15 +601,15 @@ class TestPostWrite:
             },
         )
 
-        status = (wiki / "_status.md").read_text()
-        assert "broken wikilink" not in status
+        # Valid wikilink → no issue → no _status.md written.
+        assert not (wiki / "_status.md").exists()
 
     def test_alias_syntax_wikilink(self, tmp_path):
         """[[target|label]] alias syntax: target validated, label ignored."""
         wiki = make_wiki(tmp_path)
-        make_entity(wiki, "tricentis", updated=date.today())
+        make_entity(wiki, "competitor-x", updated=date.today())
         page = wiki / "entities" / "test.md"
-        page.write_text("# Test\n[[tricentis|Tricentis Corporation]]\n")
+        page.write_text("# Test\n[[competitor-x|Competitor X Corporation]]\n")
 
         run_hook(
             POST_WRITE,
@@ -598,15 +619,15 @@ class TestPostWrite:
             },
         )
 
-        status = (wiki / "_status.md").read_text()
-        assert "broken wikilink" not in status
+        # Valid alias target → no broken-link issue → no _status.md written.
+        assert not (wiki / "_status.md").exists()
 
     def test_anchor_syntax_wikilink(self, tmp_path):
         """[[target#section]] anchor syntax: target validated, section ignored."""
         wiki = make_wiki(tmp_path)
-        make_entity(wiki, "tricentis", updated=date.today())
+        make_entity(wiki, "competitor-x", updated=date.today())
         page = wiki / "entities" / "test.md"
-        page.write_text("# Test\n[[tricentis#pricing]]\n")
+        page.write_text("# Test\n[[competitor-x#pricing]]\n")
 
         run_hook(
             POST_WRITE,
@@ -616,15 +637,15 @@ class TestPostWrite:
             },
         )
 
-        status = (wiki / "_status.md").read_text()
-        assert "broken wikilink" not in status
+        # Valid anchor target → no broken-link issue → no _status.md written.
+        assert not (wiki / "_status.md").exists()
 
     def test_appends_to_existing_status(self, tmp_path):
-        """Successive writes append to _status.md without wiping it."""
+        """An issue-write appends to _status.md without wiping existing content."""
         wiki = make_wiki(tmp_path)
         (wiki / "_status.md").write_text("# Wiki Status\n\n## Previous\n")
         page = wiki / "entities" / "test.md"
-        page.write_text("# Test\n")
+        page.write_text("# Test\n[[nonexistent-page]]\n")  # broken link → an issue
 
         run_hook(
             POST_WRITE,
@@ -636,6 +657,7 @@ class TestPostWrite:
 
         status = (wiki / "_status.md").read_text()
         assert "Previous" in status, "Existing status content must be preserved"
+        assert "broken wikilink" in status, "New issue must be appended"
 
     def test_exits_zero_always(self, tmp_path):
         """Hook never blocks a write (always exits 0)."""
@@ -774,6 +796,32 @@ class TestSessionStop:
             "Must not rotate: only 499 entries despite 1497 lines"
         )
 
+    def test_no_rotation_empty_log(self, tmp_path):
+        """Regression: a header-only log (0 entries) must NOT rotate.
+
+        The old `grep -c ... || echo 0` produced ENTRY_COUNT='0\\n0' on zero
+        matches, which broke the `-le 500` test and rotated a fresh log every
+        session — spawning log-YYYY-part-2/3/... endlessly. A freshly-rotated log
+        (only a rotation header, no '## [' entries) is exactly this case.
+        """
+        wiki = make_wiki(tmp_path)
+        (wiki / "log.md").write_text(
+            "# Wiki Log\n\nRotated from log-2025.md on 2026-01-01.\n"
+        )
+        original = (wiki / "log.md").read_text()
+
+        result = run_hook(
+            SESSION_STOP,
+            session_end_payload(),
+            {
+                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+            },
+        )
+
+        assert result.returncode == 0
+        assert (wiki / "log.md").read_text() == original, "empty log must not change"
+        assert not list(wiki.glob("log-*.md")), "0-entry log must never rotate"
+
     def test_no_wiki_exits_silently(self, tmp_path):
         """Missing wiki directory: silent exit 0."""
         result = run_hook(
@@ -798,6 +846,180 @@ class TestSessionStop:
             },
         )
         assert result.returncode == 0
+
+
+LINT = REPO_ROOT / "skills" / "llm-wiki-pm" / "scripts" / "lint.py"
+
+
+def run_lint(wiki: Path):
+    """Run lint.py and return the generated report text."""
+    subprocess.run(
+        ["python3", str(LINT), str(wiki), "--quiet"],
+        capture_output=True, text=True,
+    )
+    reports = sorted((wiki / "queries").glob("lint-*.md"))
+    return reports[-1].read_text() if reports else ""
+
+
+class TestLint:
+    def _write(self, wiki, rel, fm_extra, sources, body="# t\n"):
+        p = wiki / rel
+        p.parent.mkdir(parents=True, exist_ok=True)
+        src = "sources: [" + ", ".join(sources) + "]"
+        p.write_text(
+            f"---\ntitle: t\ncreated: 2024-01-01\nupdated: {date.today()}\n"
+            f"{fm_extra}\ntags: [company]\n{src}\n---\n{body}"
+        )
+        return p
+
+    def test_missing_coverage_marker_warns(self, tmp_path):
+        wiki = make_wiki(tmp_path)
+        self._write(wiki, "entities/nocov.md", "type: entity",
+                    ["raw/articles/x.md"], "# t\nGrounded [source: x].\n")
+        report = run_lint(wiki)
+        assert "no coverage: marker" in report and "nocov" in report
+
+    def test_coverage_marker_present_no_warn(self, tmp_path):
+        wiki = make_wiki(tmp_path)
+        self._write(wiki, "entities/withcov.md",
+                    "type: entity\ncoverage: partial",
+                    ["raw/articles/x.md"], "# t\nGrounded [source: x].\n")
+        report = run_lint(wiki)
+        assert "no coverage: marker (stub/partial/comprehensive): entities/withcov.md" not in report
+
+    def test_self_referential_factual_is_error(self, tmp_path):
+        wiki = make_wiki(tmp_path)
+        self._write(wiki, "entities/laundered.md", "type: entity\ncoverage: stub",
+                    ["concepts/other.md"])
+        report = run_lint(wiki)
+        # appears under the 🔴 Errors section
+        err_section = report.split("🟡")[0]
+        assert "self-referential" in err_section and "laundered" in err_section
+
+    def test_self_referential_decision_query_is_error(self, tmp_path):
+        """A decision-tagged synthesis sourced only from wiki pages is 🔴."""
+        wiki = make_wiki(tmp_path)
+        p = wiki / "queries" / "decided.md"
+        p.write_text(
+            f"---\ntitle: t\ncreated: 2024-01-01\nupdated: {date.today()}\n"
+            "type: query\ntags: [decision]\nsources: [concepts/other.md]\n---\n# t\n"
+        )
+        report = run_lint(wiki)
+        err_section = report.split("🟡")[0]
+        assert "self-referential" in err_section and "decided" in err_section
+
+    def test_self_referential_plain_query_is_warning(self, tmp_path):
+        """An ordinary digest sourced from wiki pages stays 🟡, not 🔴."""
+        wiki = make_wiki(tmp_path)
+        p = wiki / "queries" / "digest.md"
+        p.write_text(
+            f"---\ntitle: t\ncreated: 2024-01-01\nupdated: {date.today()}\n"
+            "type: query\ntags: [question]\nsources: [concepts/other.md]\n---\n# t\n"
+        )
+        report = run_lint(wiki)
+        err_section = report.split("🟡")[1] if "🟡" in report else report
+        assert "digest" in err_section  # under warnings, not errors
+
+
+class TestPreWrite:
+    """Freshness gate + automatic pre-update snapshot."""
+
+    def _grounded(self, links="[[a]] [[b]]"):
+        return (
+            "---\ntitle: t\ntype: entity\ntags: [company]\n"
+            "sources:\n  - raw/articles/x.md\n---\n"
+            f"# t\nClaim [source: x, p.1]\n{links}\n"
+        )
+
+    def _ungrounded(self):
+        return (
+            "---\ntitle: t\ntype: entity\ntags: [company]\n"
+            "sources:\n  - entities/other.md\n---\n"
+            "# t\nSome prose with no primary source and no inline marker.\n"
+        )
+
+    def test_gate_fires_for_ungrounded_page(self, tmp_path):
+        wiki = make_wiki(tmp_path)
+        page = wiki / "entities" / "new.md"
+        r = run_hook(
+            PRE_WRITE,
+            pre_write_payload(str(page), content=self._ungrounded()),
+            {"CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki)},
+        )
+        assert r.returncode == 0
+        assert "Freshness gate" in r.stdout, "must nudge on an ungrounded knowledge page"
+
+    def test_gate_silent_for_grounded_page(self, tmp_path):
+        wiki = make_wiki(tmp_path)
+        page = wiki / "entities" / "new.md"
+        r = run_hook(
+            PRE_WRITE,
+            pre_write_payload(str(page), content=self._grounded()),
+            {"CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki)},
+        )
+        assert r.returncode == 0
+        assert r.stdout.strip() == "", "primary source + inline marker → silent"
+
+    def test_gate_silent_outside_knowledge_dirs(self, tmp_path):
+        wiki = make_wiki(tmp_path)
+        # raw/ is exempt; also a non-wiki path must be ignored
+        raw = wiki / "raw" / "articles" / "src.md"
+        r = run_hook(
+            PRE_WRITE,
+            pre_write_payload(str(raw), content=self._ungrounded()),
+            {"CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki)},
+        )
+        assert r.returncode == 0 and r.stdout.strip() == ""
+
+    def test_snapshot_created_on_overwrite(self, tmp_path):
+        wiki = make_wiki(tmp_path)
+        page = make_entity(wiki, "acme", updated=date.today())
+        r = run_hook(
+            PRE_WRITE,
+            pre_write_payload(str(page), content=self._grounded()),
+            {"CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki)},
+        )
+        assert r.returncode == 0
+        snaps = list((wiki / "_archive").glob("acme-*.md"))
+        assert len(snaps) == 1, "existing page must be snapshotted before overwrite"
+        assert "acme" in snaps[0].read_text()
+
+    def test_snapshot_reads_disk_for_edit_without_content(self, tmp_path):
+        """Edit carries no content; the hook must still snapshot from disk."""
+        wiki = make_wiki(tmp_path)
+        page = make_entity(wiki, "acme", updated=date.today())
+        r = run_hook(
+            PRE_WRITE,
+            pre_write_payload(str(page), content=None, tool="Edit"),
+            {"CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki)},
+        )
+        assert r.returncode == 0
+        assert list((wiki / "_archive").glob("acme-*.md")), "Edit must snapshot too"
+
+    def test_no_snapshot_for_new_page(self, tmp_path):
+        wiki = make_wiki(tmp_path)
+        page = wiki / "entities" / "brand-new.md"
+        run_hook(
+            PRE_WRITE,
+            pre_write_payload(str(page), content=self._grounded()),
+            {"CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki)},
+        )
+        assert not list((wiki / "_archive").glob("brand-new-*.md")), (
+            "a brand-new page has nothing to snapshot"
+        )
+
+    def test_snapshot_idempotent_same_day(self, tmp_path):
+        wiki = make_wiki(tmp_path)
+        page = make_entity(wiki, "acme", updated=date.today())
+        for _ in range(2):
+            run_hook(
+                PRE_WRITE,
+                pre_write_payload(str(page), content=self._grounded()),
+                {"CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki)},
+            )
+        assert len(list((wiki / "_archive").glob("acme-*.md"))) == 1, (
+            "at most one snapshot per page per day"
+        )
 
 
 # ---------------------------------------------------------------------------

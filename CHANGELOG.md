@@ -7,6 +7,82 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.20.0] - 2026-07-15
+
+De-bloat + de-bias release. A brutal multi-lens review (bloat, redundancy, bias,
+enforcement, scripts, overhead, second-brain efficacy) found the deterministic
+layer solid but the always-on `SKILL.md` bloated, with its highest-severity
+guardrails living in prose that structurally could not fire. This release cuts the
+always-on cost roughly in half, converts the mechanizable guards into hooks/lint,
+fixes a data-loss bug, and reconciles several drifted docs. (Supersedes the
+unreleased 2.19.0, whose provenance/falsification guard is retained but compressed
+and relocated below.)
+
+### Fixed
+
+- **P0: infinite log re-rotation.** `session-stop.sh` used `grep -c ... || echo 0`,
+  which produced `ENTRY_COUNT="0\n0"` on an empty log, broke the `-le 500` test,
+  and rotated a fresh log on **every session end** — spawning `log-YYYY-part-2/3/…`
+  and moving the real log aside each time. Now counts correctly; a 0-entry log
+  never rotates. Regression test added (the old suite only covered 499/501 entries,
+  never 0).
+- **Phantom retrieval tool naming.** Docs told the agent to run `wiki-search
+  semantic_search "..."` as a shell command; the bundled MCP is an action
+  dispatcher (`view(action=semantic_search|read|backlinks|global_search)`).
+  Following the docs literally, the agent found no tool and silently fell back to
+  grep. Fixed the fake bash in `update-guide.md` and added a canonical mapping line.
+- **Privacy-model drift.** `private: true` still appeared in `AGENTS.md`, the
+  persona/research/brief sub-skills, and two templates — a flag `lint.py` never
+  reads (false protection). All reconciled to the v2.18.0 private-by-default
+  allowlist; dead `is_private()` removed from `lint.py`.
+- **`wiki-search.sh` path resolution** now matches the other four hooks
+  (`.wiki-path` → plugin option → `WIKI_PATH` → cwd).
+- **Confidence-decay detection** no longer greps the literal word "competitive"
+  across a page's body; it reads frontmatter `tags` + `confidence_decay_days`.
+
+### Changed
+
+- **Always-on context cut ~50%.** Core `SKILL.md` 601→383 lines (~8.2k→~4.3k
+  tokens). The `session-start.sh` clause that force-loaded the full skill on every
+  session's first message is replaced with a slim always-on "watcher" primer, so
+  the full skill loads only when a PM trigger actually fires — ambient capture
+  (set-and-forget) is preserved while off-topic sessions pay ~0.4k instead of ~8.2k.
+- **Five source-discipline guards → one compressed block.** The full detail
+  (freshness-first, source-completeness, source-depth, provenance-tier &
+  falsification) moved to `references/source-discipline.md`; the named anchors and
+  the registry / 3-state (`hits`/`empty-after-retries`/`failed`) rules stay in
+  `SKILL.md` (sub-skills cite them by name).
+- **8 proactive behaviors → 2** (entity-aware recall+contradiction; capture offer
+  after mandatory dedup). Tool-discovery moved to `references/recommended-tools.md`.
+- **Deleted always-on ceremony:** the ASCII architecture tree, PM Workflow
+  Patterns, and the model-routing table (the latter already lives in worker
+  frontmatter / `AGENTS.md`); trimmed Pre-Flight/Orient overlap and the Pitfalls
+  list; deleted the 610-line `nextjs-integration.md` reference.
+- **Micro-capture fast path** added to §2 for a single conversational fact (dedup
+  search only — skips the full 12-step ingest ceremony).
+- **`AGENTS.md`** trimmed to a thin behavioral contract (Orient/Core-Ops sections
+  now point at the core skill).
+
+### Mechanized (prose guard → deterministic enforcement)
+
+- **Pre-update snapshot** is now automatic in `pre-write.sh` (idempotent copy to
+  `_archive/<slug>-<date>.md` before an overwrite), replacing the "mandatory
+  snapshot" prose the model had to remember.
+- **`lint.py`** now warns on missing `coverage:` markers (factual pages) and
+  escalates self-referential sourcing to 🔴 for decision/strategy syntheses (not
+  just factual types).
+- **`post-write.sh`** no longer appends a "clean" line to `_status.md` on every
+  write (it grew unbounded and raced session-start); it writes only on real issues.
+- **Tests:** added a `TestPreWrite` class (freshness gate + snapshot) and a
+  `TestLint` class (coverage + self-referential tiers); 63 tests pass.
+
+### Distribution
+
+- Scrubbed baked-in proper nouns (real company/product/person names) from the
+  SCHEMA template and the crystallize/update/output-format/schema references,
+  replacing them with generic placeholders so a new install isn't primed with a
+  stranger's context.
+
 ## [2.18.0] - 2026-06-24
 
 ### Added

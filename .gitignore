@@ -6,3 +6,9 @@ __pycache__/
 .venv/
 _status.md
 queries/
+
+# Wiki/vault runtime artifacts (generated per-session, not plugin source)
+.wiki-lock
+.markdown_vault_mcp/
+meta/
+.claude/settings.json

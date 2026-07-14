@@ -17,7 +17,7 @@ WIKI="${FILE_WIKI:-${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-}}}"
 INPUT=$(cat)
 
 python3 - "$INPUT" "$WIKI" <<'PY' || true
-import json, os, re, sys
+import datetime, json, os, re, shutil, sys
 
 raw, wiki = sys.argv[1], sys.argv[2]
 try:
@@ -46,6 +46,21 @@ if rel.startswith(EXEMPT_DIRS) or stem in EXEMPT_STEMS or stem.startswith("lint-
 # Only gate the agent-owned knowledge dirs.
 if not rel.startswith(("entities/", "concepts/", "comparisons/", "queries/")):
     sys.exit(0)
+
+# Pre-update snapshot (deterministic — replaces the prose "mandatory snapshot" rule).
+# If this is an overwrite/edit of an existing page, copy the current version to
+# _archive/<slug>-<YYYY-MM-DD>.md before it changes. Idempotent: at most one
+# snapshot per page per day, so it never spams and never blocks. Best-effort.
+if os.path.exists(abs_fp):
+    try:
+        day = datetime.date.today().isoformat()
+        arc_dir = os.path.join(wiki_real, "_archive")
+        os.makedirs(arc_dir, exist_ok=True)
+        snap = os.path.join(arc_dir, f"{stem}-{day}.md")
+        if not os.path.exists(snap):
+            shutil.copy2(abs_fp, snap)
+    except Exception:
+        pass
 
 # Content to assess: Write carries full content; Edit does not, so read disk.
 content = ti.get("content")

@@ -34,7 +34,7 @@ links to the artifacts. Artifacts are not standalone wiki pages.
 | "Brief the leadership team on X" | Marp deck | Markdown summary |
 | "Show the pricing trend over 6 months" | matplotlib PNG | CSV data |
 | "Customer segment breakdown" | CSV + markdown summary | matplotlib bar chart |
-| "Timeline of Kai launch decisions" | Markdown timeline | Mermaid diagram |
+| "Timeline of product launch decisions" | Markdown timeline | Mermaid diagram |
 | "Give me a one-pager for the SE team" | Markdown | Marp if meeting-bound |
 
 ## Marp Slides
@@ -64,7 +64,7 @@ footer: "Private, do not distribute"
 
 # <Topic>
 ## <Subtitle>
-Anh Chu · YYYY-MM-DD
+<Author> · YYYY-MM-DD
 
 ---
 
@@ -122,22 +122,22 @@ For pricing trends, win/loss ratios, customer growth, any numeric series.
 Inputs sourced from:
 - raw/articles/gartner-mq-2025.md
 - raw/articles/forrester-wave-2026.md
-- raw/articles/tricentis-price-2026-03.md
+- raw/articles/competitor-x-price-2026-03.md
 """
 import matplotlib.pyplot as plt
 from pathlib import Path
 
 dates = ["2024-Q4", "2025-Q2", "2025-Q4", "2026-Q2"]
-tricentis = [2.0, 2.0, 1.8, 1.4]   # ratio vs Katalon Enterprise
-smartbear = [1.1, 1.1, 1.2, 1.2]
-katalon   = [1.0, 1.0, 1.0, 1.0]
+competitor_x = [2.0, 2.0, 1.8, 1.4]   # ratio vs our Enterprise SKU
+competitor_y = [1.1, 1.1, 1.2, 1.2]
+our_product  = [1.0, 1.0, 1.0, 1.0]
 
 fig, ax = plt.subplots(figsize=(10, 6))
-ax.plot(dates, tricentis, marker="o", label="Tricentis")
-ax.plot(dates, smartbear, marker="s", label="SmartBear")
-ax.plot(dates, katalon,   marker="^", label="Katalon (baseline)")
-ax.set_title("Enterprise test automation pricing vs Katalon (ratio)")
-ax.set_ylabel("Price ratio (Katalon = 1.0)")
+ax.plot(dates, competitor_x, marker="o", label="Competitor X")
+ax.plot(dates, competitor_y, marker="s", label="Competitor Y")
+ax.plot(dates, our_product,  marker="^", label="Our product (baseline)")
+ax.set_title("Enterprise pricing vs our product (ratio)")
+ax.set_ylabel("Price ratio (our product = 1.0)")
 ax.legend()
 ax.grid(alpha=0.3)
 
@@ -200,8 +200,8 @@ renders them natively.
 ````markdown
 ```mermaid
 timeline
-    title TruePlatform launch timeline
-    2025 Q4 : TestOps renamed to TruePlatform
+    title Product launch timeline
+    2025 Q4 : Legacy product renamed
             : Internal GA
     2026 Q1 : Early access pilot
             : First 3 customer migrations

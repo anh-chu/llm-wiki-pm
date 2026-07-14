@@ -10,7 +10,7 @@ Without this, transcripts just become entity-page updates and the "decision
 ## When to Crystallize
 
 **Always:**
-- 1:1 transcripts (Vu Lam monthly, direct reports)
+- 1:1 transcripts (your manager, direct reports)
 - Customer call notes
 - Internal strategy meetings with decisions
 - Multi-source research threads you led (competitive deep-dive over a week)
@@ -50,8 +50,8 @@ _1-2 sentences: what happened, when, who was involved_
 ## Action Items
 | Owner | Action | Due | Status |
 |---|---|---|---|
-| Anh | Draft pricing proposal | 2026-04-25 | pending |
-| Vu | Approve migration budget | 2026-04-30 | pending |
+| PM | Draft pricing proposal | 2026-04-25 | pending |
+| Jordan | Approve migration budget | 2026-04-30 | pending |
 
 ## Open Questions
 - _Things we don't know yet, who should answer_
@@ -61,8 +61,8 @@ _1-2 sentences: what happened, when, who was involved_
 - _Link to existing [[concept]] pages or propose new ones_
 
 ## Links
-- [[vu-lam]]
-- [[trueplatform-launch]]
+- [[jordan-lee]]
+- [[nimbus-launch]]
 - [[pricing-strategy]]
 ```
 
@@ -97,50 +97,52 @@ After ingesting a transcript into `raw/transcripts/`:
    ```
    ## [YYYY-MM-DD] crystallize | <topic>
    - queries/crystallize-<topic>-<date>.md
-   - Affected: entities/vu-lam.md, concepts/pricing-strategy.md, ...
+   - Affected: entities/jordan-lee.md, concepts/pricing-strategy.md, ...
    ```
 
-## Example: 1:1 with Vu Lam
+## Example: 1:1 with your manager
 
-Source: `raw/transcripts/vu-lam-1-1-2026-04.md`
+(Names below are placeholders — substitute your own people, products, and dates.)
 
-Crystallize output: `queries/crystallize-vu-lam-2026-04.md`
+Source: `raw/transcripts/jordan-lee-1-1-2026-04.md`
+
+Crystallize output: `queries/crystallize-jordan-lee-2026-04.md`
 
 ```markdown
 ## Context
-Monthly strategy 1:1 with Vu Lam, 45 min. Topics: TruePlatform launch slip,
-Kai pricing signals from customer alpha, Q3 headcount.
+Monthly strategy 1:1 with Jordan Lee, 45 min. Topics: Nimbus launch slip,
+Lumen pricing signals from customer alpha, Q3 headcount.
 
 ## Decisions
-- **TruePlatform GA pushed to June 15**: enterprise migration risk,
-  confirmed by Vu, communicated to customer-alpha next week
-- **Kai pricing stays usage-based for pilot**: revisit at 10-customer mark
+- **Nimbus GA pushed to June 15**: enterprise migration risk,
+  confirmed by Jordan, communicated to customer-alpha next week
+- **Lumen pricing stays usage-based for pilot**: revisit at 10-customer mark
 
 ## Action Items
-| Anh | Write customer-alpha comms | 2026-04-22 | pending |
-| Anh | Draft Kai pricing FAQ | 2026-04-29 | pending |
-| Vu | Approve SE headcount req | 2026-05-01 | pending |
+| PM | Write customer-alpha comms | 2026-04-22 | pending |
+| PM | Draft Lumen pricing FAQ | 2026-04-29 | pending |
+| Jordan | Approve SE headcount req | 2026-05-01 | pending |
 
 ## Open Questions
-- Kai seat-based vs usage-based at scale, need data team modeling
-- TruePlatform pricing parity with Studio, decision by May
+- Lumen seat-based vs usage-based at scale, need data team modeling
+- Nimbus pricing parity with the legacy product, decision by May
 
 ## Lessons
 - Migration risk undercounted when customer runs N+1 versions in parallel
   → update [[enterprise-migration-playbook]]
 
 ## Links
-- [[vu-lam]]
-- [[trueplatform-launch]]
-- [[kai]]
+- [[jordan-lee]]
+- [[nimbus-launch]]
+- [[lumen]]
 - [[customer-alpha]]
 - [[enterprise-migration-playbook]]
 ```
 
 Then update:
-- `entities/vu-lam.md`, add 2026-04 1:1 as source, bump `updated`
-- `concepts/trueplatform-launch.md`, note GA slip decision
-- `concepts/kai-pricing.md`, reinforce usage-based pilot decision
+- `entities/jordan-lee.md`, add 2026-04 1:1 as source, bump `updated`
+- `concepts/nimbus-launch.md`, note GA slip decision
+- `concepts/lumen-pricing.md`, reinforce usage-based pilot decision
 - `overview.md`, if launch slip shifts quarter-view
 
 ## Crystallize vs Regular Ingest

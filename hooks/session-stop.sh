@@ -26,7 +26,11 @@ if [[ ! -f "$LOG_FILE" ]]; then
 fi
 
 # ③ Count log entries (each entry starts with '## [')
-ENTRY_COUNT=$(grep -c '^## \[' "$LOG_FILE" 2>/dev/null || echo 0)
+# grep -c prints 0 AND exits 1 on zero matches; `|| echo 0` would append a second
+# line making ENTRY_COUNT="0\n0", which breaks the -le test below and wrongly
+# rotates a fresh/empty log every session. Use `|| true` and default to 0.
+ENTRY_COUNT=$(grep -c '^## \[' "$LOG_FILE" 2>/dev/null || true)
+ENTRY_COUNT=${ENTRY_COUNT:-0}
 
 # ④ Only rotate if log exceeds 500 entries
 if [[ "$ENTRY_COUNT" -le 500 ]]; then

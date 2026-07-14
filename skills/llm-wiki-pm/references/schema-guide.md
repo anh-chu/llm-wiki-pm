@@ -44,7 +44,7 @@ Add fields for PM-specific signals:
 ```yaml
 relevance: high | medium | low    # How much this matters to our strategy
 last_reviewed: YYYY-MM-DD         # When a human last eyeballed it
-owner: anh | vu | data-team       # Who owns verifying this
+owner: pm | manager | data-team   # Who owns verifying this
 confidence: verified | likely | rumor
 lifecycle: stub-intentional       # By-design thin page (see below)
 ```
@@ -91,7 +91,7 @@ from the orphan warning the same way as intentional stubs. (Generated
 
 ## Domain pivots
 
-If scope shifts (e.g., TruePlatform becomes the whole company focus):
+If scope shifts (e.g., one product line becomes the whole company focus):
 1. Update `## Domain` in SCHEMA.md
 2. Run lint to identify now-out-of-scope pages
 3. Archive or re-tag as needed

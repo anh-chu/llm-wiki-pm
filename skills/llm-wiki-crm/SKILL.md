@@ -159,8 +159,9 @@ standalone fallback when research isn't available.
 
 ## Behavioral Notes
 
+- **Verify from source, don't launder wiki prose** (core skill → Session Defaults → Provenance-tier & falsification guard): account health, targeting, pipeline, and "what does this account want" answers are decision-bearing. The authoritative source is the primary system (CRM/SFDC, the warehouse, Gong), not wiki prose — route there first. Tier every asserted claim computed/primary/recalled, never generalize from a couple of named accounts onto the whole book without testing it against the full dataset, and run a falsification pass before any exec-facing account synthesis. The CRM layer's own fields (`relationship_tier`, `account_health`, `key_asks`) are recalled state — confirm them against live touchpoints before acting on them.
 - **No dollar figures**: `arr_tier` uses tiers only. Never record ARR, deal sizes, or revenue figures.
-- **Private by default**: entity pages with `relationship_tier` set — consider `private: true` for sensitive account intel.
+- **Private by default**: every wiki page is private unless it carries `shareable: true` (core skill privacy model). Do NOT add `private: true` — it is noise. Account intel pages simply stay unmarked and are excluded from exports automatically.
 - **Enrich only public data**: never infer private details (financials, internal decisions, personal info).
 - **key_asks is a list**: normalize phrasing across accounts so aggregation works cleanly.
 - **Log every CRM operation** with `crm-` prefix:

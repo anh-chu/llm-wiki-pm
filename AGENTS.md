@@ -13,16 +13,7 @@ Always resolve this before any wiki operation. Never hardcode paths. If none of 
 
 ## Orient Protocol (mandatory before writes)
 
-Before any write operation (ingest, update, archive, supersede), complete all four steps in the current session:
-
-1. Read `$WIKI/SCHEMA.md` — domain scope, conventions, tag taxonomy
-2. Read `$WIKI/index.md` — page catalog
-3. Read last 20-30 lines of `$WIKI/log.md` — recent activity
-4. Read `$WIKI/overview.md` — current synthesis state
-
-**Orient gate:** if steps 1-4 are not complete in THIS session, refuse any write. Surface: "Need to orient first. Running now." Then orient, then proceed.
-
-Read-only queries (single-page lookups) may skip orient.
+Before any write (ingest, update, archive, supersede), complete the core skill's Orient steps ①-④ (read SCHEMA.md, index.md, recent log.md, overview.md) in the current session. Narrow read-only queries may skip it. Full detail: core `llm-wiki-pm` SKILL.md → "Orient Every Session".
 
 ## Source Attribution
 
@@ -36,13 +27,7 @@ The page's frontmatter `sources:` field lists all sources for the page. Inline m
 
 ## Core Operations Summary
 
-| Operation | Trigger | Key constraint |
-|-----------|---------|----------------|
-| **Ingest** | New source to add to wiki | Orient first. Surface takeaways before writing pages. Privacy filter on raw. Inline provenance on every claim. |
-| **Query** | "What do we know about X?" | wiki-search first (semantic). Grep as fallback. Cite pages explicitly. |
-| **Update** | New info revises existing claim | Snapshot to _archive/ before destructive write. Show diff. Sweep all stale variants. |
-| **Lint** | Health check | Use worker-lint agent. Report only — no auto-fixes without user confirmation. |
-| **Crystallize** | Meeting transcript or research chain | Produces decision-digest page under queries/. Confirm private: flag with user. |
+Operation procedures (Ingest, Query, Update, Lint, Crystallize) live in the core `llm-wiki-pm` SKILL.md → "Core Operations". This file governs only the cross-cutting behavioral constraints below.
 
 ## Behavioral Constraints
 
@@ -58,7 +43,7 @@ The page's frontmatter `sources:` field lists all sources for the page. Inline m
 
 **No raw/ mutations.** Layer 1 sources are immutable. Corrections live in wiki pages.
 
-**Privacy by default.** Customer names, deal sizes, 1:1 content → `private: true`. When in doubt, mark private.
+**Privacy by default (allowlist).** Every page is private and excluded from exports unless it carries `shareable: true`. Do NOT add a `private:` flag — it is noise the tooling never reads. Leave customer names, deal sizes, and 1:1 content unflagged (they stay private automatically); add `shareable: true` only to genuinely public-safe pages.
 
 **Supersede explicitly.** Materially replacing a page requires `supersedes:` / `superseded_by:` frontmatter + archive + link rewrite. Silent replacement is not allowed.
 

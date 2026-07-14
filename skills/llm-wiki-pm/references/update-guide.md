@@ -21,13 +21,13 @@ If the source is brand new territory (no existing pages), use Ingest instead.
 
 Three-way search for completeness:
 
+1. **Semantic** (paraphrases of the stale claim) — call the bundled wiki-search
+   MCP: `view(action=semantic_search, query="old claim phrased various ways")`.
+2. **Structural + literal** — shell:
+
 ```bash
 # Structural, pages that link to the entity being revised
 python3 "${CLAUDE_SKILL_DIR}/scripts/backlinks.py" "$WIKI" <slug>
-
-# Semantic, paraphrases of the stale claim
-# Use wiki-search semantic_search (bundled)
-wiki-search semantic_search "old claim phrased in various ways"
 
 # Exact token, numbers, codenames, specific quotes
 grep -r "claim keyword" "$WIKI" --include="*.md"
@@ -37,7 +37,7 @@ Use all three. Backlinks catches structural references, wiki-search catches
 paraphrases, grep catches literals. Miss any and you leave stale variants.
 
 Don't update one page and leave stale variants. If the claim appears in:
-- `entities/tricentis.md`
+- `entities/competitor-x.md`
 - `comparisons/test-automation-mq.md`
 - `overview.md`
 
@@ -48,17 +48,17 @@ Don't update one page and leave stale variants. If the claim appears in:
 Present to user:
 
 ```
-## Page: entities/tricentis.md
+## Page: entities/competitor-x.md
 OLD:
   Pricing reported at $X per seat (source: 2025-08 analyst report).
 NEW:
-  Pricing reported at $Y per seat (source: raw/articles/tricentis-price-2026-03.md, 2026-03-15).
+  Pricing reported at $Y per seat (source: raw/articles/competitor-x-price-2026-03.md, 2026-03-15).
 
 ## Page: comparisons/test-automation-mq.md
 OLD:
-  Tricentis priced above Katalon.
+  Competitor X priced above our product.
 NEW:
-  Tricentis priced ~1.4x Katalon (from 2x per earlier note).
+  Competitor X priced ~1.4x our product (from 2x per earlier note).
 ```
 
 Confirm before writing. Mandatory for:
@@ -73,10 +73,10 @@ Every update lands with a citation inline or in a dated note block:
 ```markdown
 ## Pricing
 
-As of 2026-03, ~1.4x Katalon enterprise SKU
-(per [[raw/articles/tricentis-price-2026-03]]).
+As of 2026-03, ~1.4x our product's enterprise SKU
+(per [[raw/articles/competitor-x-price-2026-03]]).
 
-Previously (2025-08): 2x Katalon.
+Previously (2025-08): 2x our product.
 ```
 
 Don't overwrite old claims, preserve the history with dates when relevant
@@ -119,8 +119,8 @@ If the new info doesn't cleanly supersede (e.g., conflicting sources, same date)
 
 ```yaml
 ---
-title: Tricentis
-contradictions: [tricentis-pricing-dispute]
+title: Competitor X
+contradictions: [competitor-x-pricing-dispute]
 ---
 ```
 
@@ -131,8 +131,8 @@ Use `supersedes:` / `superseded_by:` when one claim replaces another.
 ### 7. Log unconditionally
 
 ```
-## [2026-03-15] update | Tricentis pricing | source: raw/articles/tricentis-price-2026-03.md
-- entities/tricentis.md
+## [2026-03-15] update | Competitor X pricing | source: raw/articles/competitor-x-price-2026-03.md
+- entities/competitor-x.md
 - comparisons/test-automation-mq.md
 - overview.md
 - Reason: new analyst report revised prior 2x claim to 1.4x

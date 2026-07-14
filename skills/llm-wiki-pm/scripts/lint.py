@@ -64,10 +64,6 @@ def slug(path):
     return path.stem
 
 
-def is_private(fm):
-    return fm and fm.get("private", "").lower() in ("true", "yes")
-
-
 def is_shareable(fm):
     # Private-by-default: a page is in the export set only if it opts in.
     return bool(fm) and fm.get("shareable", "").strip().strip("'\"").lower() in ("true", "yes")
@@ -249,7 +245,12 @@ def main():
                     f"self-referential sources (no primary source, only wiki pages): "
                     f"{p.relative_to(wiki)} — verify against live tools, add a raw/ source"
                 )
-                (errors if ptype in FACTUAL_TYPES else warnings).append(msg)
+                # 🔴 for factual pages AND for decision-bearing syntheses (a
+                # decision/strategy artifact laundered from wiki prose is the exact
+                # failure mode we guard against). Ordinary digests stay 🟡.
+                decision_bearing = any(t in ("decision", "strategy") for t in tags)
+                is_error = ptype in FACTUAL_TYPES or decision_bearing
+                (errors if is_error else warnings).append(msg)
             # factual page with body but no inline provenance markers
             fm_m = FRONTMATTER_RE.match(text)
             body = text[fm_m.end():] if fm_m else text
@@ -274,6 +275,16 @@ def main():
                         )
                 except Exception:
                     pass
+            # coverage marker (deterministic replacement for the prose "set
+            # coverage:/gaps: on every entity/concept page" rule). Warn only —
+            # pre-existing wikis predate the field.
+            if ptype in FACTUAL_TYPES:
+                coverage = (fm.get("coverage") or "").strip().strip("'\"")
+                if not coverage:
+                    warnings.append(
+                        f"no coverage: marker (stub/partial/comprehensive): "
+                        f"{p.relative_to(wiki)}"
+                    )
 
         # wikilinks
         for link in WIKILINK_RE.findall(text):

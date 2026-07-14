@@ -92,7 +92,7 @@ Prevention: don't edit on mobile while Claude Code is running an ingest. Stagger
 
 What NOT to sync (separate path):
 - Claude Code workspace directories
-- Hindsight's `~/.hindsight/`
+- Other tools' local state dirs (e.g. `~/.<tool>/`)
 - Anything outside the wiki dir
 
 ## Obsidian Config for PM Wiki

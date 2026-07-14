@@ -37,6 +37,8 @@ Full orient (AGENTS.md 4-step protocol) only required if filing output as a wiki
 
 When a brief is asked to pull from external sources (whatever the user's connected stack — issue trackers, mail, chat, CRM, meeting notes, web), the core llm-wiki-pm **Source-completeness guard** applies in full: an empty or errored source is a signal to vary the query, not to declare the sweep done.
 
+**A brief is exec-facing synthesis — the Provenance-tier & falsification guard applies (core skill → Session Defaults).** A brief reads as a complete, current picture, so a laundered claim does the most damage here. Tier every headline claim computed/primary/recalled; don't state a claim recalled from wiki prose as current fact without confirming it against a live source (a wiki page saying "pipeline is thin" does not override what the CRM says today). For any decision-bearing line, name and run the query that would disprove it before it goes in the brief, and mark claims you couldn't verify as unverified rather than asserting them.
+
 - **Get the source set from the registry, not from memory.** Before sweeping, read the `## Sweep Registry` in `$WIKI/MY-INTEGRATIONS.md` and cover every source listed; the ledger below must have one row per registered source. If no registry exists, build the set from connected tools + the `Active Sources` table, confirm it with the user, and write it to the registry. Forgetting a registered source (e.g. omitting Slack or GitHub from the sweep) is the worst failure — it reads as complete while a high-signal source went unread.
 - Run ≥2 varied queries per source before calling it empty (broaden terms, widen the window, try aliases/handles/scope variants, switch syntax). Keyword search tools commonly miss on first phrasing.
 - Classify each requested source as `hits` / `empty-after-retries` / `failed`. Never collapse `failed` or `empty-after-retries` into "covered."
@@ -247,5 +249,5 @@ For everything else — ingest, update, query, lint, archive, persona, pre-meeti
 - **No writes without orient.** Filing a brief requires full orient + SCHEMA.md compliance.
 - **No schema drift.** Filed query pages use taxonomy tags only.
 - **No orphan pages.** Filed briefs need min 2 outbound `[[wikilinks]]`.
-- **Privacy.** Log entries referencing `private: true` pages — surface topic category only, not content.
+- **Privacy.** Pages are private by default (only `shareable: true` pages are export-safe). For any non-shareable page, surface topic category only, not content.
 - **Human tone.** Scannable over verbose. No em-dashes. No AI tells.

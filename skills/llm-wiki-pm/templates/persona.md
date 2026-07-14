@@ -20,7 +20,6 @@ vocabulary_markers:
   humor_style: none | dry | casual
   signoff_patterns: []
 code_switching: []
-private: false
 ---
 
 # Persona: [Full Name]

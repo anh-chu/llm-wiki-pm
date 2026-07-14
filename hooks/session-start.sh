@@ -158,8 +158,19 @@ except Exception:
     if [[ "$updated_ts" -lt "$THRESHOLD_STALE" ]]; then
       STALE_PAGES+=("$dir/$slug ($updated_val)")
     fi
-    if grep -q 'competitive' "$file" 2>/dev/null \
-        && [[ "$updated_ts" -lt "$THRESHOLD_DECAY" ]]; then
+
+    # Confidence decay: honor frontmatter, not a body-text word match.
+    # A page decays if it is competitive-tagged (default 60d) OR sets an explicit
+    # confidence_decay_days. Non-competitive pages without the field never decay.
+    local fm decay_days is_comp decay_thresh
+    fm=$(awk 'NR==1 && /^---[[:space:]]*$/ {f=1; next} f && /^---[[:space:]]*$/ {exit} f {print}' "$file" 2>/dev/null || true)
+    decay_days=$(printf '%s\n' "$fm" | grep -m1 '^confidence_decay_days:' | sed 's/[^0-9]//g' || true)
+    is_comp=$(printf '%s\n' "$fm" | grep -m1 '^tags:' | grep -c 'competitive' || true)
+    is_comp=${is_comp:-0}
+    if [[ -n "$decay_days" ]]; then
+      decay_thresh=$(( NOW_TS - decay_days * 86400 ))
+      [[ "$updated_ts" -lt "$decay_thresh" ]] && DECAY_PAGES+=("$dir/$slug ($updated_val)")
+    elif [[ "$is_comp" -gt 0 && "$updated_ts" -lt "$THRESHOLD_DECAY" ]]; then
       DECAY_PAGES+=("$dir/$slug ($updated_val)")
     fi
   done < <(find "$WIKI/$dir" -maxdepth 1 -name '*.md' -print0 2>/dev/null)
@@ -191,20 +202,28 @@ STATUS_FILE="$WIKI/_status.md"
   echo "| Broken links | $BROKEN_LINKS |"
   echo "| Orphan pages | $ORPHANS |"
   echo "| Stale pages (>30 days) | $STALE_COUNT |"
-  echo "| Confidence decay (competitive >60 days) | $DECAY_COUNT |"
+  echo "| Confidence decay (past decay window) | $DECAY_COUNT |"
 
   if [[ "$DECAY_COUNT" -gt 0 ]]; then
     echo ""
     echo "## Confidence Decay Candidates"
     echo ""
-    for p in "${DECAY_PAGES[@]}"; do echo "- $p"; done
+    i=0
+    for p in "${DECAY_PAGES[@]}"; do
+      [[ "$i" -ge 20 ]] && { echo "- (+$(( DECAY_COUNT - 20 )) more)"; break; }
+      echo "- $p"; i=$(( i + 1 ))
+    done
   fi
 
   if [[ "$STALE_COUNT" -gt 0 ]]; then
     echo ""
     echo "## Stale Pages"
     echo ""
-    for p in "${STALE_PAGES[@]}"; do echo "- $p"; done
+    i=0
+    for p in "${STALE_PAGES[@]}"; do
+      [[ "$i" -ge 20 ]] && { echo "- (+$(( STALE_COUNT - 20 )) more)"; break; }
+      echo "- $p"; i=$(( i + 1 ))
+    done
   fi
 
   echo ""
@@ -223,17 +242,26 @@ if [[ -n "$LOCK_WARNING" ]]; then
   CONTEXT="$CONTEXT LOCK WARNING: $LOCK_WARNING"
 fi
 
+# Slim always-on "watcher" primer. Keeps the ambient proactive behaviors alive
+# (set-and-forget) without force-loading the full ~8k-token SKILL.md every
+# session. The skill loads only when a trigger below actually fires.
+PRIMER="llm-wiki-pm (a PM second-brain wiki) is available at the path above but is NOT loaded yet. Invoke the llm-wiki-pm skill (Skill tool) as soon as the conversation touches PM knowledge work, so its full instructions and proactive behaviors load. Triggers — invoke on ANY of:
+- the user asks to ingest/query/update/lint the wiki, catch up, brief, run a digest, coverage audit, or pre-meeting prep, or references 'my wiki / knowledge base / notes';
+- the user drops a wikifiable PM fact in passing: a named company/person/product, a decision ('we decided', 'going with X'), a competitor move, a customer or roadmap fact, or an open question the wiki should hold;
+- natural-memory phrases: 'remember that', 'note that', \"don't forget\", 'log this', 'what do we know about X', 'what am I missing'.
+Do NOT load it for unrelated coding or chit-chat. When unsure and a PM entity or decision was mentioned, load it — ambient capture is the whole point of a set-and-forget second brain."
+
 python3 -c "
 import json, sys
 out = {
   'hookSpecificOutput': {
     'hookEventName': 'SessionStart',
-    'additionalContext': sys.argv[1] + '\n\nThe llm-wiki-pm wiki skill is active for this session. Before responding to the first user message — regardless of what it is — invoke the skill using the Skill tool so its instructions and proactive behaviors are loaded into context.'
+    'additionalContext': sys.argv[1] + '\n\n' + sys.argv[3]
   }
 }
 if sys.argv[2]:
     out['systemMessage'] = sys.argv[2]
 print(json.dumps(out))
-" "$CONTEXT" "$GLOBAL_WARNING"
+" "$CONTEXT" "$GLOBAL_WARNING" "$PRIMER"
 
 exit 0

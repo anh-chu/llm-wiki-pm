@@ -89,14 +89,14 @@ for m in re.findall(r'\[\[[^\]]+\]\]', text):
 " "$WRITTEN_FILE" 2>/dev/null || true)
 fi
 
-# ⑤ Append to _status.md
-# Create _status.md with minimal header if it does not exist yet
-if [[ ! -f "$STATUS_FILE" ]]; then
-  printf '# Wiki Status\n\n' > "$STATUS_FILE"
-fi
-
-{
-  if [[ "${#ISSUES[@]}" -gt 0 ]]; then
+# ⑤ Append to _status.md ONLY when there is an actual issue.
+# A "clean" line on every write grew _status.md unboundedly and caused a
+# write-race with session-start.sh's snapshot; silence on success is correct.
+if [[ "${#ISSUES[@]}" -gt 0 ]]; then
+  if [[ ! -f "$STATUS_FILE" ]]; then
+    printf '# Wiki Status\n\n' > "$STATUS_FILE"
+  fi
+  {
     echo ""
     echo "## Recent Write Issues"
     echo ""
@@ -106,11 +106,8 @@ fi
       echo "$issue"
     done
     echo ""
-  else
-    echo ""
-    echo "## [$NOW_FMT] write | $SLUG | clean"
-  fi
-} >> "$STATUS_FILE"
+  } >> "$STATUS_FILE"
+fi
 
 # ⑥ Always exit 0 so the hook never blocks a write
 exit 0

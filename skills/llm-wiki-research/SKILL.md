@@ -251,5 +251,5 @@ Gap research complete:
 - **No fabrication**: if search returns nothing, say so.
 - **Snapshot before destructive updates**: `_archive/<slug>-<date>.md` before deep dive overwrites.
 - **Dedup**: grep before creating. Confirm update vs create.
-- **Privacy**: customer names, deal sizes, 1:1 content → `private: true`.
+- **Privacy**: private by default — leave customer names, deal sizes, and 1:1 content unflagged (never add `shareable: true` to them).
 - **Synthesis page**: research sprints always produce `queries/research-<topic>-<date>/README.md`.

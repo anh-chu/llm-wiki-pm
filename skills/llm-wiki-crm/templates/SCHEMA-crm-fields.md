@@ -99,7 +99,6 @@ sources: [raw/transcripts/qbr-acme-2026-04.md]
 confidence: verified
 coverage: partial
 gaps: ["no visibility into renewal timeline"]
-private: true
 reports_to: null
 direct_reports: []
 peers: []
@@ -126,7 +125,6 @@ sources: [raw/transcripts/qbr-acme-2026-04.md]
 confidence: verified
 coverage: partial
 gaps: ["competitive alternatives being evaluated unknown"]
-private: true
 relationship_tier: strategic
 account_health: yellow
 last_touchpoint: 2026-04-18

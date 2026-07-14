@@ -61,7 +61,7 @@ starting point. Slug: `<name>-persona.md` under `entities/`.
      sentence length, humor, sign-off, notes.
    - Cross-channel comparison table at the bottom, written last from the channel
      sections. Use "No data" for channels without coverage.
-   - Set `private: true` when the persona is built from 1:1 or internal content.
+   - Personas are private by default (like all pages). Leave them unflagged; never add `shareable: true` to a persona built from 1:1 or internal content.
 
 ④ **Link persona to person entity**: add `[[<name>-persona]]` to the person
    entity page under Relationships or a "Communication profile" section.
@@ -134,7 +134,6 @@ vocabulary_markers:
   humor_style: dry
   signoff_patterns: ["Thanks,", "Best,"]
 code_switching: []      # e.g. ["second language in casual chat DMs"]
-private: true
 ---
 ```
 
@@ -142,5 +141,5 @@ private: true
 
 - **No writes without orient.** Persona pages require full orient + SCHEMA.md compliance.
 - **No fabricated channels.** Only profile channels with real source material.
-- **Privacy.** Personas from 1:1/internal content are `private: true`.
+- **Privacy.** Private by default — never add `shareable: true` to a persona from 1:1/internal content.
 - **Human tone.** No em-dashes. No AI tells.
