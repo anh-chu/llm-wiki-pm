@@ -7,6 +7,22 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.20.1] - 2026-07-16
+
+### Fixed
+
+- **wiki-search MCP "failed to connect" (intermittent).** `hooks/wiki-search.sh`
+  ran `exec node`/`exec npx` trusting `node` on `PATH`. Under a Node version
+  manager like fnm, `node` is provided only via an ephemeral per-shell path
+  (e.g. `/run/user/*/fnm_multishells/<pid>_*/bin`), which the spawned MCP stdio
+  process frequently does not inherit — so `node` was not found and the server
+  never completed the JSON-RPC handshake. The launcher now resolves `node`
+  itself (PATH → fnm's stable `aliases/default` → volta/nvm → `/usr/local/bin`,
+  `/usr/bin`), prepends its dir to `PATH` so a child `npx` can find it, and
+  execs the absolute binary. Exits `127` with a clear message if no node found.
+
+---
+
 ## [2.20.0] - 2026-07-15
 
 De-bloat + de-bias release. A brutal multi-lens review (bloat, redundancy, bias,
