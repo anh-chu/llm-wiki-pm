@@ -37,7 +37,13 @@ fi
 # ①b Ensure wiki-search package is in npx cache (background, non-blocking)
 # First session after install will use npx (slow); this ensures the cache
 # exists for wiki-search.sh's fast path on subsequent runs.
-if ! find "${HOME}/.npm/_npx" -path "*/@wirux/mcp-markdown-vault/dist/index.js" -print -quit 2>/dev/null | grep -q .; then
+# Fixed-depth glob instead of `find` — find deep-traverses the entire _npx tree
+# (can be 100k+ files → multi-second stall); the glob only stats the exact path shape.
+_npx_hit=""
+for _p in "${HOME}"/.npm/_npx/*/node_modules/@wirux/mcp-markdown-vault/dist/index.js; do
+  [[ -e "$_p" ]] && { _npx_hit=1; break; }
+done
+if [[ -z "$_npx_hit" ]]; then
   npx -y @wirux/mcp-markdown-vault --version &>/dev/null &
 fi
 
@@ -135,49 +141,58 @@ if [[ -f "$SCRIPTS_DIR/lint.py" ]]; then
   fi
 fi
 
-# ⑤ Scan for stale and decayed pages
-scan_dir() {
-  local dir="$1"
-  [[ -d "$WIKI/$dir" ]] || return 0  # explicit 0: avoid set -e triggering in caller
-  while IFS= read -r -d '' file; do
-    local slug updated_val updated_ts
-    slug=$(basename "$file" .md)
-    updated_val=$(grep -m1 '^updated:' "$file" 2>/dev/null \
-      | sed 's/updated:[[:space:]]*//' | tr -d '"' | xargs || true)
-    [[ -z "$updated_val" ]] && continue
-    updated_ts=$(python3 -c "
+# ⑤ Scan for stale and decayed pages.
+# Single python pass over all pages. Previously a bash loop spawned ~12
+# subprocesses per file (basename/grep/sed/tr/xargs/date/awk...); with 100+
+# pages that dominated session-start latency (8s+). One python process does the
+# same work in-process (~0.2s). Semantics unchanged: stale = updated >30d ago;
+# decay = explicit confidence_decay_days elapsed, else competitive-tagged >60d.
+# (STALE_PAGES / DECAY_PAGES already initialized in ③.)
+mapfile -t _SCAN_OUT < <(python3 - "$WIKI" "$NOW_TS" "$THRESHOLD_STALE" "$THRESHOLD_DECAY" <<'PYEOF' 2>/dev/null || true
+import os, re, sys
 from datetime import datetime
-import sys
-try:
-    print(int(datetime.fromisoformat(sys.argv[1]).timestamp()))
-except Exception:
-    print(0)
-" "$updated_val" 2>/dev/null || echo 0)
-    [[ "$updated_ts" -eq 0 ]] && continue
-
-    if [[ "$updated_ts" -lt "$THRESHOLD_STALE" ]]; then
-      STALE_PAGES+=("$dir/$slug ($updated_val)")
-    fi
-
-    # Confidence decay: honor frontmatter, not a body-text word match.
-    # A page decays if it is competitive-tagged (default 60d) OR sets an explicit
-    # confidence_decay_days. Non-competitive pages without the field never decay.
-    local fm decay_days is_comp decay_thresh
-    fm=$(awk 'NR==1 && /^---[[:space:]]*$/ {f=1; next} f && /^---[[:space:]]*$/ {exit} f {print}' "$file" 2>/dev/null || true)
-    decay_days=$(printf '%s\n' "$fm" | grep -m1 '^confidence_decay_days:' | sed 's/[^0-9]//g' || true)
-    is_comp=$(printf '%s\n' "$fm" | grep -m1 '^tags:' | grep -c 'competitive' || true)
-    is_comp=${is_comp:-0}
-    if [[ -n "$decay_days" ]]; then
-      decay_thresh=$(( NOW_TS - decay_days * 86400 ))
-      [[ "$updated_ts" -lt "$decay_thresh" ]] && DECAY_PAGES+=("$dir/$slug ($updated_val)")
-    elif [[ "$is_comp" -gt 0 && "$updated_ts" -lt "$THRESHOLD_DECAY" ]]; then
-      DECAY_PAGES+=("$dir/$slug ($updated_val)")
-    fi
-  done < <(find "$WIKI/$dir" -maxdepth 1 -name '*.md' -print0 2>/dev/null)
-}
-
-for d in entities concepts comparisons; do
-  scan_dir "$d"
+wiki, now_ts, th_stale, th_decay = sys.argv[1], int(sys.argv[2]), int(sys.argv[3]), int(sys.argv[4])
+def epoch(v):
+    try:
+        return int(datetime.fromisoformat(v).timestamp())
+    except Exception:
+        return 0
+for d in ("entities", "concepts", "comparisons"):
+    dp = os.path.join(wiki, d)
+    if not os.path.isdir(dp):
+        continue
+    for fn in sorted(os.listdir(dp)):
+        if not fn.endswith(".md"):
+            continue
+        slug = fn[:-3]
+        try:
+            text = open(os.path.join(dp, fn), encoding="utf-8", errors="replace").read()
+        except Exception:
+            continue
+        m = re.match(r"^---\s*\n(.*?)\n---\s*\n", text, re.S)
+        fm = m.group(1) if m else ""
+        um = re.search(r"^updated:\s*(.+)$", fm, re.M)
+        if not um:
+            continue
+        uval = um.group(1).strip().strip('"').strip()
+        uts = epoch(uval)
+        if uts == 0:
+            continue
+        if uts < th_stale:
+            print(f"STALE\t{d}/{slug} ({uval})")
+        dm = re.search(r"^confidence_decay_days:\s*(\d+)", fm, re.M)
+        if dm:
+            if uts < now_ts - int(dm.group(1)) * 86400:
+                print(f"DECAY\t{d}/{slug} ({uval})")
+        elif re.search(r"^tags:.*competitive", fm, re.M) and uts < th_decay:
+            print(f"DECAY\t{d}/{slug} ({uval})")
+PYEOF
+)
+for _line in "${_SCAN_OUT[@]}"; do
+  case "$_line" in
+    STALE$'\t'*) STALE_PAGES+=("${_line#STALE$'\t'}") ;;
+    DECAY$'\t'*) DECAY_PAGES+=("${_line#DECAY$'\t'}") ;;
+  esac
 done
 
 STALE_COUNT="${#STALE_PAGES[@]}"
