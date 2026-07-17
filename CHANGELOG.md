@@ -7,6 +7,29 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.21.0] - 2026-07-17
+
+### Fixed
+
+- **SessionStart hook exited non-zero (non-blocking) with no stderr.** Under
+  `set -euo pipefail`, `scan_dir`'s `while` loop returned the status of its last
+  body command — a false `[[ -lt ]]` decay test — and `set -e` aborted the
+  script in the bare `scan_dir "$d"` caller before it emitted `additionalContext`.
+  Now returns 0 explicitly.
+- **SessionStart latency ~15s → ~1s.** The per-file bash scan spawned ~12
+  subprocesses per page (100+ pages), and the npx-cache check ran `find` over the
+  entire `~/.npm/_npx` tree (100k+ files). Replaced the scan with a single python
+  pass (same stale/decay semantics) and the `find` with a fixed-depth glob.
+
+### Changed
+
+- **Context-aware skill primer.** When a session runs inside the wiki, the hook
+  now injects an unconditional "invoke the skill on turn 1" directive (restoring
+  the reliable pre-2.20 always-on behavior); outside the wiki it keeps the slim
+  conditional primer so the ~8k-token SKILL.md isn't loaded when irrelevant.
+
+---
+
 ## [2.20.1] - 2026-07-16
 
 ### Fixed
