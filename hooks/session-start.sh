@@ -257,14 +257,28 @@ if [[ -n "$LOCK_WARNING" ]]; then
   CONTEXT="$CONTEXT LOCK WARNING: $LOCK_WARNING"
 fi
 
-# Slim always-on "watcher" primer. Keeps the ambient proactive behaviors alive
-# (set-and-forget) without force-loading the full ~8k-token SKILL.md every
-# session. The skill loads only when a trigger below actually fires.
-PRIMER="llm-wiki-pm (a PM second-brain wiki) is available at the path above but is NOT loaded yet. Invoke the llm-wiki-pm skill (Skill tool) as soon as the conversation touches PM knowledge work, so its full instructions and proactive behaviors load. Triggers — invoke on ANY of:
+# Context-aware primer.
+# When the session is running INSIDE the wiki, the user is here to do wiki work —
+# so inject an unconditional "invoke on turn 1" directive (reliable, always-on).
+# Elsewhere (the plugin is multi-project), fall back to a slim conditional primer
+# that only fires on real triggers, to avoid loading the ~8k-token SKILL.md when
+# it isn't relevant.
+CWD_REAL="$(cd "$(pwd)" && pwd -P 2>/dev/null || pwd)"
+WIKI_REAL="$(cd "$WIKI" 2>/dev/null && pwd -P || echo "$WIKI")"
+IN_WIKI=false
+if [[ "$CWD_REAL" == "$WIKI_REAL" || "$CWD_REAL" == "$WIKI_REAL"/* ]]; then
+  IN_WIKI=true
+fi
+
+if [[ "$IN_WIKI" == true ]]; then
+  PRIMER="The llm-wiki-pm wiki (a PM second-brain) is at the path above and this session is running inside it — so it IS your working context. Before responding to the first user message — regardless of what it is — invoke the llm-wiki-pm skill (Skill tool) so its full instructions and proactive behaviors are loaded. Do this on turn 1, unconditionally."
+else
+  PRIMER="llm-wiki-pm (a PM second-brain wiki) is available at the path above but is NOT loaded yet. Invoke the llm-wiki-pm skill (Skill tool) as soon as the conversation touches PM knowledge work, so its full instructions and proactive behaviors load. Triggers — invoke on ANY of:
 - the user asks to ingest/query/update/lint the wiki, catch up, brief, run a digest, coverage audit, or pre-meeting prep, or references 'my wiki / knowledge base / notes';
 - the user drops a wikifiable PM fact in passing: a named company/person/product, a decision ('we decided', 'going with X'), a competitor move, a customer or roadmap fact, or an open question the wiki should hold;
 - natural-memory phrases: 'remember that', 'note that', \"don't forget\", 'log this', 'what do we know about X', 'what am I missing'.
 Do NOT load it for unrelated coding or chit-chat. When unsure and a PM entity or decision was mentioned, load it — ambient capture is the whole point of a set-and-forget second brain."
+fi
 
 python3 -c "
 import json, sys
