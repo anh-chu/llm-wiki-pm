@@ -1,0 +1,3 @@
+mcp==2.2.0
+pyyaml==6.0.2
+pyjwt[crypto]==2.10.1
