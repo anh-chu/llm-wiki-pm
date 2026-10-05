@@ -114,6 +114,40 @@ Full setup, including mobile Obsidian sync, in
 For a deeper breakdown of which Karpathy and Rohit v2 ideas this implements,
 see the [design notes](#design-notes) below.
 
+## Benchmarks
+
+Retrieval quality was measured on a real working wiki (about 700 Markdown
+files, 11 MB, 325 of them raw sources) with 26 known-answer questions
+written from the raw sources: obscure facts, paraphrases, multi-document
+answers, facts that changed over time, and renamed concepts. Scoring is
+automatic (no LLM judge). Queries were short keyword or natural-language
+phrases written blind by a separate agent, the way an agent would search.
+
+| Search backend | Hit@10 | Hit@1 | Idle RAM |
+|---|---|---|---|
+| Bundled wiki-search (`@wirux/mcp-markdown-vault`) | 69-77% | 50-54% | ~580 MB |
+| [obsidian-mcp](https://github.com/lstpsche/obsidian-mcp), BM25 only | 65-77% | 38-42% | ~80 MB |
+| obsidian-mcp, with embeddings | 69-77% | 42-46% | ~1.2 GB |
+| [Basic Memory](https://github.com/basicmachines-co/basic-memory), hybrid | 50-54% | 19-27% | ~505 MB |
+
+Hit@10 means a file holding the answer appears in the top 10 results. The
+bundled backend ties the best alternative tested and beats Basic Memory,
+on a plain-files setup with no database and no server beyond the search
+process.
+
+Read these numbers with some care:
+
+- 26 questions is a small set. One question is about 4 points, so gaps under
+  roughly 10 points are noise.
+- Questions about facts that changed over time or concepts that were
+  renamed scored lowest for every backend tested (about half). Search
+  alone does not fix those; they depend on the supersession and update
+  rules in this skill.
+- On a fresh copy of a wiki, the bundled backend's first full index
+  stopped at about half the files with no error. Check
+  `system status` against your file count after bootstrapping a large
+  existing vault.
+
 ## Target users
 
 Good fit if you:
