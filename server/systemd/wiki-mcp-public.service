@@ -1,0 +1,26 @@
+# Authenticated instance for ChatGPT, behind Cloudflare Access. The ONLY instance a public route may target.
+# Needs ~/.config/wiki-mcp/cf-access.env (see cf-access.env.example); the unit does not start without it.
+[Unit]
+Description=wiki-mcp behind Cloudflare Access (public route target, port 37844)
+After=wiki-mcp.service
+Wants=wiki-mcp.service
+ConditionPathExists=%h/.config/wiki-mcp/cf-access.env
+
+[Service]
+Environment=WIKI_PATH=%h/workspace/wiki
+Environment=WIKI_AUTH=cf-access
+# Guarded create/edit/append/archive tools (wiki_write.py). Delete this line for a read-only public instance.
+Environment=WIKI_WRITE=1
+# Loopback if your reverse proxy runs on this machine. If it runs on another machine (e.g. Caddy on a Pi),
+# set this machine's LAN address instead. Requests without a valid Access assertion get 401 either way.
+# Replace the placeholder; the service will not start with it.
+Environment=WIKI_MCP_HOST=REPLACE_WITH_127.0.0.1_OR_LAN_IP
+Environment=WIKI_MCP_PORT=37844
+Environment=WIKI_SEARCH_BACKEND=http://127.0.0.1:37842/mcp
+EnvironmentFile=%h/.config/wiki-mcp/cf-access.env
+ExecStart=%h/.local/share/wiki-mcp/venv/bin/python %h/llm-wiki-pm/server/wiki_mcp.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

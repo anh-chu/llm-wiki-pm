@@ -1,0 +1,22 @@
+# Search backend (BM25) that wiki_search calls. https://github.com/lstpsche/obsidian-mcp
+# Expects the binary at ~/.local/bin/obsidian-mcp. OBSIDIAN_WATCH=true keeps the index current after writes.
+[Unit]
+Description=obsidian-mcp (wiki search backend, loopback)
+After=default.target
+
+[Service]
+Environment=OBSIDIAN_VAULT_PATH=%h/workspace/wiki
+Environment=OBSIDIAN_TRANSPORT=http
+Environment=OBSIDIAN_HTTP_HOST=127.0.0.1
+Environment=OBSIDIAN_HTTP_PORT=37842
+Environment=OBSIDIAN_WATCH=true
+Environment=OBSIDIAN_EMBEDDINGS=false
+Environment=OBSIDIAN_MCP_DATA=%h/.local/share/obsidian-mcp
+Environment=OBSIDIAN_LOG_LEVEL=warn
+Environment=OBSIDIAN_TOOLS=vault_info,vault_list,note_read,note_read_many,note_inspect,search_text,search_regex,search_metadata,wikilinks
+ExecStart=%h/.local/bin/obsidian-mcp
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

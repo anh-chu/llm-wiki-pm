@@ -1,0 +1,18 @@
+# Local instance for Claude Code and other local clients. No auth: keep it on loopback and never put a tunnel
+# or reverse proxy in front of it. Read-only (WIKI_WRITE is not set). Copy to ~/.config/systemd/user/.
+[Unit]
+Description=wiki-mcp (read-only wiki MCP on loopback, streamable HTTP)
+After=obsidian-mcp.service
+Wants=obsidian-mcp.service
+
+[Service]
+Environment=WIKI_PATH=%h/workspace/wiki
+Environment=WIKI_MCP_HOST=127.0.0.1
+Environment=WIKI_MCP_PORT=37843
+Environment=WIKI_SEARCH_BACKEND=http://127.0.0.1:37842/mcp
+ExecStart=%h/.local/share/wiki-mcp/venv/bin/python %h/llm-wiki-pm/server/wiki_mcp.py
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
