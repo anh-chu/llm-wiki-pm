@@ -12,6 +12,11 @@ from collections import Counter, defaultdict
 from datetime import date, datetime, timezone
 from pathlib import Path
 
+try:
+    import yaml  # optional: enables the strict frontmatter parse check
+except ImportError:
+    yaml = None
+
 REQUIRED_FRONTMATTER = {"title", "created", "updated", "type", "tags", "sources"}
 WIKI_DIRS = ["entities", "concepts", "comparisons", "queries"]
 WIKILINK_RE = re.compile(r"\[\[([^\]|#]+)(?:[|#][^\]]*)?\]\]")
@@ -196,6 +201,17 @@ def main():
             errors.append(
                 f"frontmatter missing {sorted(missing)}: {p.relative_to(wiki)}"
             )
+
+        # Strict parse: search servers and Obsidian use a real YAML parser and
+        # skip pages the regex-based parse_frontmatter() above tolerates.
+        if yaml is not None:
+            try:
+                yaml.safe_load(FRONTMATTER_RE.match(text).group(1))
+            except yaml.YAMLError as e:
+                reason = str(e).splitlines()[0]
+                errors.append(
+                    f"invalid YAML frontmatter ({reason}): {p.relative_to(wiki)}"
+                )
 
         # supersession tracking
         sb = get_superseded_by(fm)
