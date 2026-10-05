@@ -7,6 +7,27 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.22.0] - 2026-10-06
+
+### Added
+
+- **`server/`: wiki-mcp, a remote MCP server over the wiki.** Lets ChatGPT (or any
+  MCP client) search, read and edit the wiki. Authenticated instance sits behind
+  Cloudflare Access (Managed OAuth) and validates the Access JWT on every request;
+  a separate loopback instance serves local clients read-only. Write tools
+  (`wiki_save_raw`, `wiki_create_page`, `wiki_edit`, `wiki_append`,
+  `wiki_supersede`, `wiki_archive_page`) enforce the wiki rules in code: content-hash
+  concurrency check, SCHEMA.md taxonomy, provenance, snapshot to `_archive/`, log
+  entry, atomic write. `wiki_lint` runs `lint.py` on a throwaway copy. Includes
+  systemd unit examples and a setup README. Not used by the plugin itself.
+- **`lint.py`: strict YAML frontmatter check.** Flags pages that the regex parser
+  tolerates but a real YAML parser (Obsidian, search servers) rejects. Skipped when
+  PyYAML is not installed.
+
+### Changed
+
+- README: search backend benchmark section.
+
 ## [2.21.0] - 2026-07-17
 
 ### Fixed
