@@ -23,6 +23,7 @@ import yaml
 from mcp.types import ToolAnnotations
 
 ALLOWED_DIRS = ("entities", "concepts", "comparisons", "queries")
+EDITABLE_FILES = ("overview.md",)  # root synthesis page: edit/append only, never create/archive
 INDEX_SECTIONS = {d: f"## {d.capitalize()}" for d in ALLOWED_DIRS}
 NAME_RE = re.compile(r"^[a-z0-9][a-z0-9-]*\.md$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -38,10 +39,12 @@ class Refused(Exception):
         self.errors = list(errors)
 
 
+LINT_PATH = Path(__file__).resolve().parents[1] / "skills" / "llm-wiki-pm" / "scripts" / "lint.py"
+
+
 @functools.lru_cache(maxsize=1)
 def _lint():
-    p = Path(__file__).resolve().parents[1] / "skills" / "llm-wiki-pm" / "scripts" / "lint.py"
-    spec = importlib.util.spec_from_file_location("wiki_lint", p)
+    spec = importlib.util.spec_from_file_location("wiki_lint", LINT_PATH)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
@@ -64,8 +67,13 @@ def _atomic(path, data):
         raise
 
 
-def _resolve(vault, path, create):
+def _resolve(vault, path, create, files=False):
     rel = Path(path)
+    if files and not create and rel.as_posix() in EDITABLE_FILES:
+        p = (vault / rel).resolve()
+        if p.parent != vault.resolve() or (vault / rel).is_symlink() or not p.is_file():
+            raise Refused(f"{path} is not an editable file")
+        return rel.as_posix(), p
     if rel.is_absolute() or ".." in rel.parts or len(rel.parts) < 2 or rel.parts[0] not in ALLOWED_DIRS:
         raise Refused(f"path must be inside one of: {', '.join(d + '/' for d in ALLOWED_DIRS)} (no '..', no absolute paths)")
     real_vault = vault.resolve()
@@ -167,10 +175,9 @@ def _index_add(vault, rel, title, summary):
     ip = vault / "index.md"
     if not ip.exists():
         return "no index.md"
-    text = ip.read_text()
-    if f"({rel})" in text or f"[[{Path(rel).stem}]]" in text:
+    lines = ip.read_text().split("\n")
+    if any(_is_index_entry(ln, rel) for ln in lines):
         return "already listed"
-    lines = text.split("\n")
     header = INDEX_SECTIONS[rel.split("/")[0]]
     start = next((i for i, ln in enumerate(lines) if ln.rstrip() == header), None)
     if start is None:
@@ -237,32 +244,93 @@ def _guard(fn):
     return run
 
 
+def _is_index_entry(line, rel):
+    """True only if the bullet's own link target is rel (a mention inside another page's summary does not count)."""
+    stem = Path(rel).stem
+    return bool(re.match(rf"^- \[\[{re.escape(stem)}(\|[^\]]*)?\]\]", line) or re.match(rf"^- \[[^\]]*\]\({re.escape(rel)}\)", line))
+
+
 def _index_remove(vault, rel):
     ip = vault / "index.md"
     if not ip.exists():
         return "no index.md"
-    stem = Path(rel).stem
     lines = ip.read_text().split("\n")
-    keep = [ln for ln in lines if not (ln.startswith("- ") and (f"({rel})" in ln or f"[[{stem}]]" in ln))]
+    keep = [ln for ln in lines if not _is_index_entry(ln, rel)]
     if len(keep) == len(lines):
         return "not listed"
     _atomic(ip, "\n".join(keep))
     return f"removed {len(lines) - len(keep)} line(s)"
 
 
-def _inbound(vault, rel, limit=30):
+def _link_re(stem):
+    return re.compile(rf"\[\[{re.escape(stem)}((?:[|#][^\]]*)?)\]\]")
+
+
+def _inbound(vault, rel, limit=None):
+    """Pages (knowledge dirs and overview.md) that link to rel, by [[stem]] (with alias or heading) or markdown path."""
     stem, hits = Path(rel).stem, []
-    for d in ALLOWED_DIRS:
-        for f in sorted((vault / d).rglob("*.md")):
-            r = f.relative_to(vault).as_posix()
-            if r != rel and not f.name.startswith("lint-"):
-                try:
-                    t = f.read_text(errors="replace")
-                except OSError:
-                    continue
-                if f"[[{stem}]]" in t or f"[[{stem}|" in t or f"({rel})" in t:
-                    hits.append(r)
-    return hits[:limit]
+    pages = [f for d in ALLOWED_DIRS for f in sorted((vault / d).rglob("*.md"))] + [vault / n for n in EDITABLE_FILES if (vault / n).is_file()]
+    for f in pages:
+        r = f.relative_to(vault).as_posix()
+        if r == rel or f.name.startswith("lint-"):
+            continue
+        try:
+            t = f.read_text(errors="replace")
+        except OSError:
+            continue
+        if _link_re(stem).search(t) or f"({rel})" in t:
+            hits.append(r)
+    return hits[:limit] if limit else hits
+
+
+RAW_SUBDIRS = ("articles", "papers", "transcripts", "internal", "assets", "meta")
+RAW_SUFFIXES = (".md", ".txt", ".json", ".csv")
+RAW_NAME_RE = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
+MAX_RAW = 300_000
+SECRET_PATTERNS = {
+    "private key": r"-----BEGIN [A-Z ]*PRIVATE KEY-----",
+    "AWS access key": r"\bAKIA[0-9A-Z]{16}\b",
+    "GitHub token": r"\bgh[pousr]_[A-Za-z0-9]{30,}\b",
+    "Slack token": r"\bxox[abprs]-[A-Za-z0-9-]{10,}",
+    "API key (sk-...)": r"\bsk-[A-Za-z0-9_-]{20,}",
+    "JWT": r"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}",
+    "password/secret assignment": r"(?i)\b(password|passwd|secret|api[_-]?key|token)\s*[:=]\s*['\"]?[A-Za-z0-9/+_=.-]{12,}",
+}
+THREAD_ID_RE = re.compile(r"^source_thread_id:\s*(\S.*?)\s*$", re.M)
+
+
+def _set_field(text, key, line):
+    """Set a single-line frontmatter field (replace in place, or add before the closing ---)."""
+    m = _lint().FRONTMATTER_RE.match(text)
+    if not m:
+        raise Refused("page has no frontmatter")
+    fm = m.group(1)
+    mm = re.search(rf"^{key}:.*$", fm, re.M)
+    if mm:
+        if re.match(r"\n\s*-\s", fm[mm.end():]):
+            raise Refused(f"{key} is a multi-line list; change it with wiki_edit first")
+        fm = fm[: mm.start()] + line + fm[mm.end():]
+    else:
+        fm = fm + "\n" + line
+    return text[: m.start(1)] + fm + text[m.end(1):]
+
+
+def _fm_list(text, key):
+    m = _lint().FRONTMATTER_RE.match(text)
+    try:
+        v = (yaml.safe_load(m.group(1)) or {}).get(key)
+    except Exception:
+        v = None
+    return [str(x) for x in v] if isinstance(v, list) else ([] if v in (None, "") else [str(v)])
+
+
+def _archive_dest(vault, rel, today):
+    dest, n = vault / "_archive" / rel, 0
+    while dest.exists():
+        n += 1
+        dest = vault / "_archive" / f"{Path(rel).with_suffix('').as_posix()}-{today}-{n}.md"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    return dest
 
 
 def _check_prose(text, what):
@@ -273,8 +341,8 @@ def _check_prose(text, what):
 def register(mcp, vault):
     lint = _lint()
 
-    def _existing(path, expected_hash):
-        rel, p = _resolve(vault, path, create=False)
+    def _existing(path, expected_hash, files=False):
+        rel, p = _resolve(vault, path, create=False, files=files)
         raw = p.read_bytes()
         if sha(raw) != expected_hash:
             raise Refused("the page changed since you read it (hash mismatch); wiki_read it again and redo the change")
@@ -300,10 +368,10 @@ def register(mcp, vault):
     @mcp.tool(annotations=ToolAnnotations(read_only_hint=False, destructive_hint=True, idempotent_hint=False, open_world_hint=False))
     @_guard
     def wiki_edit(path: str, old_string: str, new_string: str, expected_hash: str, reason: str) -> str:
-        """Replace one exact passage in an existing page. old_string must match exactly once (include enough context).
+        """Replace one exact passage in an existing page (or in overview.md). old_string must match exactly once (include enough context).
         expected_hash is the 'hash' returned by wiki_read for this page; a stale hash is refused. The previous version is
         snapshotted to _archive/ and `updated:` is set to today. New facts need an inline [source: ...] marker."""
-        rel, p, text = _existing(path, expected_hash)
+        rel, p, text = _existing(path, expected_hash, files=True)
         _check_prose(new_string, "new_string")
         n = text.count(old_string) if old_string else 0
         if n != 1:
@@ -313,10 +381,10 @@ def register(mcp, vault):
     @mcp.tool(annotations=ToolAnnotations(read_only_hint=False, destructive_hint=False, idempotent_hint=False, open_world_hint=False))
     @_guard
     def wiki_append(path: str, text: str, expected_hash: str, reason: str) -> str:
-        """Append text to the end of an existing page, e.g. a dated section for a new fact. text must carry an inline
+        """Append text to the end of an existing page (or overview.md), e.g. a dated section for a new fact. text must carry an inline
         [source: ...] marker. expected_hash is the 'hash' from wiki_read. The previous version is snapshotted and
         `updated:` is set to today."""
-        rel, p, old = _existing(path, expected_hash)
+        rel, p, old = _existing(path, expected_hash, files=True)
         _check_prose(text, "text")
         if not lint.INLINE_PROVENANCE_RE.search(text):
             raise Refused("appended text needs an inline [source: ...] marker (e.g. [source: conversation, YYYY-MM-DD])")
@@ -332,17 +400,13 @@ def register(mcp, vault):
         if (vault / rel).is_symlink():
             raise Refused("refusing to archive a symlink")
         today = datetime.date.today().isoformat()
-        dest, n = vault / "_archive" / rel, 0
-        while dest.exists():
-            n += 1
-            dest = vault / "_archive" / f"{Path(rel).with_suffix('').as_posix()}-{today}-{n}.md"
-        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest = _archive_dest(vault, rel, today)
         data = p.read_bytes()
         os.replace(p, dest)
         if dest.read_bytes() != data or p.exists():
             raise Refused("archive verification failed; check the page and _archive/ manually")
         out = {"ok": True, "path": rel, "action": "archive", "archived_to": dest.relative_to(vault).as_posix(),
-               "inbound_links": _inbound(vault, rel)}
+               "inbound_links": _inbound(vault, rel, 30)}
         for what, step in (("index", lambda: _index_remove(vault, rel)),
                            ("log", lambda: _log(vault, "archive", rel, reason, today))):
             try:
@@ -351,4 +415,133 @@ def register(mcp, vault):
                     out[what] = res
             except Exception as e:
                 out.setdefault("warnings", []).append(f"page archived but {what}.md update failed ({type(e).__name__}); fix it manually")
+        return out
+
+    @mcp.tool(annotations=ToolAnnotations(read_only_hint=False, destructive_hint=False, idempotent_hint=False, open_world_hint=False))
+    @_guard
+    def wiki_save_raw(path: str, content: str, reason: str) -> str:
+        """Save an immutable source to raw/ (create-only; never overwritten, and no other tool can change raw/).
+        path: raw/<articles|papers|transcripts|internal|assets|meta>/<lowercase-name>.<md|txt|json|csv>.
+        Put the source text unchanged, with frontmatter where relevant (source_channel, source_date_range,
+        source_thread_id for chat or email threads). Content containing keys, tokens or passwords is refused: redact first.
+        Then cite it from wiki pages with [source: <file-stem>, <location>]."""
+        rel = Path(path)
+        if rel.is_absolute() or ".." in rel.parts or len(rel.parts) != 3 or rel.parts[0] != "raw" or rel.parts[1] not in RAW_SUBDIRS:
+            raise Refused(f"path must be raw/<{'|'.join(RAW_SUBDIRS)}>/<name>")
+        if rel.suffix not in RAW_SUFFIXES or not RAW_NAME_RE.match(rel.name):
+            raise Refused(f"name must be lowercase letters, digits, '.', '-', '_' and end in {', '.join(RAW_SUFFIXES)}")
+        top = (vault / "raw").resolve()
+        if top.parent != vault.resolve() or (vault / rel.parts[0] / rel.parts[1]).resolve().parent != top:
+            raise Refused("path resolves outside raw/")
+        p = vault / rel
+        if os.path.lexists(p):
+            raise Refused(f"{path} already exists; raw sources are immutable, save the new version under a new name")
+        content = content.replace("\r\n", "\n")
+        if len(content.encode()) > MAX_RAW:
+            raise Refused(f"source is larger than {MAX_RAW // 1000} KB; save the relevant part")
+        hits = [name for name, pat in SECRET_PATTERNS.items() if re.search(pat, content)]
+        if hits:
+            raise Refused(f"content looks like it contains secrets ({', '.join(hits)}); redact them and retry")
+        tid = THREAD_ID_RE.search(content)
+        if tid and tid.group(1) not in ("null", "None", "~", '""', "''"):
+            for f in sorted((vault / "raw" / "internal").glob("*")) if (vault / "raw" / "internal").is_dir() else []:
+                try:
+                    if f.is_file() and tid.group(1) in THREAD_ID_RE.findall(f.read_text(errors="replace")):
+                        raise Refused(f"this thread was already captured as raw/internal/{f.name} (source_thread_id {tid.group(1)})")
+                except OSError:
+                    pass
+        data = content if content.endswith("\n") else content + "\n"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        _atomic(p, data)
+        if sha(p.read_bytes()) != sha(data):
+            p.unlink()
+            raise Refused("write verification failed; nothing was saved")
+        today = datetime.date.today().isoformat()
+        out = {"ok": True, "path": rel.as_posix(), "hash": sha(data), "cite_as": f"[source: {rel.stem}, <location>]"}
+        try:
+            _log(vault, "capture", rel.as_posix(), reason, today)
+        except Exception as e:
+            out["warnings"] = [f"saved but log.md update failed ({type(e).__name__}); add the entry manually"]
+        return out
+
+    @mcp.tool(annotations=ToolAnnotations(read_only_hint=False, destructive_hint=True, idempotent_hint=False, open_world_hint=False))
+    @_guard
+    def wiki_supersede(old_path: str, new_path: str, old_hash: str, new_hash: str, reason: str,
+                       apply: bool = False, confirm_rewrite_count: int = 0) -> str:
+        """Replace a page with a newer one that materially supersedes it. Call first with apply=false: nothing changes and the
+        plan lists every page whose [[links]] would be rewritten. Then call again with apply=true. old_hash and new_hash come
+        from wiki_read. Applying: sets supersedes on the new page, adds superseded_by to the old page and archives it (path
+        preserved, never deleted), rewrites inbound links to the new page (aliases and #headings kept), removes the old index
+        line, and logs. If 10 or more pages link to the old one you must pass confirm_rewrite_count equal to that number."""
+        today = datetime.date.today().isoformat()
+        lint = _lint()
+        taxonomy = lint.load_taxonomy(vault / "SCHEMA.md")
+        if not taxonomy:
+            raise Refused("SCHEMA.md with a tag taxonomy is missing; writes are disabled until it exists")
+        o_rel, o_p, o_text = _existing(old_path, old_hash)
+        n_rel, n_p, n_text = _existing(new_path, new_hash)
+        if o_rel == n_rel:
+            raise Refused("old and new page are the same")
+        dupes = [f for d in ALLOWED_DIRS for f in (vault / d).rglob(f"{Path(o_rel).stem}.md")]
+        if len(dupes) > 1:
+            raise Refused(f"another page shares the name '{Path(o_rel).stem}', so [[links]] to it are ambiguous; rename or edit links by hand")
+        if (vault / o_rel).is_symlink() or (vault / n_rel).is_symlink():
+            raise Refused("refusing to supersede through a symlink")
+        o_stem, n_stem = Path(o_rel).stem, Path(n_rel).stem
+        new_after = _stamp(_set_field(n_text, "supersedes", f"supersedes: [{', '.join(dict.fromkeys(_fm_list(n_text, 'supersedes') + [o_stem]))}]"), today)
+        old_after = _stamp(_set_field(o_text, "superseded_by", f"superseded_by: {n_stem}"), today)
+        errors = [e for e in _problems(new_after, taxonomy, lint) if e not in set(_problems(_stamp(n_text, today), taxonomy, lint))]
+        rewrites, skipped = {}, []
+        for r in _inbound(vault, o_rel):
+            if r == n_rel:
+                continue
+            t = (vault / r).read_text(encoding="utf-8")
+            t2 = _link_re(o_stem).sub(lambda m: f"[[{n_stem}{m.group(1)}]]", t).replace(f"({o_rel})", f"({n_rel})")
+            if t2 == t:
+                continue
+            t2 = _stamp(t2, today)
+            bad = [e for e in _problems(t2, taxonomy, lint) if e not in set(_problems(_stamp(t, today), taxonomy, lint))]
+            if bad:
+                skipped.append({"page": r, "problems": bad})
+            else:
+                rewrites[r] = (t, t2)
+        if errors:
+            raise Refused(*errors)
+        if skipped:
+            raise Refused(*[f"rewriting links in {x['page']} would break it ({'; '.join(x['problems'])}); fix that page first" for x in skipped])
+        warns = [f"{n_rel} still links to {o_stem}; edit it so it does not point at the archived page"] if _link_re(o_stem).search(new_after) else []
+        plan = {"old": o_rel, "new": n_rel, "rewrite_links_in": sorted(rewrites), "count": len(rewrites), "warnings": warns}
+        if not apply:
+            return {"ok": True, "applied": False, "plan": plan, "next": "call again with apply=true" + (f" and confirm_rewrite_count={len(rewrites)}" if len(rewrites) >= 10 else "")}
+        if len(rewrites) >= 10 and confirm_rewrite_count != len(rewrites):
+            raise Refused(f"{len(rewrites)} pages would be rewritten; pass confirm_rewrite_count={len(rewrites)} after showing the user the list")
+        done = []
+        try:
+            for r, (t, t2) in sorted(rewrites.items()):
+                if sha((vault / r).read_bytes()) != sha(t):
+                    raise Refused(f"{r} changed while planning; re-run")
+                _snapshot(vault, vault / r)
+                _atomic(vault / r, t2)
+                done.append(r)
+            _snapshot(vault, n_p)
+            _atomic(n_p, new_after)
+            done.append(n_rel)
+            dest = _archive_dest(vault, o_rel, today)
+            _atomic(dest, old_after)
+            o_p.unlink()
+            done.append(f"{o_rel} -> {dest.relative_to(vault).as_posix()}")
+        except Exception as e:
+            msg = e.errors if isinstance(e, Refused) else [f"{type(e).__name__}"]
+            return {"ok": False, "errors": [f"supersede stopped part-way: {m}" for m in msg], "completed": done,
+                    "note": "pre-images are in _archive/; finish or revert by hand"}
+        out = {"ok": True, "applied": True, "plan": plan, "archived_to": dest.relative_to(vault).as_posix()}
+        for what, step in (("index", lambda: _index_remove(vault, o_rel)),
+                           ("log", lambda: _log(vault, "supersede", f"{o_stem} \u2192 {n_stem}",
+                                                reason.strip() + ("\n- rewrote links in: " + ", ".join(sorted(rewrites)) if rewrites else ""), today))):
+            try:
+                res = step()
+                if res:
+                    out[what] = res
+            except Exception as e:
+                out.setdefault("warnings", []).append(f"superseded but {what}.md update failed ({type(e).__name__}); fix it manually")
         return out

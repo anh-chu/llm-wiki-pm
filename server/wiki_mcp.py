@@ -17,6 +17,10 @@ import hashlib
 import json
 import os
 import re
+import shutil
+import subprocess
+import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -60,7 +64,7 @@ mcp = MCPServer(
         "response is size-capped; follow next_offset when truncated is true. "
         "Call wiki_guide once at the start of a conversation for how to answer from this wiki."
         + (" Writes are enabled: read a page with wiki_read first, then use wiki_edit or wiki_append with its hash; "
-           "wiki_create_page only for a new topic; wiki_archive_page to remove one." if WRITE else "")
+           "wiki_create_page only for a new topic; wiki_archive_page to remove one; wiki_supersede when a new page replaces an old one; wiki_save_raw for sources." if WRITE else "")
     ),
 )
 
@@ -283,6 +287,34 @@ def wiki_guide() -> str:
 
 
 @mcp.tool(annotations=READ_ONLY)
+def wiki_lint(tier: str = "errors", offset: int = 0, limit: int = 40) -> str:
+    """Wiki health check (broken links, bad frontmatter, off-taxonomy tags, orphans, stale pages, ungrounded pages).
+    Runs on a throwaway copy, so nothing is written to the wiki. Returns the count per tier and pages through one tier:
+    tier = errors | warnings | info."""
+    tier = tier if tier in ("errors", "warnings", "info") else "errors"
+    with tempfile.TemporaryDirectory(prefix="wiki-lint-") as tmp:
+        copy = Path(tmp) / "wiki"
+        shutil.copytree(VAULT, copy, ignore=shutil.ignore_patterns(".*", "external", "node_modules", "exports"), symlinks=False)
+        try:
+            run = subprocess.run([sys.executable, str(wiki_write.LINT_PATH), str(copy), "--quiet"], capture_output=True, text=True, timeout=90)
+        except subprocess.TimeoutExpired:
+            return json.dumps({"error": "lint timed out"})
+        reports = sorted((copy / "queries").glob("lint-*.md"))
+        if run.returncode != 0 or not reports:
+            return json.dumps({"error": "lint failed", "detail": run.stderr[-300:]})
+        text = reports[-1].read_text()
+    sections = {}
+    for name, key in (("Errors", "errors"), ("Warnings", "warnings"), ("Info", "info")):
+        mm = re.search(rf"^## \S+ {name} \((\d+)\)\n(.*?)(?=^## |\Z)", text, re.M | re.S)
+        items = [ln[2:] for ln in (mm.group(2).splitlines() if mm else []) if ln.startswith("- ") and ln != "- none"]
+        sections[key] = items
+    page = sections[tier][offset : offset + max(1, min(limit, 200))]
+    nxt = offset + len(page)
+    return _dump({"counts": {k: len(v) for k, v in sections.items()}, "tier": tier, "offset": offset,
+                  "next_offset": nxt if nxt < len(sections[tier]) else None, "results": page, "truncated": False})
+
+
+@mcp.tool(annotations=READ_ONLY)
 def wiki_info() -> str:
     """Wiki size and health: file counts, pages whose frontmatter fails to parse, newest change."""
     rels = _files()
@@ -299,9 +331,9 @@ def wiki_info() -> str:
                   "truncated": False})
 
 
-if WRITE:
-    import wiki_write
+import wiki_write
 
+if WRITE:
     wiki_write.register(mcp, VAULT)
 
 

@@ -37,7 +37,7 @@ def main():
     w = lambda rel, t: open(os.path.join(vault, rel), "w").write(t)
     rd = lambda rel: open(os.path.join(vault, rel)).read()
     w("SCHEMA.md", SCHEMA); w("index.md", INDEX); w("log.md", "# Log\n"); w("raw/internal/x.md", "raw source\n")
-    w("entities/acme.md", PAGE("Acme")); w("entities/old.md", "---\ntitle: Old\n---\nno links, off schema\n")
+    w("overview.md", PAGE("Overview", body="Synthesis of [[acme]] and [[beta]] [source: conversation, 2026-10-01].\n")); w("entities/acme.md", PAGE("Acme")); w("entities/old.md", "---\ntitle: Old\n---\nno links, off schema\n")
     os.symlink(outside, os.path.join(vault, "concepts", "escape"))
     env = dict(os.environ, WIKI_PATH=vault, WIKI_MCP_PORT=str(PORT), WIKI_WRITE="1")
     env.pop("WIKI_AUTH", None)
@@ -154,6 +154,81 @@ def main():
             check("edit cannot set shareable: true", not r["ok"] and "shareable" in " ".join(r["errors"]), r)
             r = await call("wiki_create_page", path="entities/pub.md", content=PAGE("Pub", extra="shareable: true\n"), summary="x", reason="t")
             check("create cannot set shareable: true", not r["ok"], r)
+
+            # ---- wiki_lint is read-only
+            snap = lambda: sorted((dp, f, os.path.getmtime(os.path.join(dp, f))) for dp, _, fs in os.walk(vault) for f in fs)
+            before_files = snap(); r = await call("wiki_lint", tier="errors")
+            check("wiki_lint returns counts per tier", set(r.get("counts", {})) == {"errors", "warnings", "info"}, r)
+            check("wiki_lint writes nothing to the wiki", snap() == before_files)
+            check("wiki_lint pages a tier", isinstance(r.get("results"), list) and "next_offset" in r)
+
+            # ---- wiki_save_raw
+            r = await call("wiki_save_raw", path="raw/articles/gartner-note.md", content="# Note\nPublic fact.\n", reason="capture test")
+            check("save_raw ok", r.get("ok") and rd("raw/articles/gartner-note.md").startswith("# Note"), r)
+            check("save_raw logs a capture", f"## [{TODAY}] capture | raw/articles/gartner-note.md" in rd("log.md"))
+            check("save_raw refuses to overwrite", not (await call("wiki_save_raw", path="raw/articles/gartner-note.md", content="x", reason="t"))["ok"])
+            for p in ("raw/other/x.md", "raw/internal/Bad Name.md", "raw/internal/x.exe", "raw/articles/sub/x.md", "raw/../entities/x.md", "entities/x.md", "raw/x.md"):
+                check(f"save_raw refuses {p}", not (await call("wiki_save_raw", path=p, content="x", reason="t"))["ok"])
+            for label, body in (("AWS key", "key AKIA" + "ABCDEFGHIJKLMNOP"), ("password", "password: hunter2hunter2hunter2"), ("private key", "-----BEGIN RSA PRIVATE KEY-----\nabc")):
+                r = await call("wiki_save_raw", path="raw/internal/secret-test.md", content=body, reason="t")
+                check(f"save_raw refuses content with a {label}", not r["ok"] and "secrets" in r["errors"][0] and not os.path.exists(os.path.join(vault, "raw/internal/secret-test.md")), r)
+            check("save_raw error does not echo the secret", "hunter2" not in json.dumps(r))
+            await call("wiki_save_raw", path="raw/internal/slack-a-2026-10-01.md", content="---\nsource_thread_id: 1712.345\n---\nthread\n", reason="t")
+            r = await call("wiki_save_raw", path="raw/internal/slack-b-2026-10-01.md", content="---\nsource_thread_id: 1712.345\n---\nsame thread\n", reason="t")
+            check("save_raw refuses a duplicate source_thread_id", not r["ok"] and "already captured" in r["errors"][0], r)
+            r = await call("wiki_edit", path="raw/articles/gartner-note.md", old_string="Public", new_string="Private", expected_hash="0", reason="t")
+            check("raw/ stays immutable through edit", not r["ok"] and "Public fact" in rd("raw/articles/gartner-note.md"))
+
+            # ---- wiki_supersede
+            mk = lambda name, body, extra="": call("wiki_create_page", path=f"entities/{name}.md", content=PAGE(name, body=body + " [source: conversation, 2026-10-01]\n", extra=extra), summary=f"{name} page", reason="t")
+            await mk("v1", "Old version, see [[acme]] and [[beta]]."); await mk("v2", "New version, see [[acme]] and [[beta]].")
+            await mk("p1", "Uses [[v1|the old one]] and [[v1#history]] and [link](entities/v1.md) plus [[acme]]."); await mk("p2", "Plain [[v1]] and [[beta]].")
+            hv1 = (await call("wiki_read", path="entities/v1.md"))["hash"]; hv2 = (await call("wiki_read", path="entities/v2.md"))["hash"]
+            files_before = {f: rd(f"entities/{f}") for f in ("v1.md", "v2.md", "p1.md", "p2.md")}; idx_before = rd("index.md")
+            r = await call("wiki_supersede", old_path="entities/v1.md", new_path="entities/v2.md", old_hash=hv1, new_hash=hv2, reason="v2 replaces v1")
+            check("supersede dry-run returns the plan", r.get("ok") and r["applied"] is False and r["plan"]["rewrite_links_in"] == ["entities/p1.md", "entities/p2.md"], r)
+            check("supersede dry-run changes nothing", all(rd(f"entities/{f}") == v for f, v in files_before.items()) and rd("index.md") == idx_before)
+            r = await call("wiki_supersede", old_path="entities/v1.md", new_path="entities/v2.md", old_hash="0" * 16, new_hash=hv2, reason="t", apply=True)
+            check("supersede with a stale old_hash is refused", not r["ok"] and "hash mismatch" in r["errors"][0], r)
+            r = await call("wiki_supersede", old_path="entities/v1.md", new_path="entities/v1.md", old_hash=hv1, new_hash=hv1, reason="t", apply=True)
+            check("supersede refuses old == new", not r["ok"], r)
+            r = await call("wiki_supersede", old_path="raw/articles/gartner-note.md", new_path="entities/v2.md", old_hash="0", new_hash=hv2, reason="t", apply=True)
+            check("supersede refuses raw/", not r["ok"], r)
+            r = await call("wiki_supersede", old_path="entities/v1.md", new_path="entities/v2.md", old_hash=hv1, new_hash=hv2, reason="v2 replaces v1", apply=True)
+            check("supersede applies", r.get("ok") and r["applied"] and r["archived_to"] == "_archive/entities/v1.md", r)
+            check("old page archived with superseded_by", not os.path.exists(os.path.join(vault, "entities/v1.md")) and "superseded_by: v2" in rd("_archive/entities/v1.md"))
+            check("new page gains supersedes", "supersedes: [v1]" in rd("entities/v2.md") and f"updated: {TODAY}" in rd("entities/v2.md"))
+            p1 = rd("entities/p1.md")
+            check("inbound links rewritten, alias, heading and path kept", "[[v2|the old one]]" in p1 and "[[v2#history]]" in p1 and "(entities/v2.md)" in p1 and "v1" not in p1 and "[[v2]]" in rd("entities/p2.md"), p1)
+            check("supersede removes the old index line and logs it", "(entities/v1.md)" not in rd("index.md") and f"## [{TODAY}] supersede | v1 \u2192 v2" in rd("log.md") and "entities/p1.md" in rd("log.md"))
+            check("supersede snapshots rewritten pages", rd("_archive/p1-%s.md" % TODAY) == files_before["p1.md"])
+
+            # ten or more inbound pages need an explicit count
+            await mk("big-old", "Old, see [[acme]] and [[beta]]."); await mk("big-new", "New, see [[acme]] and [[beta]].")
+            for i in range(10):
+                await mk(f"ref{i}", f"Refers to [[big-old]] and [[acme]].")
+            hb1 = (await call("wiki_read", path="entities/big-old.md"))["hash"]; hb2 = (await call("wiki_read", path="entities/big-new.md"))["hash"]
+            kw = dict(old_path="entities/big-old.md", new_path="entities/big-new.md", old_hash=hb1, new_hash=hb2, reason="t", apply=True)
+            check("10+ inbound pages: apply without a count is refused", not (await call("wiki_supersede", **kw))["ok"] and os.path.exists(os.path.join(vault, "entities/big-old.md")))
+            check("10+ inbound pages: wrong count is refused", not (await call("wiki_supersede", confirm_rewrite_count=3, **kw))["ok"])
+            r = await call("wiki_supersede", confirm_rewrite_count=10, **kw)
+            check("10+ inbound pages: correct count applies", r.get("ok") and "[[big-new]]" in rd("entities/ref0.md") and "[[big-new]]" in rd("entities/ref9.md"), r)
+
+            # ---- index matching only looks at a bullet's own link target
+            await call("wiki_create_page", path="entities/mention.md", content=PAGE("Mention", body="x [[acme]] [[beta]] [source: conversation, 2026-10-01]\n"), summary="rival of [[tgt]] and see (entities/tgt.md)", reason="t")
+            r = await call("wiki_create_page", path="entities/tgt.md", content=PAGE("Tgt", body="x [[acme]] [[beta]] [source: conversation, 2026-10-01]\n"), summary="target page", reason="t")
+            check("create indexes a page whose stem appears only in another summary", r.get("index") == "added" and "- [Tgt](entities/tgt.md) - target page" in rd("index.md"), r)
+            r = await call("wiki_archive_page", path="entities/tgt.md", expected_hash=r["hash"], reason="t")
+            check("archive removes only the page's own index line", r.get("ok") and "(entities/tgt.md)" not in rd("index.md").replace("see (entities/tgt.md)", "") and "- [Mention](entities/mention.md) - rival of [[tgt]]" in rd("index.md"), r)
+
+            # ---- overview.md is editable, nothing else at the root is
+            ho = (await call("wiki_read", path="overview.md"))["hash"]
+            r = await call("wiki_edit", path="overview.md", old_string="Synthesis of", new_string="Updated synthesis of", expected_hash=ho, reason="refresh overview")
+            check("overview.md can be edited", r.get("ok") and "Updated synthesis" in rd("overview.md"), r)
+            check("overview.md cannot be created or archived", not (await call("wiki_create_page", path="overview.md", content=PAGE("O"), summary="x", reason="t"))["ok"]
+                  and not (await call("wiki_archive_page", path="overview.md", expected_hash=r["hash"], reason="t"))["ok"] and os.path.exists(os.path.join(vault, "overview.md")))
+            for p in ("index.md", "log.md", "SCHEMA.md"):
+                check(f"{p} cannot be edited", not (await call("wiki_edit", path=p, old_string="#", new_string="##", expected_hash=hsh(os.path.join(vault, p)), reason="t"))["ok"])
         asyncio.run(run(steps))
     finally:
         srv.terminate()

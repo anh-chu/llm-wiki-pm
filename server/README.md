@@ -14,14 +14,14 @@ Never expose 37843 or 37842. Only 37844 may sit behind a public route.
 
 ## Tools
 
-Read: `wiki_search` (ranked BM25), `wiki_scan` (exhaustive regex, tag or frontmatter scan with a total), `wiki_read`, `wiki_read_many`, `wiki_list`, `wiki_links`, `wiki_info`, `wiki_guide` (instructions the client should follow).
+Read: `wiki_search` (ranked BM25), `wiki_scan` (exhaustive regex, tag or frontmatter scan with a total), `wiki_read`, `wiki_read_many`, `wiki_list`, `wiki_links`, `wiki_info`, `wiki_lint` (the plugin's lint run on a throwaway copy, so nothing is written to the wiki), `wiki_guide` (instructions the client should follow).
 
-Write, only when `WIKI_WRITE=1`: `wiki_create_page`, `wiki_edit`, `wiki_append`, `wiki_archive_page`. Rules, enforced in `wiki_write.py`:
+Write, only when `WIKI_WRITE=1`: `wiki_save_raw`, `wiki_create_page`, `wiki_edit`, `wiki_append`, `wiki_supersede`, `wiki_archive_page`. Rules, enforced in `wiki_write.py`:
 
-- Pages only under `entities/`, `concepts/`, `comparisons/`, `queries/`. Never `raw/`, `_archive/`, root files, `..` or symlink escapes.
+- Pages only under `entities/`, `concepts/`, `comparisons/`, `queries/`, plus edit and append on `overview.md`. Never `_archive/`, other root files, `..` or symlink escapes. `raw/` can only be added to, through `wiki_save_raw`: create-only, lowercase names, size-capped, refused if it contains keys, tokens or passwords, and refused if the same `source_thread_id` was already captured.
 - `wiki_read` returns a content `hash`. Edit, append and archive must pass it, so a stale read is refused.
 - Frontmatter must parse and carry the required fields, tags must exist in `SCHEMA.md`, at least 2 `[[wikilinks]]`, no em-dashes, no `private:`, and `shareable: true` cannot be set. Create and append need an inline `[source: ...]`. Only problems a change introduces are blocked, so legacy pages stay editable.
-- Every write snapshots the old page to `_archive/`, writes atomically, re-reads to verify, appends to `log.md`, and updates `index.md` on create and archive. Archive moves a page to `_archive/` and never hard-deletes.
+- Every write snapshots the old page to `_archive/`, writes atomically, re-reads to verify, appends to `log.md`, and updates `index.md` on create and archive. Archive moves a page to `_archive/` and never hard-deletes. Supersede follows the wiki's flow: `supersedes` on the new page, `superseded_by` on the old one, the old page archived, inbound links rewritten (aliases and `#headings` kept). It runs as a dry-run plan first, and 10 or more rewritten pages need an explicit count.
 
 ## Setup
 
