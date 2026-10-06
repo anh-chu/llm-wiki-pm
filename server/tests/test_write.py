@@ -12,7 +12,7 @@ URL = f"http://127.0.0.1:{PORT}/mcp"
 TODAY = time.strftime("%Y-%m-%d")
 
 SCHEMA = "# Schema\n\n## Tag Taxonomy\n- `company`, org\n- `competitive`, rivals\n- `strategy`, direction\n"
-INDEX = "# Wiki Index\n\n## Entities\n<!-- Alphabetical. -->\n- [[acme]]\n\n## Concepts\n\n## Comparisons\n\n## Queries\n"
+INDEX = "# Wiki Index\n\n## Entities\n<!-- Alphabetical. -->\n- [[acme]]\n\n## Concepts\n\n## Comparisons\n\n## Briefings\n<!-- newest first -->\n- [Daily Brief 2026-09-11](briefings/daily-brief-2026-09-11.md) - old\n- [Daily Brief 2026-09-10](briefings/daily-brief-2026-09-10.md) - older\n\n## Queries\n"
 PAGE = lambda title, body="Acme sells widgets [source: conversation, 2026-10-01]. See [[beta]] and [[gamma]].\n", tags="[company]", extra="": (
     f"---\ntitle: {title}\ncreated: 2026-10-01\nupdated: 2026-10-01\ntype: entity\ntags: {tags}\nsources: [raw/internal/x.md]\n{extra}---\n\n# {title}\n\n{body}")
 
@@ -32,12 +32,12 @@ async def run(steps):
 
 def main():
     tmp = tempfile.mkdtemp(); vault = os.path.join(tmp, "wiki"); outside = os.path.join(tmp, "outside"); os.makedirs(outside)
-    for d in ("entities", "concepts", "comparisons", "queries", "raw/internal", "_archive"):
+    for d in ("entities", "concepts", "comparisons", "queries", "briefings", "raw/internal", "_archive"):
         os.makedirs(os.path.join(vault, d))
     w = lambda rel, t: open(os.path.join(vault, rel), "w").write(t)
     rd = lambda rel: open(os.path.join(vault, rel)).read()
     w("SCHEMA.md", SCHEMA); w("index.md", INDEX); w("log.md", "# Log\n"); w("raw/internal/x.md", "raw source\n")
-    w("overview.md", PAGE("Overview", body="Synthesis of [[acme]] and [[beta]] [source: conversation, 2026-10-01].\n")); w("entities/acme.md", PAGE("Acme")); w("entities/old.md", "---\ntitle: Old\n---\nno links, off schema\n")
+    w("briefings/daily-brief-2026-09-10.md", "---\ntitle: Daily Brief 2026-09-10\ncreated: 2026-09-10\nupdated: 2026-09-10\ntype: brief\nlifecycle: dated-digest\ntags: [brief]\nsources: [raw/internal/x.md]\nprivate: true\n---\n\nold brief\n"); w("overview.md", PAGE("Overview", body="Synthesis of [[acme]] and [[beta]] [source: conversation, 2026-10-01].\n")); w("entities/acme.md", PAGE("Acme")); w("entities/old.md", "---\ntitle: Old\n---\nno links, off schema\n")
     os.symlink(outside, os.path.join(vault, "concepts", "escape"))
     env = dict(os.environ, WIKI_PATH=vault, WIKI_MCP_PORT=str(PORT), WIKI_WRITE="1")
     env.pop("WIKI_AUTH", None)
@@ -220,6 +220,22 @@ def main():
             check("create indexes a page whose stem appears only in another summary", r.get("index") == "added" and "- [Tgt](entities/tgt.md) - target page" in rd("index.md"), r)
             r = await call("wiki_archive_page", path="entities/tgt.md", expected_hash=r["hash"], reason="t")
             check("archive removes only the page's own index line", r.get("ok") and "(entities/tgt.md)" not in rd("index.md").replace("see (entities/tgt.md)", "") and "- [Mention](entities/mention.md) - rival of [[tgt]]" in rd("index.md"), r)
+
+            # ---- briefings/ (dated digests, lighter rules)
+            BRIEF = lambda day, extra="", tags="[brief, katalon-internal]", src="[raw/internal/x.md]": f"---\ntitle: Daily Brief {day}\ncreated: {day}\nupdated: {day}\ntype: brief\nlifecycle: dated-digest\ntags: {tags}\nsources: {src}\nwindow: 2026-10-05 to 2026-10-06\nprivate: true\n{extra}---\n\n# Daily brief\n\nNothing linked, nothing tagged from the taxonomy [source: raw/internal/x.md].\n"
+            r = await call("wiki_create_page", path="briefings/daily-brief-2026-10-06.md", content=BRIEF("2026-10-06"), summary="the day in one line", reason="daily brief")
+            check("briefing created with the daily-brief prompt's frontmatter (brief tag, private, no wikilinks)", r.get("ok") and r.get("index") == "added", r)
+            ix = rd("index.md")
+            check("new brief is listed first (newest first) in the Briefings section", ix.index("daily-brief-2026-10-06.md") < ix.index("daily-brief-2026-09-11.md") and ix.index("## Briefings") < ix.index("daily-brief-2026-10-06.md") < ix.index("## Queries"), ix)
+            r = await call("wiki_create_page", path="briefings/daily-brief-2026-10-07.md", content=BRIEF("2026-10-07", src="[entities/acme.md]").replace(" [source: raw/internal/x.md]", ""), summary="x", reason="t")
+            check("briefing still needs a primary source", not r["ok"] and "primary source" in " ".join(r["errors"]), r)
+            r = await call("wiki_create_page", path="briefings/daily-brief-2026-10-08.md", content=BRIEF("2026-10-08", extra="shareable: true\n"), summary="x", reason="t")
+            check("briefing cannot set shareable: true", not r["ok"], r)
+            r = await call("wiki_create_page", path="entities/brief-tagged.md", content=PAGE("B", tags="[brief]"), summary="x", reason="t")
+            check("brief tag is still refused outside briefings/", not r["ok"] and "taxonomy" in " ".join(r["errors"]), r)
+            check("private: is still refused outside briefings/", not (await call("wiki_create_page", path="entities/priv.md", content=PAGE("P", extra="private: true\n"), summary="x", reason="t"))["ok"])
+            r = await call("wiki_archive_page", path="briefings/daily-brief-2026-09-10.md", expected_hash=(await call("wiki_read", path="briefings/daily-brief-2026-09-10.md"))["hash"], reason="older than five days")
+            check("old brief rotates to _archive/briefings/ and leaves the index", r.get("ok") and r["archived_to"] == "_archive/briefings/daily-brief-2026-09-10.md" and os.path.exists(os.path.join(vault, "_archive/briefings/daily-brief-2026-09-10.md")) and "(briefings/daily-brief-2026-09-10.md)" not in rd("index.md") and "(briefings/daily-brief-2026-09-11.md)" in rd("index.md"), r)
 
             # ---- overview.md is editable, nothing else at the root is
             ho = (await call("wiki_read", path="overview.md"))["hash"]

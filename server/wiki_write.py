@@ -22,7 +22,8 @@ from pathlib import Path
 import yaml
 from mcp.types import ToolAnnotations
 
-ALLOWED_DIRS = ("entities", "concepts", "comparisons", "queries")
+ALLOWED_DIRS = ("entities", "concepts", "comparisons", "queries", "briefings")
+LOOSE_DIRS = ("briefings",)  # dated digests: lint.py never scans them, so no tag taxonomy, wikilink minimum or private: check
 EDITABLE_FILES = ("overview.md",)  # root synthesis page: edit/append only, never create/archive
 INDEX_SECTIONS = {d: f"## {d.capitalize()}" for d in ALLOWED_DIRS}
 NAME_RE = re.compile(r"^[a-z0-9][a-z0-9-]*\.md$")
@@ -93,7 +94,8 @@ def _resolve(vault, path, create, files=False):
     return rel.as_posix(), p
 
 
-def _problems(text, taxonomy, lint):
+def _problems(text, taxonomy, lint, rel=""):
+    loose = rel.split("/")[0] in LOOSE_DIRS
     m = lint.FRONTMATTER_RE.match(text)
     if not m:
         return ["page must start with a '---' YAML frontmatter block"]
@@ -107,7 +109,7 @@ def _problems(text, taxonomy, lint):
     missing = sorted(lint.REQUIRED_FRONTMATTER - set(fm))
     if missing:
         errs.append(f"missing frontmatter fields: {', '.join(missing)}")
-    if "private" in fm:
+    if "private" in fm and not loose:
         errs.append("remove the `private:` field; pages are private by default (use shareable: true only for public-safe pages)")
     if str(fm.get("shareable")).lower() in ("true", "yes"):
         errs.append("shareable: true cannot be set through this connector (it publishes the page to exports); set it in the wiki directly")
@@ -115,14 +117,14 @@ def _problems(text, taxonomy, lint):
     if tags is not None:
         if not isinstance(tags, list):
             errs.append("tags must be a list, e.g. tags: [company, competitive]")
-        else:
+        elif not loose:
             bad = sorted(str(t) for t in tags if str(t) not in taxonomy)
             if bad:
                 errs.append(f"tags not in the SCHEMA.md taxonomy: {', '.join(bad)}")
     for k in ("created", "updated"):
         if k in fm and not DATE_RE.match(str(fm[k])):
             errs.append(f"{k} must be YYYY-MM-DD")
-    if len({x.strip() for x in lint.WIKILINK_RE.findall(text)}) < 2:
+    if not loose and len({x.strip() for x in lint.WIKILINK_RE.findall(text)}) < 2:
         errs.append("page needs at least 2 distinct outbound [[wikilinks]]")
     return errs
 
@@ -185,6 +187,8 @@ def _index_add(vault, rel, title, summary):
     end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
     bullets = [i for i in range(start + 1, end) if lines[i].startswith("- ")]
     last = bullets[-1] if bullets else (start + 1 if lines[start + 1].startswith("<!--") else start)
+    if bullets and rel.startswith("briefings/"):  # that section is newest first
+        last = bullets[0] - 1
     summary = " ".join(summary.split()).replace(EM_DASH, "-")[:220]
     lines.insert(last + 1, f"- [{title}]({rel}) - {summary}")
     _atomic(ip, "\n".join(lines))
@@ -204,15 +208,15 @@ def _commit(vault, rel, p, old, new, action, reason, extra_errors_before=None, i
     if not taxonomy:
         raise Refused("SCHEMA.md with a tag taxonomy is missing; writes are disabled until it exists")
     new = _stamp(new, today)
-    before = set(_problems(_stamp(old, today), taxonomy, lint)) if old is not None else set()
-    after = _problems(new, taxonomy, lint)
+    before = set(_problems(_stamp(old, today), taxonomy, lint, rel)) if old is not None else set()
+    after = _problems(new, taxonomy, lint, rel)
     errors = [e for e in after if e not in before]
     if errors:
         raise Refused(*errors)
     snap = _snapshot(vault, p) if old is not None else None
     _atomic(p, new)
     back = p.read_bytes()
-    if sha(back) != sha(new) or [e for e in _problems(back.decode(), taxonomy, lint) if e not in before]:
+    if sha(back) != sha(new) or [e for e in _problems(back.decode(), taxonomy, lint, rel) if e not in before]:
         if old is not None:
             _atomic(p, old)
         else:
@@ -351,7 +355,7 @@ def register(mcp, vault):
     @mcp.tool(annotations=ToolAnnotations(read_only_hint=False, destructive_hint=False, idempotent_hint=False, open_world_hint=False))
     @_guard
     def wiki_create_page(path: str, content: str, summary: str, reason: str) -> str:
-        """Create a NEW knowledge page (fails if it exists). path: entities|concepts|comparisons|queries/<lowercase-hyphen>.md.
+        """Create a NEW knowledge page (fails if it exists). path: entities|concepts|comparisons|queries|briefings/<lowercase-hyphen>.md.
         content: the whole page including YAML frontmatter (title, created, updated, type, tags from SCHEMA.md, sources),
         at least 2 [[wikilinks]], and inline [source: ...] markers (use [source: conversation, YYYY-MM-DD] for chat facts).
         summary: one line for index.md. reason: one line for log.md. Errors come back as a list; fix them and retry."""
@@ -490,7 +494,7 @@ def register(mcp, vault):
         o_stem, n_stem = Path(o_rel).stem, Path(n_rel).stem
         new_after = _stamp(_set_field(n_text, "supersedes", f"supersedes: [{', '.join(dict.fromkeys(_fm_list(n_text, 'supersedes') + [o_stem]))}]"), today)
         old_after = _stamp(_set_field(o_text, "superseded_by", f"superseded_by: {n_stem}"), today)
-        errors = [e for e in _problems(new_after, taxonomy, lint) if e not in set(_problems(_stamp(n_text, today), taxonomy, lint))]
+        errors = [e for e in _problems(new_after, taxonomy, lint, n_rel) if e not in set(_problems(_stamp(n_text, today), taxonomy, lint, n_rel))]
         rewrites, skipped = {}, []
         for r in _inbound(vault, o_rel):
             if r == n_rel:
@@ -500,7 +504,7 @@ def register(mcp, vault):
             if t2 == t:
                 continue
             t2 = _stamp(t2, today)
-            bad = [e for e in _problems(t2, taxonomy, lint) if e not in set(_problems(_stamp(t, today), taxonomy, lint))]
+            bad = [e for e in _problems(t2, taxonomy, lint, r) if e not in set(_problems(_stamp(t, today), taxonomy, lint, r))]
             if bad:
                 skipped.append({"page": r, "problems": bad})
             else:
