@@ -34,18 +34,9 @@ elif [[ -z "$FILE_WIKI" ]]; then
   GLOBAL_WARNING="llm-wiki-pm: using global wiki path ($WIKI). Run /llm-wiki-pm:set-wiki-path ~/your-path from your project directory to set a project-specific path."
 fi
 
-# ①b Ensure wiki-search package is in npx cache (background, non-blocking)
-# First session after install will use npx (slow); this ensures the cache
-# exists for wiki-search.sh's fast path on subsequent runs.
-# Fixed-depth glob instead of `find` — find deep-traverses the entire _npx tree
-# (can be 100k+ files → multi-second stall); the glob only stats the exact path shape.
-_npx_hit=""
-for _p in "${HOME}"/.npm/_npx/*/node_modules/@wirux/mcp-markdown-vault/dist/index.js; do
-  [[ -e "$_p" ]] && { _npx_hit=1; break; }
-done
-if [[ -z "$_npx_hit" ]]; then
-  npx -y @wirux/mcp-markdown-vault --version &>/dev/null &
-fi
+# ①b Pre-fetch the wiki-search binary (background, non-blocking) so the MCP
+# launcher never waits on a download. No-op once cached or if on PATH.
+sh "$SCRIPT_DIR/obsidian-mcp-fetch.sh" &>/dev/null &
 
 # ② Scaffold wiki on first run — only if dir is new or truly empty
 # Never overwrite files in an existing non-empty directory.

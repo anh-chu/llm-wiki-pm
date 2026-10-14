@@ -14,7 +14,7 @@ surface_confidence_threshold: verified
 
 | Integration | Why it matters for you |
 |---|---|
-| wiki-search (bundled) | Semantic + TF-IDF search — critical for finding nuanced thematic connections across sources |
+| wiki-search (bundled) | Ranked keyword and regex search — finds thematic connections across sources when you try a few phrasings |
 | WebFetch | Ingest analyst reports, papers, and press directly into raw/articles/ and raw/papers/ |
 
 ## Suggested Agent Mode

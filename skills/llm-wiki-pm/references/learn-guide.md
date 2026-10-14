@@ -16,7 +16,7 @@ PM-domain content. Skip opinions without specifics, hypotheticals, and casual as
 
 ## ② Dedup against wiki
 
-For each candidate learning, search existing pages (wiki-search `semantic_search`
+For each candidate learning, search existing pages (wiki-search `search_text`
 preferred, grep fallback). Drop anything already recorded. If a fact exists but
 needs updating (newer info), mark it as an update rather than a new capture.
 

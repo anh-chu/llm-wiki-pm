@@ -21,8 +21,9 @@ If the source is brand new territory (no existing pages), use Ingest instead.
 
 Three-way search for completeness:
 
-1. **Semantic** (paraphrases of the stale claim) — call the bundled wiki-search
-   MCP: `view(action=semantic_search, query="old claim phrased various ways")`.
+1. **Ranked keyword** (paraphrases of the stale claim) — call the bundled
+   wiki-search MCP: `search_text` with the claim's key terms, then again with
+   synonyms. It matches words, not meaning, so vary the wording.
 2. **Structural + literal** — shell:
 
 ```bash

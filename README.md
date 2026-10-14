@@ -41,7 +41,7 @@ bundled [wiki-mcp server](server/README.md).
 - **Supersession** with auto-redirect of inbound links
 - **Crystallize** pattern: transcripts become structured decision digests
 - **Privacy-first**: pre-ingest filter, and every page is private (excluded from exports) unless it carries `shareable: true`
-- **Bundled wiki-search**: semantic + TF-IDF search over your whole wiki (auto-indexes on startup)
+- **Bundled wiki-search**: ranked keyword, regex, tag and backlink search over your whole wiki, via [obsidian-mcp](https://github.com/lstpsche/obsidian-mcp) (auto-indexes on startup)
 - **ChatGPT access via [wiki-mcp](server/README.md)**: a remote MCP server behind Cloudflare Access. Read tools by default; with `WIKI_WRITE=1` it adds create, edit, append, archive, supersede, and raw capture, each validated against `SCHEMA.md`, snapshotted, and logged the same way Claude Code writes are
 - **Obsidian-compatible**: works as a vault out of the box
 - **Worker agents**: five subagents (indexer, fetcher, link-validator, lint, people-updater)
@@ -113,7 +113,7 @@ Full setup, including mobile Obsidian sync, in
 |---|---|---|---|---|---|
 | **Shape** | Single skill | 5 skills | Skill + plugin + server | Full web app | SaaS |
 | **Storage** | Plain markdown | Plain markdown | Plain markdown | Supabase + S3 | Cloud |
-| **Search** | Bundled semantic + TF-IDF (wiki-search) + backlinks | grep + index | grep + index | PGroonga | Proprietary |
+| **Search** | Bundled BM25 + regex + tags (wiki-search) + backlinks | grep + index | grep + index | PGroonga | Proprietary |
 | **Update discipline** | Diffs + supersession fields + auto-link rewrite | Diffs + source cite | Human-in-loop audit | None explicit | N/A |
 | **Privacy** | Pre-ingest filter + private by default (`shareable:` allowlist) | None | None | User-scoped | SaaS ToS |
 | **Transcript support** | `crystallize` flow (decisions + actions) | Generic ingest | Generic ingest | Generic ingest | Source-only |
@@ -136,8 +136,8 @@ phrases written blind by a separate agent, the way an agent would search.
 
 | Search backend | Hit@10 | Hit@1 | Idle RAM |
 |---|---|---|---|
-| Bundled wiki-search (`@wirux/mcp-markdown-vault`) | 69-77% | 50-54% | ~580 MB |
-| [obsidian-mcp](https://github.com/lstpsche/obsidian-mcp), BM25 only | 65-77% | 38-42% | ~80 MB |
+| [@wirux/mcp-markdown-vault](https://www.npmjs.com/package/@wirux/mcp-markdown-vault) (bundled before 2.23) | 69-77% | 50-54% | ~580 MB |
+| [obsidian-mcp](https://github.com/lstpsche/obsidian-mcp), BM25 only (bundled since 2.23) | 65-77% | 38-42% | ~80 MB |
 | obsidian-mcp, with embeddings | 69-77% | 42-46% | ~1.2 GB |
 | [Basic Memory](https://github.com/basicmachines-co/basic-memory), hybrid | 50-54% | 19-27% | ~505 MB |
 
@@ -146,9 +146,9 @@ this corpus the two plain-files engines came out ahead, at similar
 quality, with no database involved. Credit for that goes to the search
 projects themselves:
 [@wirux/mcp-markdown-vault](https://www.npmjs.com/package/@wirux/mcp-markdown-vault)
-(bundled for Claude Code) and [obsidian-mcp](https://github.com/lstpsche/obsidian-mcp)
-(the backend behind [wiki-mcp](server/README.md)). This skill adds the
-structure and update rules around them, not the ranking.
+and [obsidian-mcp](https://github.com/lstpsche/obsidian-mcp), which now
+backs both the bundled wiki-search and [wiki-mcp](server/README.md). This
+skill adds the structure and update rules around them, not the ranking.
 
 Read these numbers with some care:
 
@@ -158,10 +158,10 @@ Read these numbers with some care:
   renamed scored lowest for every backend tested (about half). Search
   alone does not fix those; they depend on the supersession and update
   rules in this skill.
-- On a fresh copy of a wiki, the bundled backend's first full index
-  stopped at about half the files with no error. Check
-  `system status` against your file count after bootstrapping a large
-  existing vault.
+- On a fresh copy of a wiki, mcp-markdown-vault's first full index
+  stopped at about half the files with no error. That, its memory use, and
+  its open write bugs are why 2.23 switched the bundled search to
+  obsidian-mcp, which indexed every page in about 3 seconds.
 
 ## Target users
 
@@ -245,10 +245,16 @@ the raw/entities/concepts/comparisons/queries/_archive subdirectories.
 
 ### 1b. Wiki search (bundled, automatic)
 
-Semantic + TF-IDF search over your wiki is bundled via `wiki-search`
-(`@wirux/mcp-markdown-vault`). It auto-indexes on startup — no setup needed.
-~80MB model downloads on first use, cached in `.markdown_vault_mcp/` inside
-your wiki directory. Add `.markdown_vault_mcp/` to `.gitignore`.
+Ranked keyword (BM25), regex, tag and wikilink search over your wiki is
+bundled as `wiki-search`, backed by
+[obsidian-mcp](https://github.com/lstpsche/obsidian-mcp). The first session
+downloads a pinned, checksum-verified binary (21 MB download, 64 MB
+unpacked) to `~/.cache/llm-wiki-pm/`; if `obsidian-mcp` 3.x is already on
+your PATH it is used instead. The index builds in seconds on startup and
+lives in `~/.local/share/obsidian-mcp/`, outside your wiki, though
+obsidian-mcp still creates a small `.obsidian-mcp/` folder in the wiki (add
+it to `.gitignore`). Needs `python3` (already required by the hooks), which
+trims search results to a few snippets per file.
 
 ### 2. Review SCHEMA.md
 
@@ -350,8 +356,11 @@ Built on prior art from:
   `overview.md` synthesis.
 - **[lewislulu/llm-wiki-skill](https://github.com/lewislulu/llm-wiki-skill)**
  , audit/feedback loop design (inspiration for future team-mode support).
+- **[obsidian-mcp](https://github.com/lstpsche/obsidian-mcp)**: BM25, regex
+  and wikilink search over markdown vaults (bundled as wiki-search, and the
+  backend of wiki-mcp).
 - **[@wirux/mcp-markdown-vault](https://github.com/Wirux/mcp-markdown-vault)**:
-  semantic + TF-IDF search engine for markdown vaults (bundled as wiki-search).
+  semantic + TF-IDF search, bundled as wiki-search up to 2.22.
 
 ## Design notes
 
@@ -367,7 +376,7 @@ How this skill maps to Karpathy's original gist and Rohit's v2 extensions:
 - Obsidian compatibility (Graph, Dataview, frontmatter)
 - Schema as key configuration, co-evolved
 - Ingests touch 10-15 pages routinely
-- Bundled semantic wiki-search via `@wirux/mcp-markdown-vault`
+- Bundled wiki-search via `obsidian-mcp`
 - Multi-format outputs: [Marp, matplotlib, CSV, Mermaid, Canvas](references/output-formats.md)
 
 ### v2 cherry-picks (7/16)

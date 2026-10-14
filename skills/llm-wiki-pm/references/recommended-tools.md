@@ -1,7 +1,7 @@
 # Recommended Tools
 
 Optional MCP servers that enhance the wiki when connected. The plugin bundles
-only `wiki-search` (semantic + TF-IDF over your wiki). Everything below is
+only `wiki-search` (BM25 keyword, regex and link search over your wiki). Everything below is
 opt-in — install what you need.
 
 Suggest these to users via Proactive Behavior #8 when their query would benefit.

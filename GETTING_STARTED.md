@@ -99,9 +99,16 @@ Skipping this step = generic wiki that doesn't fit your domain.
 
 ### 3. Wiki search (bundled, automatic)
 
-Semantic + TF-IDF search is bundled via `wiki-search` and starts automatically.
-~80MB model downloads on first use, cached in `.markdown_vault_mcp/` inside
-your wiki. No setup needed.
+Ranked keyword (BM25), regex, tag and wikilink search over your wiki is
+bundled as `wiki-search`, backed by
+[obsidian-mcp](https://github.com/lstpsche/obsidian-mcp). The first session
+downloads a pinned, checksum-verified binary (21 MB download, 64 MB
+unpacked) to `~/.cache/llm-wiki-pm/`; if `obsidian-mcp` 3.x is already on
+your PATH it is used instead. The index builds in seconds on startup and
+lives in `~/.local/share/obsidian-mcp/`, outside your wiki, though
+obsidian-mcp still creates a small `.obsidian-mcp/` folder in the wiki (add
+it to `.gitignore`). Needs `python3` (already required by the hooks), which
+trims search results to a few snippets per file.
 
 ### 4. First ingest
 
@@ -123,7 +130,7 @@ Claude will:
 
 > What do we know about Tricentis pricing?
 
-Claude reads overview.md, searches the wiki semantically, synthesizes with citations,
+Claude reads overview.md, searches the wiki, synthesizes with citations,
 offers to file the answer as a new page if it's substantial.
 
 ### 6. Mobile access (optional, 10 minutes)
@@ -156,7 +163,13 @@ Then install Obsidian on your phone, pair with the synced vault.
   run `/skills`. Check SKILL.md frontmatter is intact.
 - **Claude can't find the wiki** → The skill resolves the wiki path in this order: `CLAUDE_PLUGIN_OPTION_wiki_path` (set at plugin enable time), then `WIKI_PATH`, then a built-in default. If you installed via plugin, check the path you entered when enabling it. For skill-only installs, run `echo $WIKI_PATH` and confirm it is set in the shell that launched Claude Code. Export in your rc file and re-launch.
 - **wiki-search returns nothing** → wiki-search auto-indexes on startup.
-  If issues persist, check that `VAULT_PATH` points to your wiki directory.
+  Ask Claude to call `vault_info` and check `vault_path` and the note count.
+  It searches words, not meaning, so try 2-6 distinctive terms or synonyms.
+- **wiki-search fails to connect** → the first session downloads the
+  obsidian-mcp binary; restart Claude Code once it finishes. Offline, or on a
+  platform without a prebuilt binary (anything but Linux or macOS on x86_64
+  or arm64), run
+  `cargo install obsidian-mcp` and make sure it is on PATH.
 - **Pages multiplying on same entity** → you're skipping orientation.
   Tell Claude explicitly "read SCHEMA, index, log, overview first" at
   session start until it becomes habit.
@@ -344,9 +357,10 @@ Store domain presets as JSON/YAML in your app, render per-user on provision.
 
 ### Search provisioning
 
-Wiki-search (`@wirux/mcp-markdown-vault`) is bundled and auto-configures per
-wiki. Each wiki gets its own `.markdown_vault_mcp/` index directory — no
-shared state between users.
+Wiki-search ([obsidian-mcp](https://github.com/lstpsche/obsidian-mcp)) is
+bundled and auto-configures per wiki. Each wiki gets its own index under
+`$OBSIDIAN_MCP_DATA/vaults/<wiki-path>/` (default `~/.local/share/obsidian-mcp`),
+so per-user wiki directories never share an index.
 
 ### Lifecycle hooks your app should implement
 
@@ -357,13 +371,13 @@ shared state between users.
 | Page created/updated by agent | re-index             | wiki-search auto-reindexes on next query        |
 | Nightly                       | `lint.py --auto-fix` | Keep wiki healthy                               |
 | Monthly                       | export private audit | `grep -rl "^private: true"` report              |
-| User deletion                 | GDPR delete          | Remove wiki dir + `.markdown_vault_mcp/` + S3 backup |
+| User deletion                 | GDPR delete          | Remove wiki dir + its obsidian-mcp index + S3 backup |
 | Session start                 | inject context       | Load overview.md + recent log into agent prompt |
 
 ### Multi-tenant hardening
 
 - **Filesystem isolation**: each wiki in its own dir, no shared paths
-- **Search isolation**: per-wiki `.markdown_vault_mcp/` index (never shared)
+- **Search isolation**: per-wiki obsidian-mcp index (never shared)
 - **Privacy enforcement**: server-side `grep "^private: true"` filter before
   any export, not just client-side. Don't trust the agent to remember.
 - **Audit log persistence**: ship `log.md` lines to your central logging for
@@ -445,7 +459,7 @@ agent is skipping orientation.
 | Install              | symlink to ~/.claude/skills/ | copy/symlink per-user                    |
 | Scaffold             | embed scaffold logic         | create dirs + copy templates (see Scenario 2) |
 | Env                  | `WIKI_PATH` in rc            | pass per-request                         |
-| Search               | wiki-search (bundled, auto)   | per-wiki `.markdown_vault_mcp/` index    |
+| Search               | wiki-search (bundled, auto)   | per-wiki obsidian-mcp index              |
 | SCHEMA               | edit by hand                 | render from presets                      |
 | Lint                 | manual, bi-weekly            | nightly cron with `--auto-fix`           |
 | Privacy              | trust user                   | server-side enforcement                  |

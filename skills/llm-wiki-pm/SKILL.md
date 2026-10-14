@@ -47,7 +47,7 @@ sub-skill (you can still run maintenance steps manually via core ingest/brief/li
 ## Proactive Behaviors
 
 Fire whenever the skill is loaded. Append notes briefly *after* your answer, never
-before. Searches: wiki-search `semantic_search` preferred, grep fallback.
+before. Searches: wiki-search `search_text` preferred, grep fallback.
 **Limits:** max 1 suggestion per turn; skip during code/debug tasks; PM-domain
 facts not already addressed; never auto-write.
 
@@ -126,16 +126,19 @@ Inventory every connected MCP tool at session start and use them eagerly.
 
 | Priority | Tools | When |
 |----------|-------|------|
-| 1 | **wiki-search** (bundled) — semantic + TF-IDF over wiki | Wiki queries, entity lookup, semantic recall |
+| 1 | **wiki-search** (bundled) — BM25 keyword, regex, tag and link search over wiki | Wiki queries, entity lookup, recall |
 | 2 | **MCP integrations** — Gmail, Slack, calendar, CRM, any connected MCP | Emails, threads, messages, events, enriching pages |
 | 3 | **WebFetch / WebSearch** | External research, fetching pages for ingest |
 | 4 | **grep** | Exact token match (dollar figures, codenames, frontmatter values) |
 | 5 | **Read** | When you already know the exact file |
 
-**wiki-search is an action dispatcher, not a bare command.** Call
-`view(action=semantic_search|read|backlinks|outline, query=...)`; use
-`view(action=global_search)` for exact phrases. (Bundled via
-`@wirux/mcp-markdown-vault`, ~80MB model on first use.) Optional key-required tools:
+**wiki-search tools** (bundled [obsidian-mcp](https://github.com/lstpsche/obsidian-mcp),
+read-only): `search_text` (ranked BM25; pass 2-6 distinctive terms, not a
+sentence; it matches words, not meaning, so retry with synonyms), `search_regex`
+(exact tokens, numbers, codenames), `search_metadata` (by tag or frontmatter
+field), `wikilinks` (backlinks, outgoing, broken, orphans), `note_read` /
+`note_read_many`, `vault_list`. Results come back trimmed to a few snippets per
+file; `note_read` the hits you need. Optional key-required tools:
 `references/recommended-tools.md`.
 
 **Rules:**
@@ -144,7 +147,7 @@ Inventory every connected MCP tool at session start and use them eagerly.
   100K+ chars. Default to the tightest useful query: summary format, no message
   context, `limit`≤15, and **narrow scope (channel/author/label/date) BEFORE broad
   keyword**. Widen only if the narrow pass is empty. Dump-then-slice is a defect.
-- **Date operators are soft on semantic backends.** Many treat `after:`/`before:`
+- **Date operators are soft on search backends.** Many treat `after:`/`before:`
   as advisory — verify each result's actual timestamp before trusting it as in-window.
 
 ## Architecture: Three Layers
@@ -181,7 +184,7 @@ Before any ingest/query/update/lint:
 ② Read `index.md` — what pages exist
 ③ Read last 20-30 lines of `log.md` — recent activity
 ④ Read `overview.md` — current synthesis state
-⑤ For 100+ page wikis: search before creating (`view(action=semantic_search)` or `grep -r`)
+⑤ For 100+ page wikis: search before creating (`search_text` or `grep -r`)
 ⑥ **Staleness warning:** if a page's `updated:` is older than 14 days
    (overview/index) or 30 days (entity/concept) AND `log.md` shows recent activity
    in that area, surface: "Warning: [[page]] may be stale (updated YYYY-MM-DD)."
@@ -235,7 +238,7 @@ In brief:
    to their own page (confirm first). Offer a persona page (`llm-wiki-persona`) for any promoted person.
 
 ### 3. Query
-① **Search first**: `view(action=semantic_search)` → grep → file read.
+① **Search first**: `search_text` → `search_regex`/grep → file read.
 ② Read `index.md` to confirm the catalog for top hits.
 ③ Read relevant pages (only after search identified them).
 ④ Synthesize; cite pages: "Per [[competitor-x]] and [[test-automation-mq]]...". **For
@@ -259,7 +262,7 @@ copies the current page to `_archive/<slug>-<date>.md` before an overwrite
 (idempotent, once/day), so "undo that last change" stays trivial.
 
 ① **Identify all affected pages** — three-way search: `backlinks.py` (structural),
-   `view(action=semantic_search)` (paraphrases), `grep -r` (exact tokens). Don't
+   `search_text` with rephrased terms (paraphrases), `grep -r` (exact tokens). Don't
    fix one page and leave three with the stale claim.
 ② **Show diff BEFORE writing**: old text, new text, reason. Confirm for any claim
    touching 5+ pages or changing stated strategy.
