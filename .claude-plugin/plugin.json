@@ -1,7 +1,7 @@
 {
 	"name": "llm-wiki-pm",
-	"version": "2.22.0",
-	"description": "PM knowledge base skill implementing Karpathy's LLM Wiki pattern. Ingest sources, query a compounding markdown wiki, supersede with auto-link rewrite, crystallize transcripts into decision digests. Bundles semantic wiki search.",
+	"version": "2.23.0",
+	"description": "PM knowledge base skill implementing Karpathy's LLM Wiki pattern. Ingest sources, query a compounding markdown wiki, supersede with auto-link rewrite, crystallize transcripts into decision digests. Bundles wiki search (obsidian-mcp).",
 	"author": {
 		"name": "Anh Chu",
 		"email": "anhdchu@gmail.com"
@@ -18,7 +18,6 @@
 		"markdown-wiki",
 		"crystallize",
 		"wiki-search",
-		"semantic-search",
 		"supersession",
 		"second-brain",
 		"pm-wiki",

@@ -7,6 +7,43 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.23.0] - 2026-10-14
+
+### Changed
+
+- **Bundled wiki-search now runs [obsidian-mcp](https://github.com/lstpsche/obsidian-mcp)
+  instead of `@wirux/mcp-markdown-vault`.** In the search benchmark hit@10 is
+  similar (65-77% vs 69-77%) but hit@1 is lower (38-42% vs 50-54%), so the right
+  page is usually in the results but less often first. In exchange: about 80 MB
+  idle instead of about 580 MB, a full index in seconds, and no silent partial
+  index on a fresh wiki.
+  It is the same engine wiki-mcp uses, so Claude Code and ChatGPT get the same
+  results. The launcher downloads a pinned, checksum-verified release binary to
+  `~/.cache/llm-wiki-pm/` (or uses `obsidian-mcp` 3.x from PATH);
+  `session-start.sh` pre-fetches it in the background instead of warming npx.
+  Node is no longer needed. Tools are read-only: `search_text`, `search_regex`,
+  `search_metadata`, `wikilinks`, `note_read`, `note_read_many`, `note_inspect`,
+  `vault_list`, `vault_info`. There is no semantic search; queries match words.
+- **`hooks/wiki-search-filter.py`** sits between Claude Code and obsidian-mcp and
+  trims responses (a raw `search_text` can exceed 1 MB): stopwords and query
+  syntax removed from the query, at most two snippets per file plus a match
+  count, capped lists, a 20K-character cap, and no duplicate `structuredContent`.
+  Typical searches return 2-5K characters. It also declines Claude Code's
+  `server/discover` probe: obsidian-mcp 3.1.0 answers it and then rejects the
+  ordinary session's `tools/list`, so without this no tools load.
+- `_archive/` snapshots are excluded from wiki-search results and backlinks, so
+  superseded claims no longer surface in searches. `note_read` still opens them
+  by path; override with `OBSIDIAN_EXCLUDE_PATHS`.
+- Skill, update and learn guides, role packs, README and GETTING_STARTED updated
+  for the new tool names (`view(action=semantic_search)` is gone).
+
+### Upgrade notes
+
+- The old index folder `.markdown_vault_mcp/` in your wiki is no longer used and
+  can be deleted. obsidian-mcp creates a small `.obsidian-mcp/` folder instead.
+- Platforms without a prebuilt binary (anything but Linux or macOS on x86_64 or
+  arm64): `cargo install obsidian-mcp` and put it on PATH.
+
 ## [2.22.0] - 2026-10-06
 
 ### Added
