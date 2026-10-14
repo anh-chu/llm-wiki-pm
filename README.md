@@ -4,9 +4,10 @@
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-skill-orange)](https://docs.claude.com/en/docs/claude-code/skills)
 [![Stars](https://img.shields.io/github/stars/anh-chu/llm-wiki-pm?style=social)](https://github.com/anh-chu/llm-wiki-pm/stargazers)
 
-> A Claude Code skill that turns your PM work into a persistent, compounding
-> knowledge base. Ingest meetings, analyst reports, and strategy docs.
-> Query across months of context. Let the agent handle the bookkeeping.
+> A PM knowledge base that stays correct as it grows. Ingest meetings,
+> analyst reports, and strategy docs into a plain Markdown wiki, then work
+> with it from Claude Code or ChatGPT. Every write follows the same rules:
+> cited sources, snapshots before overwrites, explicit supersession, lint.
 
 Based on [Andrej Karpathy's LLM Wiki pattern](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f),
 tuned for product management: competitive intel, customer notes, strategy,
@@ -23,6 +24,15 @@ This skill gives you the middle path: you curate sources, the agent maintains
 an interlinked markdown wiki that stays current. Every ingest touches 5-15
 pages. Every query cites specific wiki entries. The wiki compounds.
 
+Letting an agent write is the easy part. Keeping months of agent writes
+trustworthy is the hard part, and it is where most memory tools stop. Here,
+when a fact changes the old page is superseded and its inbound links are
+rewritten rather than silently overwritten. Every claim points back to an
+immutable source in `raw/`, every overwrite leaves a snapshot in `_archive/`,
+and lint flags stale pages, broken links, and off-schema tags. The same rules
+apply whether the write comes from Claude Code or from ChatGPT through the
+bundled [wiki-mcp server](server/README.md).
+
 ## What you get
 
 - **Three-layer architecture**: immutable `raw/` sources, agent-owned wiki
@@ -30,8 +40,9 @@ pages. Every query cites specific wiki entries. The wiki compounds.
 - **Ingest / query / update / lint / archive** flows with discipline guardrails
 - **Supersession** with auto-redirect of inbound links
 - **Crystallize** pattern: transcripts become structured decision digests
-- **Privacy-first**: pre-ingest filter + `private:` frontmatter flag
+- **Privacy-first**: pre-ingest filter, and every page is private (excluded from exports) unless it carries `shareable: true`
 - **Bundled wiki-search**: semantic + TF-IDF search over your whole wiki (auto-indexes on startup)
+- **ChatGPT access via [wiki-mcp](server/README.md)**: a remote MCP server behind Cloudflare Access. Read tools by default; with `WIKI_WRITE=1` it adds create, edit, append, archive, supersede, and raw capture, each validated against `SCHEMA.md`, snapshotted, and logged the same way Claude Code writes are
 - **Obsidian-compatible**: works as a vault out of the box
 - **Worker agents**: five subagents (indexer, fetcher, link-validator, lint, people-updater)
   handle expensive ops without bloating the lead session
@@ -104,9 +115,9 @@ Full setup, including mobile Obsidian sync, in
 | **Storage** | Plain markdown | Plain markdown | Plain markdown | Supabase + S3 | Cloud |
 | **Search** | Bundled semantic + TF-IDF (wiki-search) + backlinks | grep + index | grep + index | PGroonga | Proprietary |
 | **Update discipline** | Diffs + supersession fields + auto-link rewrite | Diffs + source cite | Human-in-loop audit | None explicit | N/A |
-| **Privacy** | Pre-ingest filter + `private:` flag | None | None | User-scoped | SaaS ToS |
+| **Privacy** | Pre-ingest filter + private by default (`shareable:` allowlist) | None | None | User-scoped | SaaS ToS |
 | **Transcript support** | `crystallize` flow (decisions + actions) | Generic ingest | Generic ingest | Generic ingest | Source-only |
-| **Install target** | Claude Code | Claude Code | OpenClaw / Codex | Self-host web | SaaS |
+| **Install target** | Claude Code, plus ChatGPT via wiki-mcp | Claude Code | OpenClaw / Codex | Self-host web | SaaS |
 | **Ops burden** | None (local files) | None | Obsidian plugin + Node server | Supabase + S3 + OCR | Zero |
 | **Scales to 1000+ pages** | Yes (wiki-search, bundled) | Degrades | Degrades | Yes | Yes |
 | **PM-tuned taxonomy** | Yes (competitive, customer, strategy, roadmap, ai) | No | No | No | No |
@@ -130,10 +141,14 @@ phrases written blind by a separate agent, the way an agent would search.
 | obsidian-mcp, with embeddings | 69-77% | 42-46% | ~1.2 GB |
 | [Basic Memory](https://github.com/basicmachines-co/basic-memory), hybrid | 50-54% | 19-27% | ~505 MB |
 
-Hit@10 means a file holding the answer appears in the top 10 results. The
-bundled backend ties the best alternative tested and beats Basic Memory,
-on a plain-files setup with no database and no server beyond the search
-process.
+Hit@10 means a file holding the answer appears in the top 10 results. On
+this corpus the two plain-files engines came out ahead, at similar
+quality, with no database involved. Credit for that goes to the search
+projects themselves:
+[@wirux/mcp-markdown-vault](https://www.npmjs.com/package/@wirux/mcp-markdown-vault)
+(bundled for Claude Code) and [obsidian-mcp](https://github.com/lstpsche/obsidian-mcp)
+(the backend behind [wiki-mcp](server/README.md)). This skill adds the
+structure and update rules around them, not the ranking.
 
 Read these numbers with some care:
 
@@ -154,14 +169,14 @@ Good fit if you:
 
 - Work as a PM, analyst, researcher, or founder with lots of meetings and reports
 - Want a local-first, markdown-based knowledge base that you own
-- Use Claude Code as your primary agent
-- Are comfortable on a terminal (you'll occasionally run `lint.py`)
+- Use Claude Code as your primary agent, optionally with ChatGPT as a second client
+- Are comfortable on a terminal (you'll occasionally run `lint.py`, and ChatGPT access means running a small server behind a reverse proxy)
 
 Not a fit if you:
 
 - Want a zero-terminal SaaS → use NotebookLM
 - Need team collaboration out of the box → use Notion or a shared Obsidian vault
-- Don't use Claude Code → `AGENTS.md` is the portable reference if you want to port to another agent
+- Don't use Claude Code → ChatGPT can read and write through wiki-mcp, but the skills, hooks, and sub-skill workflows are Claude Code only. `AGENTS.md` is the portable reference if you want to port to another agent
 
 ## Layout
 
@@ -360,7 +375,7 @@ How this skill maps to Karpathy's original gist and Rohit's v2 extensions:
 Implemented:
 
 - Explicit supersession with `supersedes:` / `superseded_by:` fields + auto-redirect
-- Privacy filter (pre-ingest checklist + `private:` frontmatter flag)
+- Privacy filter (pre-ingest checklist + private-by-default `shareable:` allowlist)
 - Self-healing lint (`--auto-fix` for safe repairs)
 - Crystallization (transcript → decision digest)
 - Schema as the real product
