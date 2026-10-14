@@ -10,5 +10,6 @@ queries/
 # Wiki/vault runtime artifacts (generated per-session, not plugin source)
 .wiki-lock
 .markdown_vault_mcp/
+.obsidian-mcp/
 meta/
 .claude/settings.json
