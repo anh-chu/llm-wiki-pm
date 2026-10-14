@@ -104,11 +104,13 @@ bundled as `wiki-search`, backed by
 [obsidian-mcp](https://github.com/lstpsche/obsidian-mcp). The first session
 downloads a pinned, checksum-verified binary (21 MB download, 64 MB
 unpacked) to `~/.cache/llm-wiki-pm/`; if `obsidian-mcp` 3.x is already on
-your PATH it is used instead. The index builds in seconds on startup and
-lives in `~/.local/share/obsidian-mcp/`, outside your wiki, though
-obsidian-mcp still creates a small `.obsidian-mcp/` folder in the wiki (add
-it to `.gitignore`). Needs `python3` (already required by the hooks), which
-trims search results to a few snippets per file.
+your PATH it is used instead. Each Claude Code session runs its own copy,
+which builds the index in memory in seconds at startup. obsidian-mcp keeps
+its data folder in `~/.local/share/obsidian-mcp/` but still creates a small
+`.obsidian-mcp/` folder in the wiki (add it to `.gitignore`). Needs
+`python3` (already required by the hooks), which trims search results to a
+few snippets per file. `_archive/` snapshots are left out of search;
+`note_read` still opens them by path.
 
 ### 4. First ingest
 
@@ -358,9 +360,10 @@ Store domain presets as JSON/YAML in your app, render per-user on provision.
 ### Search provisioning
 
 Wiki-search ([obsidian-mcp](https://github.com/lstpsche/obsidian-mcp)) is
-bundled and auto-configures per wiki. Each wiki gets its own index under
-`$OBSIDIAN_MCP_DATA/vaults/<wiki-path>/` (default `~/.local/share/obsidian-mcp`),
-so per-user wiki directories never share an index.
+bundled and auto-configures per wiki. The index is built in memory by the
+obsidian-mcp process serving that wiki directory, so per-user wiki
+directories never share an index. Its data folder is
+`$OBSIDIAN_MCP_DATA/vaults/<wiki-path>/` (default `~/.local/share/obsidian-mcp`).
 
 ### Lifecycle hooks your app should implement
 
@@ -371,7 +374,7 @@ so per-user wiki directories never share an index.
 | Page created/updated by agent | re-index             | wiki-search auto-reindexes on next query        |
 | Nightly                       | `lint.py --auto-fix` | Keep wiki healthy                               |
 | Monthly                       | export private audit | `grep -rl "^private: true"` report              |
-| User deletion                 | GDPR delete          | Remove wiki dir + its obsidian-mcp index + S3 backup |
+| User deletion                 | GDPR delete          | Remove wiki dir + its obsidian-mcp data folder + S3 backup |
 | Session start                 | inject context       | Load overview.md + recent log into agent prompt |
 
 ### Multi-tenant hardening

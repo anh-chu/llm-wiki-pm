@@ -250,11 +250,13 @@ bundled as `wiki-search`, backed by
 [obsidian-mcp](https://github.com/lstpsche/obsidian-mcp). The first session
 downloads a pinned, checksum-verified binary (21 MB download, 64 MB
 unpacked) to `~/.cache/llm-wiki-pm/`; if `obsidian-mcp` 3.x is already on
-your PATH it is used instead. The index builds in seconds on startup and
-lives in `~/.local/share/obsidian-mcp/`, outside your wiki, though
-obsidian-mcp still creates a small `.obsidian-mcp/` folder in the wiki (add
-it to `.gitignore`). Needs `python3` (already required by the hooks), which
-trims search results to a few snippets per file.
+your PATH it is used instead. Each Claude Code session runs its own copy,
+which builds the index in memory in seconds at startup. obsidian-mcp keeps
+its data folder in `~/.local/share/obsidian-mcp/` but still creates a small
+`.obsidian-mcp/` folder in the wiki (add it to `.gitignore`). Needs
+`python3` (already required by the hooks), which trims search results to a
+few snippets per file. `_archive/` snapshots are left out of search;
+`note_read` still opens them by path.
 
 ### 2. Review SCHEMA.md
 

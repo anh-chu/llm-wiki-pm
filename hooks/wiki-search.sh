@@ -14,7 +14,7 @@ VAULT="${FILE_WIKI:-${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-$(pwd)}}}"
 
 BIN=$(sh "$(dirname "$0")/obsidian-mcp-fetch.sh")
 
-# Index lives outside the vault, keyed by vault path; shared safely across sessions.
+# Data folder outside the vault (the search index itself is in memory per process).
 export OBSIDIAN_MCP_DATA="${XDG_DATA_HOME:-$HOME/.local/share}/obsidian-mcp"
 export OBSIDIAN_TOOLS="vault_info,vault_list,note_read,note_read_many,note_inspect,search_text,search_regex,search_metadata,wikilinks"
 export OBSIDIAN_EMBEDDINGS=false
