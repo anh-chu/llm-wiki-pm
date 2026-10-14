@@ -138,7 +138,8 @@ sentence; it matches words, not meaning, so retry with synonyms), `search_regex`
 (exact tokens, numbers, codenames), `search_metadata` (by tag or frontmatter
 field), `wikilinks` (backlinks, outgoing, broken, orphans), `note_read` /
 `note_read_many`, `vault_list`. Results come back trimmed to a few snippets per
-file; `note_read` the hits you need. Optional key-required tools:
+file; `note_read` the hits you need. `_archive/` snapshots are left out of
+search and backlinks (read them by path when you need history). Optional key-required tools:
 `references/recommended-tools.md`.
 
 **Rules:**
