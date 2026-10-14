@@ -18,7 +18,9 @@ No Write access. This worker produces a report only.
 
 ```bash
 WIKI=$(cat .wiki-path 2>/dev/null | tr -d '[:space:]')
-WIKI=${WIKI:-${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-$(pwd)}}}
+CONF='${user_config.wiki_path}'; case "$CONF" in '${'*) CONF= ;; esac  # plugin option, if set
+WIKI=${WIKI:-${CONF:-${WIKI_PATH:-}}}
+[ -z "$WIKI" ] && [ -f SCHEMA.md ] && WIKI=$(pwd)  # cwd only if it is already a wiki
 # CLAUDE_SKILL_DIR is injected by Claude Code at skill invocation time.
 ```
 

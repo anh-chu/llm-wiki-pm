@@ -76,10 +76,13 @@ one only when a query would clearly be richer with an unconnected tool.)*
 Before any bash command using `$WIKI`, resolve it:
 ```bash
 WIKI=$(cat .wiki-path 2>/dev/null | tr -d '[:space:]')
-WIKI=${WIKI:-${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-$(pwd)}}}
+CONF='${user_config.wiki_path}'; case "$CONF" in '${'*) CONF= ;; esac  # plugin option, if set
+WIKI=${WIKI:-${CONF:-${WIKI_PATH:-}}}
+[ -z "$WIKI" ] && [ -f SCHEMA.md ] && WIKI=$(pwd)  # cwd only if it is already a wiki
 ```
-Resolution: `.wiki-path` (project) → `CLAUDE_PLUGIN_OPTION_wiki_path` (global) →
-`WIKI_PATH` → cwd. Run `/llm-wiki-pm:set-wiki-path ~/path` to set a project path.
+Resolution: `.wiki-path` (project) → the plugin's `wiki_path` option (global) →
+`WIKI_PATH` → cwd, but only if cwd already is a wiki (has `SCHEMA.md`). If `WIKI`
+is empty, stop and tell the user to run `/llm-wiki-pm:set-wiki-path ~/path`.
 The SessionStart hook states the active path each session.
 
 ## Session Defaults

@@ -8,7 +8,7 @@ Three shell scripts that keep the wiki healthy across sessions. When installed a
 
 **session-start.sh**
 Runs at session start. Scaffolds the wiki on first run if it does not exist
-(reads `.wiki-path` file in cwd (project-specific), then `CLAUDE_PLUGIN_OPTION_wiki_path` (global plugin config), then `WIKI_PATH` env, then cwd). Then scans
+(path from `resolve-wiki.sh`: `.wiki-path` in cwd, then the plugin's `wiki_path` option, then `WIKI_PATH`, then cwd only if it already has `SCHEMA.md`; with none of these it writes nothing and prints a set-wiki-path hint). Then scans
 for broken links, orphan pages, stale entries (>30 days), and competitive pages
 past their confidence decay threshold (>60 days). Writes `_status.md` and
 outputs an `additionalContext` summary directly into Claude's context.

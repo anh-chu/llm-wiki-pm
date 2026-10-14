@@ -7,10 +7,13 @@
 
 set -eu
 
-# Resolve vault path with the same precedence as the other hooks:
-# .wiki-path (project) > CLAUDE_PLUGIN_OPTION_wiki_path (global) > WIKI_PATH > cwd
-FILE_WIKI=$(tr -d '[:space:]' < "$(pwd)/.wiki-path" 2>/dev/null || true)
-VAULT="${FILE_WIKI:-${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-$(pwd)}}}"
+# Same wiki path as the hooks. MCP servers don't get CLAUDE_PLUGIN_OPTION_*, so
+# plugin.json passes the option in as WIKI_CONFIGURED_PATH.
+VAULT=$(sh "$(dirname "$0")/resolve-wiki.sh" "${WIKI_CONFIGURED_PATH:-}")
+if [ -z "$VAULT" ]; then
+  echo "llm-wiki-pm: no wiki path configured. Run /llm-wiki-pm:set-wiki-path ~/your-path, then restart." >&2
+  exit 1
+fi
 
 BIN=$(sh "$(dirname "$0")/obsidian-mcp-fetch.sh")
 

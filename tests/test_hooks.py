@@ -171,8 +171,8 @@ class TestSessionStart:
             SESSION_START,
             session_start_payload(),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
-                "CLAUDE_PLUGIN_OPTION_wiki_domain": "Test Domain",
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_DOMAIN": "Test Domain",
             },
         )
 
@@ -193,8 +193,8 @@ class TestSessionStart:
             SESSION_START,
             session_start_payload(),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
-                "CLAUDE_PLUGIN_OPTION_wiki_domain": "Legal Research",
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_DOMAIN": "Legal Research",
             },
         )
 
@@ -210,8 +210,8 @@ class TestSessionStart:
             SESSION_START,
             session_start_payload(),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
-                "CLAUDE_PLUGIN_OPTION_wiki_domain": "Finance & Risk / Compliance",
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_DOMAIN": "Finance & Risk / Compliance",
             },
         )
 
@@ -227,8 +227,8 @@ class TestSessionStart:
             SESSION_START,
             session_start_payload(),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
-                "CLAUDE_PLUGIN_OPTION_wiki_domain": "R&D",
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_DOMAIN": "R&D",
             },
         )
 
@@ -248,7 +248,7 @@ class TestSessionStart:
             SESSION_START,
             session_start_payload(),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -270,8 +270,8 @@ class TestSessionStart:
             SESSION_START,
             session_start_payload(),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
-                "CLAUDE_PLUGIN_OPTION_wiki_domain": "PM",
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_DOMAIN": "PM",
             },
         )
 
@@ -288,7 +288,7 @@ class TestSessionStart:
             SESSION_START,
             session_start_payload(),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -304,7 +304,7 @@ class TestSessionStart:
             SESSION_START,
             session_start_payload(),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -323,7 +323,7 @@ class TestSessionStart:
             SESSION_START,
             session_start_payload(),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -339,7 +339,7 @@ class TestSessionStart:
             SESSION_START,
             session_start_payload(),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -358,7 +358,7 @@ class TestSessionStart:
             SESSION_START,
             session_start_payload(),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -377,7 +377,7 @@ class TestSessionStart:
             SESSION_START,
             session_start_payload(),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -394,7 +394,7 @@ class TestSessionStart:
             SESSION_START,
             session_start_payload(),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -416,8 +416,9 @@ class TestSessionStart:
             env={
                 **os.environ,
                 "CLAUDE_PLUGIN_ROOT": str(bad_root),
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
+            cwd=tmp_path,  # not the repo, whose own .wiki-path would win
         )
         # With set -euo pipefail this will fail when templates missing, which is expected.
         # The key is it must not produce corrupt JSON output if it does exit 0.
@@ -434,6 +435,8 @@ class TestSessionStart:
                 "WIKI_PATH",
                 "CLAUDE_PLUGIN_OPTION_wiki_path",
                 "CLAUDE_PLUGIN_OPTION_wiki_domain",
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH",
+                "CLAUDE_PLUGIN_OPTION_WIKI_DOMAIN",
             )
         }
         env["CLAUDE_PLUGIN_ROOT"] = str(REPO_ROOT)
@@ -474,7 +477,7 @@ class TestPostWrite:
             POST_WRITE,
             post_write_payload(str(outside)),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -491,7 +494,7 @@ class TestPostWrite:
             POST_WRITE,
             post_write_payload(str(asset)),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -508,7 +511,7 @@ class TestPostWrite:
         env = {
             **os.environ,
             "CLAUDE_PLUGIN_ROOT": str(REPO_ROOT),
-            "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+            "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
         }
         env["PATH"] = ":".join(
             p for p in env.get("PATH", "").split(":") if "jq" not in p
@@ -520,6 +523,7 @@ class TestPostWrite:
             capture_output=True,
             text=True,
             env=env,
+            cwd=tmp_path,  # not the repo, whose own .wiki-path would win
         )
 
         assert result.returncode == 0
@@ -541,7 +545,7 @@ class TestPostWrite:
             POST_WRITE,
             post_write_payload(str(page)),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -559,7 +563,7 @@ class TestPostWrite:
             POST_WRITE,
             post_write_payload(str(page)),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -579,7 +583,7 @@ class TestPostWrite:
             POST_WRITE,
             post_write_payload(str(page)),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -597,7 +601,7 @@ class TestPostWrite:
             POST_WRITE,
             post_write_payload(str(page), tool="Edit"),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -615,7 +619,7 @@ class TestPostWrite:
             POST_WRITE,
             post_write_payload(str(page)),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -633,7 +637,7 @@ class TestPostWrite:
             POST_WRITE,
             post_write_payload(str(page)),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -651,7 +655,7 @@ class TestPostWrite:
             POST_WRITE,
             post_write_payload(str(page)),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -669,7 +673,7 @@ class TestPostWrite:
             POST_WRITE,
             post_write_payload(str(page)),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -683,6 +687,7 @@ class TestPostWrite:
             capture_output=True,
             text=True,
             env={**os.environ, "CLAUDE_PLUGIN_ROOT": str(REPO_ROOT)},
+            cwd=tmp_path,
         )
         assert result.returncode == 0
 
@@ -695,7 +700,7 @@ class TestPostWrite:
             POST_WRITE,
             payload,
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -721,7 +726,7 @@ class TestSessionStop:
             SESSION_STOP,
             session_end_payload(),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -739,7 +744,7 @@ class TestSessionStop:
             SESSION_STOP,
             session_end_payload(),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -764,7 +769,7 @@ class TestSessionStop:
             SESSION_STOP,
             session_end_payload(),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -787,7 +792,7 @@ class TestSessionStop:
             SESSION_STOP,
             session_end_payload(),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -814,7 +819,7 @@ class TestSessionStop:
             SESSION_STOP,
             session_end_payload(),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
 
@@ -842,7 +847,7 @@ class TestSessionStop:
             SESSION_STOP,
             session_end_payload(),
             {
-                "CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki),
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
             },
         )
         assert result.returncode == 0
@@ -944,7 +949,7 @@ class TestPreWrite:
         r = run_hook(
             PRE_WRITE,
             pre_write_payload(str(page), content=self._ungrounded()),
-            {"CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki)},
+            {"CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki)},
         )
         assert r.returncode == 0
         assert "Freshness gate" in r.stdout, "must nudge on an ungrounded knowledge page"
@@ -955,7 +960,7 @@ class TestPreWrite:
         r = run_hook(
             PRE_WRITE,
             pre_write_payload(str(page), content=self._grounded()),
-            {"CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki)},
+            {"CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki)},
         )
         assert r.returncode == 0
         assert r.stdout.strip() == "", "primary source + inline marker → silent"
@@ -967,7 +972,7 @@ class TestPreWrite:
         r = run_hook(
             PRE_WRITE,
             pre_write_payload(str(raw), content=self._ungrounded()),
-            {"CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki)},
+            {"CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki)},
         )
         assert r.returncode == 0 and r.stdout.strip() == ""
 
@@ -977,7 +982,7 @@ class TestPreWrite:
         r = run_hook(
             PRE_WRITE,
             pre_write_payload(str(page), content=self._grounded()),
-            {"CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki)},
+            {"CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki)},
         )
         assert r.returncode == 0
         snaps = list((wiki / "_archive").glob("acme-*.md"))
@@ -991,7 +996,7 @@ class TestPreWrite:
         r = run_hook(
             PRE_WRITE,
             pre_write_payload(str(page), content=None, tool="Edit"),
-            {"CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki)},
+            {"CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki)},
         )
         assert r.returncode == 0
         assert list((wiki / "_archive").glob("acme-*.md")), "Edit must snapshot too"
@@ -1002,7 +1007,7 @@ class TestPreWrite:
         run_hook(
             PRE_WRITE,
             pre_write_payload(str(page), content=self._grounded()),
-            {"CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki)},
+            {"CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki)},
         )
         assert not list((wiki / "_archive").glob("brand-new-*.md")), (
             "a brand-new page has nothing to snapshot"
@@ -1015,7 +1020,7 @@ class TestPreWrite:
             run_hook(
                 PRE_WRITE,
                 pre_write_payload(str(page), content=self._grounded()),
-                {"CLAUDE_PLUGIN_OPTION_wiki_path": str(wiki)},
+                {"CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki)},
             )
         assert len(list((wiki / "_archive").glob("acme-*.md"))) == 1, (
             "at most one snapshot per page per day"

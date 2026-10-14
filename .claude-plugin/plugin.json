@@ -39,7 +39,8 @@
 	"mcpServers": {
 		"wiki-search": {
 			"command": "sh",
-			"args": ["${CLAUDE_PLUGIN_ROOT}/hooks/wiki-search.sh"]
+			"args": ["${CLAUDE_PLUGIN_ROOT}/hooks/wiki-search.sh"],
+			"env": { "WIKI_CONFIGURED_PATH": "${user_config.wiki_path}" }
 		}
 	},
 	"userConfig": {

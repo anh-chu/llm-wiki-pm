@@ -19,18 +19,19 @@ PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}"
 TEMPLATES_DIR="$PLUGIN_ROOT/skills/llm-wiki-pm/templates"
 SCRIPTS_DIR="$PLUGIN_ROOT/skills/llm-wiki-pm/scripts"
 
-# ① Resolve wiki path
-# Priority: .wiki-path file (project) > CLAUDE_PLUGIN_OPTION_wiki_path (global) > WIKI_PATH env > cwd fallback
-WIKI_PATH_FILE="$(pwd)/.wiki-path"
-FILE_WIKI=$(cat "$WIKI_PATH_FILE" 2>/dev/null | tr -d '[:space:]' || true)
-
-WIKI="${FILE_WIKI:-${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-}}}"
-DOMAIN="${CLAUDE_PLUGIN_OPTION_wiki_domain:-PM}"
+# ① Resolve wiki path (see resolve-wiki.sh for the order)
+WIKI=$(sh "$SCRIPT_DIR/resolve-wiki.sh")
+DOMAIN="${CLAUDE_PLUGIN_OPTION_WIKI_DOMAIN:-${CLAUDE_PLUGIN_OPTION_wiki_domain:-PM}}"
 GLOBAL_WARNING=""
 if [[ -z "$WIKI" ]]; then
-  WIKI="$(pwd)"
-  GLOBAL_WARNING="llm-wiki-pm: no wiki path configured. Falling back to current directory ($WIKI). Run /llm-wiki-pm:set-wiki-path ~/your-path to set a permanent path."
-elif [[ -z "$FILE_WIKI" ]]; then
+  # Not a wiki and none configured: write nothing here, just say how to set one.
+  MSG="llm-wiki-pm: no wiki path configured. Run /llm-wiki-pm:set-wiki-path ~/your-path to set one."
+  python3 -c "
+import json, sys
+print(json.dumps({'systemMessage': sys.argv[1], 'hookSpecificOutput': {'hookEventName': 'SessionStart', 'additionalContext': sys.argv[1]}}))
+" "$MSG"
+  exit 0
+elif [[ ! -f .wiki-path ]]; then
   GLOBAL_WARNING="llm-wiki-pm: using global wiki path ($WIKI). Run /llm-wiki-pm:set-wiki-path ~/your-path from your project directory to set a project-specific path."
 fi
 

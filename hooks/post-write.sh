@@ -7,8 +7,7 @@
 set -euo pipefail
 
 # ── Resolve paths (must match session-start.sh) ──────────────────────────────
-FILE_WIKI=$(cat "$(pwd)/.wiki-path" 2>/dev/null | tr -d '[:space:]' || true)
-WIKI="${FILE_WIKI:-${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-}}}"
+WIKI=$(sh "$(dirname "${BASH_SOURCE[0]}")/resolve-wiki.sh")
 [[ -z "$WIKI" ]] && exit 0
 
 # ① Read file path from stdin JSON using Python (no jq dependency)

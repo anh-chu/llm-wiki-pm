@@ -6,11 +6,10 @@
 set -euo pipefail
 
 # ── Resolve WIKI path (must match session-start.sh) ──────────────────────────
-FILE_WIKI=$(cat "$(pwd)/.wiki-path" 2>/dev/null | tr -d '[:space:]' || true)
-WIKI="${FILE_WIKI:-${CLAUDE_PLUGIN_OPTION_wiki_path:-${WIKI_PATH:-$(pwd)}}}"
+WIKI=$(sh "$(dirname "${BASH_SOURCE[0]}")/resolve-wiki.sh")
 
-# ① Exit silently if wiki not initialized yet
-if [[ ! -d "$WIKI" ]]; then
+# ① Exit silently if no wiki or not initialized yet
+if [[ -z "$WIKI" || ! -d "$WIKI" ]]; then
   exit 0
 fi
 
