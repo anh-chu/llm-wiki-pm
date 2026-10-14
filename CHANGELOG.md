@@ -7,6 +7,39 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.23.1] - 2026-10-14
+
+### Fixed
+
+- **The configured wiki path never reached the hooks.** Claude Code exports
+  plugin options to hooks as `CLAUDE_PLUGIN_OPTION_WIKI_PATH` (uppercase); the
+  hooks read `CLAUDE_PLUGIN_OPTION_wiki_path`, so the path entered when enabling
+  the plugin was ignored. Without a `.wiki-path` file, session-start fell back to
+  the working directory, and the snapshot and link-check write hooks never ran.
+  The same applied to `wiki_domain`, so new wikis always got the "PM" domain.
+- **wiki-search ignored the configured path too.** MCP servers don't receive
+  `CLAUDE_PLUGIN_OPTION_*`; `plugin.json` now passes `${user_config.wiki_path}`
+  as `WIKI_CONFIGURED_PATH`. Before, it indexed whatever directory Claude Code
+  was opened in.
+- **Skill and agent path snippets** read `CLAUDE_PLUGIN_OPTION_wiki_path`, which
+  the Bash tool never has. They now use `${user_config.wiki_path}`, which Claude
+  Code substitutes into skill text.
+- **No more writing into unrelated directories.** One resolver,
+  `hooks/resolve-wiki.sh`, used by every hook and the launcher: `.wiki-path` in
+  the working directory, then the plugin option, then `WIKI_PATH`, then the
+  working directory only if it already has `SCHEMA.md`. Otherwise the hooks write
+  nothing (no `_status.md`, `.wiki-lock`, `queries/` or scaffold) and only show a
+  set-wiki-path hint, and wiki-search exits with the same message.
+
+### Upgrade notes
+
+- If you relied on opening Claude Code inside a wiki without any configuration,
+  that still works as long as the directory has `SCHEMA.md`. An empty directory
+  is no longer scaffolded unless it is the configured path.
+- Check for leftovers in projects where the plugin ran before: `_status.md`,
+  `.wiki-lock`, `queries/lint-*.md`, and old search indexes (`.markdown_vault_mcp/`
+  or `.obsidian-mcp/`).
+
 ## [2.23.0] - 2026-10-14
 
 ### Changed
