@@ -31,7 +31,8 @@ rewritten rather than silently overwritten. Every claim points back to an
 immutable source in `raw/`, every overwrite leaves a snapshot in `_archive/`,
 and lint flags stale pages, broken links, and off-schema tags. The same rules
 apply whether the write comes from Claude Code or from ChatGPT through the
-bundled [wiki-mcp server](server/README.md).
+[wiki-mcp server](server/README.md), which is included in the repo and
+installed separately.
 
 ## What you get
 
@@ -42,7 +43,7 @@ bundled [wiki-mcp server](server/README.md).
 - **Crystallize** pattern: transcripts become structured decision digests
 - **Privacy-first**: pre-ingest filter, and every page is private (excluded from exports) unless it carries `shareable: true`
 - **Bundled wiki-search**: ranked keyword, regex, tag and backlink search over your whole wiki, via [obsidian-mcp](https://github.com/lstpsche/obsidian-mcp) (auto-indexes on startup)
-- **ChatGPT access via [wiki-mcp](server/README.md)**: a remote MCP server behind Cloudflare Access. Read tools by default; with `WIKI_WRITE=1` it adds create, edit, append, archive, supersede, and raw capture, each validated against `SCHEMA.md`, snapshotted, and logged the same way Claude Code writes are
+- **ChatGPT access via [wiki-mcp](server/README.md)**: a remote MCP server behind Cloudflare Access. It is included in the repo but not installed by the plugin; you run it yourself. Read tools by default; with `WIKI_WRITE=1` it adds create, edit, append, archive, supersede, and raw capture, each validated against `SCHEMA.md`, snapshotted, and logged the same way Claude Code writes are
 - **Obsidian-compatible**: works as a vault out of the box
 - **Prompt recall**: each prompt that names a page, or matches pages closely, lists up to 3 of them in context, so the agent reads the wiki before asking you
 - **Sub-skills** (optional, install as needed):
