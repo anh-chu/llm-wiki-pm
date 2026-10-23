@@ -4,6 +4,8 @@
 Usage:
     lint.py <wiki_path>              # report only
     lint.py <wiki_path> --auto-fix   # report + repair safe issues
+    lint.py <wiki_path> --quiet      # check only: no report file, no log entry
+    lint.py <wiki_path> --json       # check only, JSON summary on stdout (hooks)
 """
 
 import re
@@ -159,6 +161,9 @@ def main():
     auto_fix = "--auto-fix" in args
     output_json = "--json" in args
     quiet = "--quiet" in args
+    # --quiet/--json are read-only checks (hooks, ad hoc counts); only a plain
+    # run or --auto-fix (which edits pages) writes the report and a log entry.
+    write = auto_fix or not (quiet or output_json)
     args = [a for a in args if not a.startswith("--")]
     wiki = Path(args[0]).expanduser().resolve()
     if not wiki.exists():
@@ -455,7 +460,6 @@ def main():
 
     # report
     report_dir = wiki / "queries"
-    report_dir.mkdir(parents=True, exist_ok=True)
     report_path = report_dir / f"lint-{today}.md"
 
     out = [
@@ -495,7 +499,9 @@ def main():
     if info:
         out.append("3. Note 🔵 info for quarterly taxonomy review.")
 
-    report_path.write_text("\n".join(out) + "\n")
+    if write:
+        report_dir.mkdir(parents=True, exist_ok=True)
+        report_path.write_text("\n".join(out) + "\n")
 
     # Output structured JSON when requested (used by hooks for health checks).
     # Using --json implies no prose on stdout.
@@ -514,7 +520,7 @@ def main():
             )
         )
         return
-    if log_path.exists():
+    if write and log_path.exists():
         with log_path.open("a") as f:
             f.write(
                 f"\n## [{today}] lint | {len(errors)}E {len(warnings)}W "

@@ -859,11 +859,44 @@ LINT = REPO_ROOT / "skills" / "llm-wiki-pm" / "scripts" / "lint.py"
 def run_lint(wiki: Path):
     """Run lint.py and return the generated report text."""
     subprocess.run(
-        ["python3", str(LINT), str(wiki), "--quiet"],
+        ["python3", str(LINT), str(wiki)],
         capture_output=True, text=True,
     )
     reports = sorted((wiki / "queries").glob("lint-*.md"))
     return reports[-1].read_text() if reports else ""
+
+
+class TestLintWrites:
+    """--quiet and --json are read-only checks; a plain run writes the report and a log entry."""
+
+    def _state(self, wiki):
+        log = (wiki / "log.md").read_text() if (wiki / "log.md").exists() else None
+        return log, sorted(p.name for p in (wiki / "queries").glob("lint-*.md"))
+
+    def test_quiet_writes_nothing(self, tmp_path):
+        wiki = make_wiki(tmp_path)
+        (wiki / "log.md").write_text("# Log\n")
+        before = self._state(wiki)
+        r = subprocess.run(["python3", str(LINT), str(wiki), "--quiet"], capture_output=True, text=True)
+        assert r.returncode == 0
+        assert self._state(wiki) == before
+
+    def test_json_writes_nothing(self, tmp_path):
+        wiki = make_wiki(tmp_path)
+        (wiki / "log.md").write_text("# Log\n")
+        before = self._state(wiki)
+        r = subprocess.run(["python3", str(LINT), str(wiki), "--quiet", "--json"], capture_output=True, text=True)
+        assert r.returncode == 0
+        assert "broken_links" in json.loads(r.stdout)
+        assert self._state(wiki) == before
+
+    def test_plain_run_writes_report_and_log(self, tmp_path):
+        wiki = make_wiki(tmp_path)
+        (wiki / "log.md").write_text("# Log\n")
+        subprocess.run(["python3", str(LINT), str(wiki)], capture_output=True, text=True)
+        log, reports = self._state(wiki)
+        assert reports == [f"lint-{date.today().isoformat()}.md"]
+        assert f"] lint |" in log
 
 
 class TestLint:

@@ -7,6 +7,19 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [3.0.1] - 2026-10-24
+
+### Fixed
+
+- **`lint.py --quiet` and `--json` wrote to the wiki.** A quiet run appended a
+  `lint` entry to `log.md`, and both flags rewrote `queries/lint-<date>.md`. The
+  session-start hook runs `--quiet --json`, so every session start rewrote the
+  report, and repeated checks left duplicate log entries. Both flags are now
+  read-only checks; a plain run or `--auto-fix` still writes the report and a
+  log entry.
+
+---
+
 ## [3.0.0] - 2026-10-24
 
 ### Removed

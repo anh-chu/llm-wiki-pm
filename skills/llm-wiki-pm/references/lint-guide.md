@@ -2,6 +2,8 @@
 
 Lint runs programmatically via `scripts/lint.py` and writes a tiered report to
 `wiki/queries/lint-YYYY-MM-DD.md`. Run every 5-10 ingests, or monthly.
+`--quiet` and `--json` only check: they write no report and no `log.md` entry, so
+use them for quick counts. A plain run or `--auto-fix` writes both.
 
 ## Severity Tiers
 
