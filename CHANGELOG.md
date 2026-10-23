@@ -7,6 +7,20 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [2.24.1] - 2026-10-23
+
+### Changed
+
+- **wiki-search loads at session start and has 4 tools.** Claude Code deferred
+  the 9 wiki-search tools behind `ToolSearch`, so agents used grep, which needs
+  no extra step. The server now sets `alwaysLoad: true` and exposes only
+  `search_text`, `search_regex`, `note_read` and `wikilinks` (about 1,000 tokens
+  per session instead of 2,600). Tag and frontmatter lookups use `search_regex`
+  (for example `tags:.*competitive`). `search_metadata`, `note_read_many`,
+  `note_inspect`, `vault_list` and `vault_info` are no longer exposed.
+
+---
+
 ## [2.24.0] - 2026-10-23
 
 ### Added

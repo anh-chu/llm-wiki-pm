@@ -165,7 +165,7 @@ Then install Obsidian on your phone, pair with the synced vault.
   run `/skills`. Check SKILL.md frontmatter is intact.
 - **Claude can't find the wiki** → The wiki path is resolved in this order: a `.wiki-path` file in the directory Claude Code was opened in (written by `/llm-wiki-pm:set-wiki-path`), then the plugin's `wiki_path` option (set when enabling the plugin, editable in `/config`), then `WIKI_PATH`, then the current directory if it already is a wiki (has `SCHEMA.md`). With none of these the plugin does nothing in that directory and wiki-search shows as failed in `/mcp`. For skill-only installs, run `echo $WIKI_PATH` and confirm it is set in the shell that launched Claude Code.
 - **wiki-search returns nothing** → wiki-search auto-indexes on startup.
-  Ask Claude to call `vault_info` and check `vault_path` and the note count.
+  Ask Claude to call `search_text` with the name of a page you know exists.
   It searches words, not meaning, so try 2-6 distinctive terms or synonyms.
 - **wiki-search fails to connect** → the first session downloads the
   obsidian-mcp binary; restart Claude Code once it finishes. Offline, or on a

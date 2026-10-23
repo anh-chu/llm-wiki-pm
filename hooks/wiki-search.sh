@@ -19,7 +19,7 @@ BIN=$(sh "$(dirname "$0")/obsidian-mcp-fetch.sh")
 
 # Data folder outside the vault (the search index itself is in memory per process).
 export OBSIDIAN_MCP_DATA="${XDG_DATA_HOME:-$HOME/.local/share}/obsidian-mcp"
-export OBSIDIAN_TOOLS="vault_info,vault_list,note_read,note_read_many,note_inspect,search_text,search_regex,search_metadata,wikilinks"
+export OBSIDIAN_TOOLS="search_text,search_regex,note_read,wikilinks"
 export OBSIDIAN_EMBEDDINGS=false
 # _archive/ holds pre-overwrite snapshots; searching them surfaces stale claims.
 # note_read can still open an archived page by path.

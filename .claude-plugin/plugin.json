@@ -1,6 +1,6 @@
 {
 	"name": "llm-wiki-pm",
-	"version": "2.24.0",
+	"version": "2.24.1",
 	"description": "PM knowledge base skill implementing Karpathy's LLM Wiki pattern. Ingest sources, query a compounding markdown wiki, supersede with auto-link rewrite, crystallize transcripts into decision digests. Bundles wiki search (obsidian-mcp).",
 	"author": {
 		"name": "Anh Chu",
@@ -40,7 +40,8 @@
 		"wiki-search": {
 			"command": "sh",
 			"args": ["${CLAUDE_PLUGIN_ROOT}/hooks/wiki-search.sh"],
-			"env": { "WIKI_CONFIGURED_PATH": "${user_config.wiki_path}" }
+			"env": { "WIKI_CONFIGURED_PATH": "${user_config.wiki_path}" },
+			"alwaysLoad": true
 		}
 	},
 	"userConfig": {

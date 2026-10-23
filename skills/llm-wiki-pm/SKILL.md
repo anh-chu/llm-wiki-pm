@@ -140,10 +140,11 @@ Inventory every connected MCP tool at session start and use them eagerly.
 **wiki-search tools** (bundled [obsidian-mcp](https://github.com/lstpsche/obsidian-mcp),
 read-only): `search_text` (ranked BM25; pass 2-6 distinctive terms, not a
 sentence; it matches words, not meaning, so retry with synonyms), `search_regex`
-(exact tokens, numbers, codenames), `search_metadata` (by tag or frontmatter
-field), `wikilinks` (backlinks, outgoing, broken, orphans), `note_read` /
-`note_read_many`, `vault_list`. Results come back trimmed to a few snippets per
-file; `note_read` the hits you need. `_archive/` snapshots are left out of
+(exact tokens, numbers, codenames, or a tag or frontmatter value such as
+`tags:.*competitive`), `wikilinks` (backlinks, outgoing, broken, orphans),
+`note_read`. They are loaded at session start, so use them before grep for wiki
+lookups. Results come back trimmed to a few snippets per file; `note_read` the
+hits you need. `_archive/` snapshots are left out of
 search and backlinks (read them by path when you need history). Optional key-required tools:
 `references/recommended-tools.md`.
 
