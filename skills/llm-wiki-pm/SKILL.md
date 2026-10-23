@@ -1,7 +1,7 @@
 ---
 name: llm-wiki-pm
 description: Persistent PM knowledge base, competitive intel, customer notes, strategy, roadmap, AI market. Markdown wiki with entities, concepts, comparisons. Ingest sources, query, update with diffs, lint. Fires on "remember that / note that / don't forget / what do we know about X / what am I missing / blind spots".
-when_to_use: Use when user wants to ingest a source, query the wiki, update pages, lint/audit, bootstrap a new wiki, audit coverage gaps, capture learnings, or says "remember that / note that / don't forget / what am I missing / blind spots". For persona/relationship-map pages use llm-wiki-persona; for briefs/digests use llm-wiki-brief; for CRM use llm-wiki-crm; for PRDs/user-stories/release-notes use llm-wiki-prd; for research sprints/deep dives use llm-wiki-research; for the daily-maintenance loop (sweep all sources → ingest → brief → tidy, incl. scheduled runs) use llm-wiki-maintain.
+when_to_use: Use when user wants to ingest a source, query the wiki, update pages, lint/audit, bootstrap a new wiki, audit coverage gaps, capture learnings, or says "remember that / note that / don't forget / what am I missing / blind spots". For briefs/digests use llm-wiki-brief; for research sprints/deep dives use llm-wiki-research; for the daily-maintenance loop (sweep all sources → ingest → brief → tidy, incl. scheduled runs) use llm-wiki-maintain.
 allowed-tools: Read Grep Write Edit Bash WebFetch
 ---
 
@@ -33,15 +33,12 @@ Route to these — including **mid-flow** when a core operation surfaces the nee
 
 | Need | Sub-skill | Triggers |
 |------|-----------|----------|
-| Communication persona pages, relationship maps, org charts | `llm-wiki-persona` | "build a persona", "communication profile", "map relationships" |
 | Daily/weekly briefs, tag digests, coverage briefs | `llm-wiki-brief` | "daily/weekly brief", "catch me up", "[tag] digest" |
-| PRDs, user stories, release notes | `llm-wiki-prd` | "write a PRD", "user stories", "release notes" |
 | Research sprints, competitive deep dives, stub enrichment | `llm-wiki-research` | "research [topic]", "deep dive", "auto-research [entity]" |
-| Relationship/account health, CRM context, touchpoints | `llm-wiki-crm` | "relationship health", "account health", "who haven't I talked to" |
 | Daily-maintenance loop (sweep all sources → ingest → brief → tidy), incl. scheduled runs | `llm-wiki-maintain` | "daily maintenance", "morning sweep", "ingest all sources and brief", "do the daily run" |
 
 If a sub-skill isn't installed, the core skill's matching fallback handles it where
-one exists (§10/§11/§12); persona, PRD, research, CRM, and maintain require their
+one exists (§10/§11/§12); research and maintain require their
 sub-skill (you can still run maintenance steps manually via core ingest/brief/lint).
 
 ## Proactive Behaviors
@@ -178,10 +175,7 @@ write operation proceeds until it exists.
 **③ MY-INTEGRATIONS.md (optional).** If present, apply its Routing Notes to ingest
 defaults and read `## Sweep Registry` (canonical source list). No file = generic
 defaults. Never create it during Pre-Flight (auto-created on first ingest).
-**④ Role pack (optional).** Check `.claude/roles/` for a file matching the user's
-role; if found apply `focus_tags`, `preferred_output_format`, `crystallize_template`,
-`surface_confidence_threshold`. Missing dir is not an error.
-**⑤ _status.md warnings.** If present, read it and surface staleness/lock warnings.
+**④ _status.md warnings.** If present, read it and surface staleness/lock warnings.
 
 ## Orient Every Session
 
@@ -195,7 +189,7 @@ Before any ingest/query/update/lint:
 ⑥ **Staleness warning:** if a page's `updated:` is older than 14 days
    (overview/index) or 30 days (entity/concept) AND `log.md` shows recent activity
    in that area, surface: "Warning: [[page]] may be stale (updated YYYY-MM-DD)."
-⑦ **_status.md warnings** were surfaced in Pre-Flight ⑤; if Pre-Flight was skipped,
+⑦ **_status.md warnings** were surfaced in Pre-Flight ④; if Pre-Flight was skipped,
    read `$WIKI/_status.md` now. It also precomputes confidence-decay candidates.
 ⑧ **Orient gate (checklist):** before creating or modifying any wiki page, ensure
    ①-④ are done this session. If not: "Need to orient first. Running now." Then
@@ -242,7 +236,7 @@ In brief:
 ⑩ Report every file touched; confirm before mass-updating (10+ pages).
 ⑪ **Crystallize** transcripts/research chains into a `queries/` digest (`references/crystallize-guide.md`).
 ⑫ **Entity promotion scan** — promote people/companies/products with 3+ attributes
-   to their own page (confirm first). Offer a persona page (`llm-wiki-persona`) for any promoted person.
+   to their own page (confirm first).
 
 ### 3. Query
 ① **Search first**: `search_text` → `search_regex`/grep → file read.
@@ -305,10 +299,10 @@ overview/index, 30 entity/concept). Cross-reference `log.md` — a page with rec
 activity but an unmoved `updated:` is behind; flag those first. Offer the Update
 flow (§4). Log the check regardless.
 
-### 8. Persona Pages → `llm-wiki-persona` sub-skill
-Persona pages and relationship maps are owned by `llm-wiki-persona` (channel model,
-no-fabrication rule, relationship-map format). The entity-promotion scan (§2 ⑫)
-offers a persona for any promoted person — route there.
+### 8. Persona Pages
+Existing `<name>-persona.md` pages stay valid (type `persona` in SCHEMA.md). Put new
+communication notes on the person's entity page, quoting real messages; never invent
+traits.
 
 ### 9. Pre-Meeting Briefing
 Trigger: "I have a meeting/1:1 with X". Read the entity page + persona if present;

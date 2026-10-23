@@ -148,5 +148,3 @@ described with 3+ attributes (role, style, concerns, position, history, etc.).
 - Don't silently promote. Always confirm.
 - After splitting, update the concept page to link out: `[[entity-slug]]` instead
   of the inline prose.
-- Check whether a persona page is warranted for any promoted person entity (the
-  `llm-wiki-persona` sub-skill handles persona pages).

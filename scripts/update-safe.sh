@@ -33,10 +33,6 @@ OVERWRITE_SAFE=(
   "scripts/lint.py"
   "scripts/backlinks.py"
   "scripts/update-safe.sh"
-  ".claude/agents/worker-wiki-indexer.md"
-  ".claude/agents/worker-source-fetcher.md"
-  ".claude/agents/worker-link-validator.md"
-  ".claude/agents/worker-lint.md"
   "AGENTS.md"
   "CLAUDE.md"
 )
@@ -48,10 +44,6 @@ USER_CUSTOMIZABLE=(
   "skills/llm-wiki-pm/templates/overview.md"
   "skills/llm-wiki-pm/templates/log.md"
   "skills/llm-wiki-pm/templates/persona.md"
-  ".claude/roles/product-manager.md"
-  ".claude/roles/researcher.md"
-  ".claude/roles/executive.md"
-  ".claude/roles/founder.md"
   ".claude-plugin/plugin.json"
 )
 

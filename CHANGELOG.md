@@ -7,6 +7,28 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [3.0.0] - 2026-10-24
+
+### Removed
+
+- **Sub-skills `llm-wiki-persona`, `llm-wiki-crm` and `llm-wiki-prd`.** None was
+  called in 129 wiki sessions. Existing `persona` pages stay valid (the type,
+  template and lint rules remain); new communication notes go on the person's
+  entity page. For PRDs, use a spec skill grounded in the code.
+- **Worker agents (`.claude/agents/`) and role packs (`.claude/roles/`).** They
+  lived in the repo's `.claude/` folder, which Claude Code reads only in the
+  plugin's own checkout, so they never reached a wiki session. Orient step ④
+  (role packs) is gone; `_status.md` warnings are now step ④.
+
+### Changed
+
+- **`llm-wiki-research` captures sources itself.** It used to send every fetch to
+  `worker-source-fetcher`, which never shipped. It now fetches with `WebFetch`
+  and saves to `raw/` with the core ingest rules (routing, privacy filter,
+  dedup), optionally through a general-purpose subagent for 4+ sources.
+
+---
+
 ## [2.24.1] - 2026-10-23
 
 ### Changed

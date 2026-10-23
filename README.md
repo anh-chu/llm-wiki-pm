@@ -44,16 +44,10 @@ bundled [wiki-mcp server](server/README.md).
 - **Bundled wiki-search**: ranked keyword, regex, tag and backlink search over your whole wiki, via [obsidian-mcp](https://github.com/lstpsche/obsidian-mcp) (auto-indexes on startup)
 - **ChatGPT access via [wiki-mcp](server/README.md)**: a remote MCP server behind Cloudflare Access. Read tools by default; with `WIKI_WRITE=1` it adds create, edit, append, archive, supersede, and raw capture, each validated against `SCHEMA.md`, snapshotted, and logged the same way Claude Code writes are
 - **Obsidian-compatible**: works as a vault out of the box
-- **Worker agents**: five subagents (indexer, fetcher, link-validator, lint, people-updater)
-  handle expensive ops without bloating the lead session
-- **Role packs**: PM, researcher, executive, founder personas tune proactive
-  recall sensitivity, output format, and crystallize templates per session
+- **Prompt recall**: each prompt that names a page, or matches pages closely, lists up to 3 of them in context, so the agent reads the wiki before asking you
 - **Sub-skills** (optional, install as needed):
   - `llm-wiki-brief` — daily/weekly briefs, tag digests, coverage brief
-  - `llm-wiki-prd` — PRD drafts, user stories, release notes (wiki-grounded, no fabrication)
   - `llm-wiki-research` — research sprints, competitive deep dives, stub enrichment
-  - `llm-wiki-crm` — relationship health, account health dashboard, feature ask tracker, auto-enrichment
-  - `llm-wiki-persona` — communication persona pages and relationship maps, grounded in real message samples
   - `llm-wiki-maintain` — the daily-maintenance loop (registry-driven sweep → ingest → brief → tidy → health check), with interactive vs autonomous modes
 - **MY-INTEGRATIONS.md**: learned source routing — auto-populated from actual ingest activity
 - **Next.js embed path** for platform deployments
@@ -76,11 +70,11 @@ npx skills add anh-chu/llm-wiki-pm --skill llm-wiki-pm -a claude-code -g
 Install individual sub-skills the same way:
 
 ```bash
-npx skills add anh-chu/llm-wiki-pm --skill llm-wiki-crm -a claude-code -g
+npx skills add anh-chu/llm-wiki-pm --skill llm-wiki-research -a claude-code -g
 npx skills add anh-chu/llm-wiki-pm --skill llm-wiki-brief -a claude-code -g
 ```
 
-This installs the skill with all its scripts, templates, and references. **What you don't get** without the full plugin: session hooks (auto-scaffold, wikilink validation, log rotation), worker agents, and role packs. Core wiki operations (ingest, query, update, lint) work fine — you just need to create the wiki directory structure manually on first use.
+This installs the skill with all its scripts, templates, and references. **What you don't get** without the full plugin: session hooks (auto-scaffold, prompt recall, wikilink validation, log rotation) and the bundled wiki-search. Core wiki operations (ingest, query, update, lint) work fine — you just need to create the wiki directory structure manually on first use.
 
 ### Option C: Symlink from a clone
 
@@ -187,19 +181,6 @@ llm-wiki-pm/
 ├── .claude-plugin/
 │   ├── plugin.json
 │   └── marketplace.json
-├── .claude/
-│   ├── agents/                      # Worker subagents
-│   │   ├── worker-wiki-indexer.md
-│   │   ├── worker-source-fetcher.md
-│   │   ├── worker-link-validator.md
-│   │   ├── worker-lint.md
-│   │   └── worker-people-updater.md
-│   └── roles/                       # Role packs
-│       ├── _template.md
-│       ├── product-manager.md
-│       ├── researcher.md
-│       ├── executive.md
-│       └── founder.md
 ├── hooks/
 │   └── hooks.json
 ├── scripts/
@@ -214,15 +195,7 @@ llm-wiki-pm/
     │                    MY-INTEGRATIONS.md)
     ├── llm-wiki-brief/              # Optional: daily/weekly briefs, tag digests
     │   └── SKILL.md
-    ├── llm-wiki-prd/                # Optional: PRD drafts, user stories, release notes
-    │   └── SKILL.md
     ├── llm-wiki-research/           # Optional: research sprints, competitive deep dives
-    │   └── SKILL.md
-    ├── llm-wiki-crm/                # Optional: relationship health, CRM layer
-    │   ├── SKILL.md
-    │   └── templates/
-    │       └── SCHEMA-crm-fields.md
-    ├── llm-wiki-persona/            # Optional: persona pages + relationship maps
     │   └── SKILL.md
     └── llm-wiki-maintain/           # Optional: daily-maintenance loop (sweep→ingest→brief→tidy)
         └── SKILL.md

@@ -1,15 +1,15 @@
 ---
 name: llm-wiki-research
-description: Research sprints, competitive deep dives, and auto-enrichment of stub wiki pages. Delegates web fetching to worker-source-fetcher. Files all findings back into the wiki.
+description: Research sprints, competitive deep dives, and auto-enrichment of stub wiki pages. Captures sources to raw/ with the core ingest step. Files all findings back into the wiki.
 when_to_use: Use for "research [topic]", "deep dive on [topic/company]", "auto-research", "enrich [entity]", "find more about [X]", "what do we know vs what's public about [X]", "competitive research on [company]", "research sprint". Does not handle routine ingest — use core llm-wiki-pm for that.
 allowed-tools: Read Grep Write Bash WebFetch WebSearch
 ---
 
 # LLM Wiki Research
 
-Sub-skill of llm-wiki-pm. Handles research sprints, competitive deep dives, and auto-enrichment of stub entities. Delegates all URL fetching to `worker-source-fetcher` so privacy filtering and raw/ logging happen correctly.
+Sub-skill of llm-wiki-pm. Handles research sprints, competitive deep dives, and auto-enrichment of stub entities. Every fetched source goes through the core ingest capture step, so privacy filtering and raw/ logging happen correctly.
 
-**WebFetch note:** `WebFetch` is listed in allowed-tools for quick page previews (e.g., confirming a URL before delegation). For source capture (saving to raw/), always delegate to `worker-source-fetcher`. Never call WebFetch directly for source saving — privacy filtering and raw/ logging won't happen.
+**WebFetch note:** use `WebFetch` freely to preview a page. Before you save a source to raw/, apply the privacy filter from the core ingest guide.
 
 ## Orient First
 
@@ -31,14 +31,9 @@ WIKI=${WIKI:-${CONF:-${WIKI_PATH:-}}}
 [ -z "$WIKI" ] && [ -f SCHEMA.md ] && WIKI=$(pwd)  # cwd only if it is already a wiki
 ```
 
-## Worker Delegation
+## Source Capture
 
-This skill uses `worker-source-fetcher` for all URL fetching. Never call WebFetch directly for source capture — always invoke the worker:
-
-> "Use worker-source-fetcher to fetch [URL]"
-
-This ensures privacy filtering and raw/ logging happen correctly. The worker returns:
-`"OK: saved to raw/<subdir>/<slug>.md"` — use that path for synthesis.
+For each source, fetch it (`WebFetch`) and capture it with the core skill's Ingest step ① (`llm-wiki-pm/references/ingest-guide.md`: route to `raw/<subdir>/`, apply the privacy filter, dedup by URL). Use the saved `raw/<subdir>/<slug>.md` path for synthesis and `[source: ...]` markers. For 4+ sources, a general-purpose subagent can fetch and save them in parallel; give it the ingest-guide rules.
 
 ---
 
@@ -65,9 +60,9 @@ Read all relevant pages. Surface: "Wiki has N relevant pages. Here's what we alr
 
 Present 3-5 specific sources to fetch — name each, why it's relevant, what question it answers. Typical: analyst reports, company pages, recent press, whitepapers, industry forums. Get user confirmation before fetching.
 
-**④ Delegate fetching**
+**④ Capture sources**
 
-For each confirmed source: "Use worker-source-fetcher to fetch [URL]"
+For each confirmed source, fetch it and save it to raw/ (see Source Capture).
 
 If a fetch fails (404, paywall, timeout), note it and continue. Collect all raw/ paths before writing.
 
@@ -148,9 +143,9 @@ Standard source set:
 
 Get user confirmation before fetching.
 
-**③ Delegate fetching**
+**③ Capture sources**
 
-"Use worker-source-fetcher to fetch [URL]" for each confirmed source.
+Fetch each confirmed source and save it to raw/ (see Source Capture).
 
 **④ Update entity page**
 
@@ -181,8 +176,7 @@ Update existing comparisons/ pages. Offer to create a new comparison page if the
 **Trigger:** "auto-research [entity]", "enrich [entity]", "fill in [entity] page"
 
 For entity pages with `coverage: stub`. Fast enrichment pass. This is *factual/web*
-enrichment. If the user wants relationship/CRM context (tier, touchpoint, feature
-asks) rather than facts, route to llm-wiki-crm's enrich instead.
+enrichment.
 
 **① Read the stub** — what do we already know? What's in `gaps:`?
 
@@ -245,7 +239,7 @@ Gap research complete:
 ## Pitfalls
 
 - **Orient first**: before any writes. Research sprints may touch many pages.
-- **Delegate fetching**: always use `worker-source-fetcher` — never WebFetch directly for source saving.
+- **Capture through ingest**: save every source to raw/ with the core ingest rules (privacy filter, routing, dedup).
 - **Confirm before mass creates**: 5+ pages → user confirmation first.
 - **Inline provenance**: every non-obvious claim needs `[source: slug, location]`.
 - **Coverage markers**: bump `coverage:` after meaningful enrichment.

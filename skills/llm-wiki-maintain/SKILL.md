@@ -86,5 +86,5 @@ run?") and proceed on the answer; default to interactive.
 
 ## What this skill does NOT do
 
-Single ingests, ad-hoc queries, updates, persona/PRD/research/CRM work — route
+Single ingests, ad-hoc queries, updates, research work — route
 to the core skill or the matching sub-skill. This skill is the daily loop only.

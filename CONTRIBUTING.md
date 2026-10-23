@@ -8,29 +8,15 @@
 4. Add a reference doc to `skills/llm-wiki-pm/references/` if the operation is complex enough to warrant one
 5. Update `plugin.json` description if the new operation is user-facing and notable
 
-## Adding a Worker Agent
-
-1. Create `.claude/agents/worker-<name>.md`
-2. Required frontmatter: `name`, `description`, `model` (use `sonnet` for I/O workers)
-3. Include the standard wiki path resolution block
-4. **Output rule is mandatory**: workers write to `/tmp/<name>-<YYYYMMDD>.md` and return only a short status + path
-5. Update `plugin.json` → `metadata.workerCount` and `metadata.skillArchitecture`
-
-## Adding a Role Pack
-
-1. Copy `.claude/roles/_template.md` → `.claude/roles/<role-id>.md`
-2. Set `focus_tags` to a subset of the tag taxonomy in `templates/SCHEMA.md`
-3. Update `plugin.json` → `metadata.rolePackCount`
-
 ## Version Bump Protocol
 
 This project uses [semver](https://semver.org/):
 
 | Change type | Version bump | Examples |
 |-------------|-------------|---------|
-| New operation, new worker, new role pack | **minor** (2.5.0 → 2.6.0) | Add §13, new worker agent |
+| New operation, new hook, new sub-skill | **minor** (2.5.0 → 2.6.0) | Add §13, new hook |
 | Bug fix, clarification, constraint tightening | **patch** (2.5.0 → 2.5.1) | Fix broken bash snippet, clarify orient gate |
-| Breaking change to wiki structure, frontmatter schema | **major** (2.x.x → 3.0.0) | New required frontmatter field, changed directory layout |
+| Breaking change to wiki structure, frontmatter schema, or a removed skill | **major** (2.x.x → 3.0.0) | New required frontmatter field, changed directory layout, sub-skill removed |
 
 When bumping version:
 1. Update `version` in `.claude-plugin/plugin.json`

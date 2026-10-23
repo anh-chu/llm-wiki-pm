@@ -1,6 +1,6 @@
 {
 	"name": "llm-wiki-pm",
-	"version": "2.24.1",
+	"version": "3.0.0",
 	"description": "PM knowledge base skill implementing Karpathy's LLM Wiki pattern. Ingest sources, query a compounding markdown wiki, supersede with auto-link rewrite, crystallize transcripts into decision digests. Bundles wiki search (obsidian-mcp).",
 	"author": {
 		"name": "Anh Chu",
@@ -29,12 +29,10 @@
 		"briefs"
 	],
 	"metadata": {
-		"skillCount": 6,
-		"workerCount": 5,
-		"rolePackCount": 4,
+		"skillCount": 4,
 		"supportedAgents": ["claude-code"],
-		"skillArchitecture": "core (llm-wiki-pm) + 5 sub-skills (brief, prd, research, crm, persona) + set-wiki-path utility",
-		"directoryLayout": "skills/llm-wiki-{pm,brief,prd,research,crm,persona}/ | .claude/agents/ (workers) | .claude/roles/ (role packs)"
+		"skillArchitecture": "core (llm-wiki-pm) + 3 sub-skills (brief, research, maintain) + set-wiki-path utility",
+		"directoryLayout": "skills/llm-wiki-{pm,brief,research,maintain}/ | hooks/ | server/ (wiki-mcp, installed separately)"
 	},
 	"mcpServers": {
 		"wiki-search": {

@@ -242,7 +242,7 @@ N pages tagged [tag]
 
 This skill handles: daily brief, weekly brief, tag digest, coverage brief.
 
-For everything else — ingest, update, query, lint, archive, persona, pre-meeting briefing — the core `llm-wiki-pm` skill handles those.
+For everything else — ingest, update, query, lint, archive, pre-meeting briefing — the core `llm-wiki-pm` skill handles those.
 
 > "For full ingest/update/query operations, the core llm-wiki-pm skill handles those."
 

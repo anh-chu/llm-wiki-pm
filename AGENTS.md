@@ -71,10 +71,7 @@ any operation not handled by an installed sub-skill.
 | Sub-skill | Handles | Core fallback |
 |-----------|---------|---------------|
 | `llm-wiki-brief` | Daily/weekly briefs, tag digests, coverage brief | §10, §11, §12 |
-| `llm-wiki-prd` | PRD drafts, user stories, release notes | — |
 | `llm-wiki-research` | Research sprints, competitive deep dives, stub enrichment | — |
-| `llm-wiki-crm` | Relationship health, auto-enrichment, feature ask tracking | — |
-| `llm-wiki-persona` | Communication persona pages, relationship maps | — |
 | `llm-wiki-maintain` | Daily-maintenance loop (sweep all sources → ingest → brief → tidy), interactive/autonomous modes | run steps manually |
 
 Sub-skills are additive. Install only what you need. The core skill works standalone.
@@ -83,8 +80,8 @@ Sub-skills are additive. Install only what you need. The core skill works standa
 
 This plugin ships Claude Code support:
 - **Core skill**: `skills/llm-wiki-pm/SKILL.md`
-- **Sub-skills**: `skills/llm-wiki-{brief,prd,research,crm,persona,maintain}/SKILL.md`
-- **Workers**: `.claude/agents/` (indexer, fetcher, link-validator, lint, people-updater)
-- **Role packs**: `.claude/roles/` (product-manager, researcher, executive, founder)
+- **Sub-skills**: `skills/llm-wiki-{brief,research,maintain}/SKILL.md`
+- **Hooks**: `hooks/` (session start, prompt recall, write guards, session end)
+- **Wiki search**: bundled obsidian-mcp (`wiki-search` MCP server)
 
 This file is the portable behavioral contract for any future agent surfaces.
