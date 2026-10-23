@@ -1,6 +1,6 @@
 # Wiki Hooks
 
-Three shell scripts that keep the wiki healthy across sessions. When installed as a Claude Code plugin, they activate automatically via `hooks/hooks.json` at the plugin root. No manual configuration needed.
+Hook scripts that keep the wiki healthy across sessions and point the agent at relevant pages. When installed as a Claude Code plugin, they activate automatically via `hooks/hooks.json` at the plugin root. No manual configuration needed.
 
 ---
 
@@ -12,6 +12,17 @@ Runs at session start. Scaffolds the wiki on first run if it does not exist
 for broken links, orphan pages, stale entries (>30 days), and competitive pages
 past their confidence decay threshold (>60 days). Writes `_status.md` and
 outputs an `additionalContext` summary directly into Claude's context.
+
+**prompt-recall.py**
+Runs on every user prompt (`UserPromptSubmit`, 3 s timeout). It searches the
+pages in `entities/`, `concepts/`, `comparisons/` and `queries/` with the prompt
+and adds up to 3 matches (path, title, `updated:`, `confidence:`; 600 bytes at
+most) to Claude's context, so the agent reads the page instead of asking you.
+A page whose file name or title (before ` — `) appears in the prompt is always
+listed first. Other pages need a BM25 score of at least `THRESHOLD` (title and
+file name count 3×). Prompts with fewer than 3 content words only get file-name
+matches. Slash commands, `<…>` hook envelopes and sessions without a wiki get
+nothing. It never prints page bodies and exits 0 silently on any error.
 
 **post-write.sh**
 Runs after every file write inside the wiki directory. It reads the file path from stdin JSON (`tool_input.file_path`), then scans the written file for broken `[[wikilinks]]` against the wiki page directories. Results are appended to `_status.md`. The hook always exits 0 so it never blocks a write.
@@ -37,6 +48,7 @@ Script paths in `hooks/hooks.json` use `${CLAUDE_PLUGIN_ROOT}` so they resolve c
 
 **Notes on events:**
 - `SessionStart` fires once when the session opens (new, resumed, or cleared). Not on every message.
+- `UserPromptSubmit` fires on every prompt you send, before Claude sees it.
 - `PostToolUse` with `matcher: "Write|Edit|MultiEdit"` fires after file writes. The hook reads the file path from stdin JSON (`tool_input.file_path`).
 - `SessionEnd` fires when the session terminates. Not after every Claude response (`Stop` does that).
 

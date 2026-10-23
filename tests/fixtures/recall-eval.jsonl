@@ -1,0 +1,12 @@
+{"prompt": "which pod owns the data binding work?", "expected": ["concepts/data-binding.md", "concepts/pod-structure.md", "entities/jane-doe.md"]}
+{"prompt": "what's the status of the Globex pilot and the Jira on-prem sync", "expected": ["entities/globex.md", "queries/globex-pilot-review.md"]}
+{"prompt": "how is Acme Corp doing", "expected": ["entities/acme-corp.md"]}
+{"prompt": "what is the Q4 roadmap for data binding and versioning", "expected": ["queries/roadmap-q4-2026.md", "concepts/data-binding.md"]}
+{"prompt": "Umbrella Health asks", "expected": ["entities/umbrella-health.md"]}
+{"prompt": "draft a reply to Jane Doe about the reporting service", "expected": ["entities/jane-doe.md"]}
+{"prompt": "fix the typo in line 3", "expected": "none"}
+{"prompt": "rename this variable and rerun the unit tests", "expected": "none"}
+{"prompt": "make the chart bigger and use a darker blue", "expected": "none"}
+{"prompt": "remove the extra blank lines from that html file", "expected": "none"}
+{"prompt": "push the branch and open a pull request", "expected": "none"}
+{"prompt": "why is the build failing on the linter step", "expected": "none"}

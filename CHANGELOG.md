@@ -7,6 +7,24 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Wiki auto-recall on each prompt.** A new `UserPromptSubmit` hook,
+  `hooks/prompt-recall.py`, searches `entities/`, `concepts/`, `comparisons/`
+  and `queries/` with the user's prompt and lists up to 3 matching pages (path,
+  title, `updated:`, `confidence:`, at most 600 bytes) in the model's context.
+  A page whose file name or title appears in the prompt is always listed; other
+  pages need a BM25 score of 10 or more. Short replies, slash commands, hook
+  envelopes and sessions without a wiki get nothing. Stdlib only, about 0.1 s on
+  a 250-page wiki, and it fails open on any error.
+- **Skill rule:** before asking the user a fact about people, teams, ownership,
+  customers, roadmap or process, search the wiki first, also during code or
+  GitHub work.
+
+---
+
 ## [2.23.1] - 2026-10-14
 
 ### Fixed

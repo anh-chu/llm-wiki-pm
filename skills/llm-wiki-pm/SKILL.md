@@ -90,7 +90,9 @@ The SessionStart hook states the active path each session.
 **Wiki-first protocol:** Before answering a PM knowledge question, search the wiki
 with connected tools. Don't synthesize from training data when wiki pages exist.
 Cite explicitly: "Per [[page]]...". If no page exists, say so and offer to create
-one or log an open question.
+one or log an open question. Before asking the user a fact about people, teams,
+ownership, customers, roadmap or process, search the wiki first, including during
+code or GitHub work.
 
 **Source discipline (the wiki is a map, not the territory):** wiki-first must not
 become wiki-only. Verify from source; use the wiki to know where to look. Four
