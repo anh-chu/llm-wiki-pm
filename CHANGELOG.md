@@ -7,6 +7,27 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Block-style `tags:` lists were ignored** (#9). `lint.py` only read inline
+  `tags: [a, b]`, so tags written as a `- item` list skipped the tag counts and
+  the taxonomy check. The session-start hook missed them too, so those pages never
+  got the competitive-decay flag. Tags now use the same parser as `sources`.
+- **Folder pages named `README.md` broke slugs** (#11). The docs filed rich query
+  answers and research sprints as `queries/<slug>/README.md`, but the file name is
+  the page's slug, so links, backlinks and lint all failed. The docs now use
+  `queries/<slug>/<slug>.md`. **Migration:** rename existing
+  `queries/<slug>/README.md` pages to `queries/<slug>/<slug>.md`.
+- **`llm-wiki-maintain` filed weekly briefs as daily briefs** (#12). Step ④ now
+  picks the daily or weekly cadence. Weekly briefs go to
+  `queries/weekly-brief-YYYY-MM-DD.md`, and step ⑤ rotates daily briefs only.
+- Removed plugin keywords for features deleted in 3.0.0 (`worker-agents`,
+  `role-packs`, `crm`, `prd`).
+
+---
+
 ## [3.0.1] - 2026-10-24
 
 ### Fixed
