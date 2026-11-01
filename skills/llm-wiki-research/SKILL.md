@@ -77,7 +77,7 @@ Read all fetched raw files. Extract entities, claims, data points. Cross-referen
 
 Create/update wiki pages per core ingest discipline: inline provenance, coverage markers, confidence levels, min 2 outbound wikilinks, backlink audit.
 
-Produce a synthesis page at `queries/research-<topic>-<YYYY-MM-DD>/README.md`:
+Produce a synthesis page at `queries/research-<topic>-<YYYY-MM-DD>/research-<topic>-<YYYY-MM-DD>.md` (the page is named after its folder so its slug matches):
 
 ```markdown
 ---
@@ -248,4 +248,4 @@ Gap research complete:
 - **Snapshot before destructive updates**: `_archive/<slug>-<date>.md` before deep dive overwrites.
 - **Dedup**: grep before creating. Confirm update vs create.
 - **Privacy**: private by default — leave customer names, deal sizes, and 1:1 content unflagged (never add `shareable: true` to them).
-- **Synthesis page**: research sprints always produce `queries/research-<topic>-<date>/README.md`.
+- **Synthesis page**: research sprints always produce `queries/research-<topic>-<date>/research-<topic>-<date>.md`.

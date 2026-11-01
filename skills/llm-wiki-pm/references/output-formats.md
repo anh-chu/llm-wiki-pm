@@ -14,7 +14,7 @@ Rich-format query answers go under `queries/<slug>/` as a directory with:
 ```
 queries/
 └── competitor-pricing-2026-q2/
-    ├── README.md          # wiki page with frontmatter + links to artifacts
+    ├── competitor-pricing-2026-q2.md  # wiki page with frontmatter + links to artifacts
     ├── deck.md            # Marp source
     ├── deck.pdf           # rendered (optional, for sharing)
     ├── pricing-trend.png  # matplotlib output
@@ -22,8 +22,10 @@ queries/
     └── customers.csv      # structured export
 ```
 
-The `README.md` is the wiki page, shows up in index.md, has frontmatter,
-links to the artifacts. Artifacts are not standalone wiki pages.
+The page named after the folder (`<slug>/<slug>.md`) is the wiki page, shows up
+in index.md, has frontmatter, links to the artifacts. Name it after the folder, not
+`README.md`: the file name is the page's slug, so `README.md` breaks wikilinks,
+backlinks and lint. Artifacts are not standalone wiki pages.
 
 ## Format Selection
 
@@ -177,7 +179,7 @@ customer-gamma,healthcare,mid-7,2027-Q1,high,<private>
 
 ### Always
 
-- Keep a `README.md` next to the CSV explaining columns and sources
+- Explain the CSV's columns and sources in the parent wiki page
 - If any real names appear, leave the parent page unflagged (private by default);
   never add `shareable: true` to it
 - Dataview can read CSVs in Obsidian via the Dataview CSV plugin
@@ -260,10 +262,10 @@ sources: [entities/..., concepts/..., ...]
 
 When filing a valuable query answer:
 
-1. Always write the wiki page (markdown) under `queries/<slug>/README.md`
+1. Always write the wiki page (markdown) under `queries/<slug>/<slug>.md`
 2. If the answer involves numeric data → add CSV + chart
 3. If the answer is for a specific audience/meeting → add Marp deck
 4. If the answer has spatial/relational structure → consider Mermaid or Canvas
-5. Link all artifacts from the README.md
+5. Link all artifacts from that page
 
 Never skip the markdown page. Rich formats augment, they don't replace.

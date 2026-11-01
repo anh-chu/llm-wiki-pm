@@ -248,7 +248,7 @@ In brief:
    upgrade recalled claims against a primary source, and route
    targeting/pipeline/quantitative questions to the primary system (CRM, warehouse,
    Gong), not wiki prose. For a casual lookup, cite pages and answer.
-⑤ **Select output format**: inline markdown for most; a `queries/<slug>/README.md`
+⑤ **Select output format**: inline markdown for most; a `queries/<slug>/<slug>.md`
    page for substantial syntheses; add artifacts (Marp/matplotlib/CSV/Mermaid) when
    warranted (`references/output-formats.md`).
 ⑥ **File valuable answers back** (substantial comparisons, deep dives, novel
