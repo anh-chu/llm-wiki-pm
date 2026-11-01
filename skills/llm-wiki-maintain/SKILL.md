@@ -1,6 +1,6 @@
 ---
 name: llm-wiki-maintain
-description: Orchestrates the recurring daily-maintenance loop for the PM wiki — registry-driven multi-source sweep, ingest, daily brief, brief rotation, and a health check — with explicit interactive-vs-autonomous mode handling.
+description: Orchestrates the recurring daily-maintenance loop for the PM wiki — registry-driven multi-source sweep, ingest, daily or weekly brief, brief rotation, and a health check — with explicit interactive-vs-autonomous mode handling.
 when_to_use: Use for "daily maintenance", "run the daily wiki", "morning sweep", "ingest all sources and brief me", "do the daily run", "maintain the wiki", or any scheduled/autonomous run that should sweep all sources and produce a brief. For a brief alone use llm-wiki-brief; for a single ingest use core llm-wiki-pm.
 allowed-tools: Read Grep Bash Edit Write
 ---
@@ -59,14 +59,21 @@ run?") and proceed on the answer; default to interactive.
    MY-INTEGRATIONS). Pages are private by default; never mark a digest
    `shareable`. Stamp `lifecycle: stub-intentional` on by-design thin stubs.
 
-④ **Daily brief.** Route to `llm-wiki-brief` (daily brief). If filing it as a
-   page, write `briefings/YYYY-MM-DD.md` with `lifecycle: dated-digest` (keeps
-   it out of the orphan count). The brief MUST include the Source Coverage
+④ **Brief.** Pick the cadence from the request or the schedule. Interactive:
+   ask if it is unclear. Autonomous: use the run's declared cadence, default daily.
+   - **Daily:** route to `llm-wiki-brief` (daily brief). If filing it as a page,
+     write `briefings/YYYY-MM-DD.md` with `lifecycle: dated-digest` (keeps it out
+     of the orphan count).
+   - **Weekly:** route to `llm-wiki-brief` (weekly brief). If filing it as a page,
+     write `queries/weekly-brief-YYYY-MM-DD.md` and link it from index.md. Never
+     file a weekly brief under `briefings/`.
+
+   Either brief MUST include the Source Coverage
    ledger (one row per registered source) and, in autonomous mode, a **Needs
    Review** section.
 
-⑤ **Brief rotation.** Keep the last 7 days in `briefings/`; move older briefs to
-   `_archive/briefings/`. Use `git mv` if the file is tracked, plain `mv` if not
+⑤ **Brief rotation.** Daily briefs only: keep the last 7 days in `briefings/`;
+   move older briefs to `_archive/briefings/`. Use `git mv` if the file is tracked, plain `mv` if not
    (check first — don't let an untracked file abort the run).
 
 ⑥ **Health check.** Run `scripts/lint.py $WIKI`. Surface the tiered summary,
@@ -80,11 +87,13 @@ run?") and proceed on the answer; default to interactive.
 ## Brief lifecycle convention
 
 - `briefings/YYYY-MM-DD.md` — current briefs, `lifecycle: dated-digest`.
-- `_archive/briefings/` — briefs older than 7 days.
+- `_archive/briefings/` — daily briefs older than 7 days.
+- `queries/weekly-brief-YYYY-MM-DD.md` — weekly briefs, kept as query pages and
+  never rotated.
 - Briefs are orphans by design; the `dated-digest` flag keeps them out of lint's
   orphan count. Never link-spam pages just to de-orphan a brief.
 
 ## What this skill does NOT do
 
 Single ingests, ad-hoc queries, updates, research work — route
-to the core skill or the matching sub-skill. This skill is the daily loop only.
+to the core skill or the matching sub-skill. This skill is the recurring daily or weekly loop only.
