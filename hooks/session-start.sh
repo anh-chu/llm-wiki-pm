@@ -176,7 +176,7 @@ for d in ("entities", "concepts", "comparisons"):
         if dm:
             if uts < now_ts - int(dm.group(1)) * 86400:
                 print(f"DECAY\t{d}/{slug} ({uval})")
-        elif re.search(r"^tags:.*competitive", fm, re.M) and uts < th_decay:
+        elif re.search(r"^tags:(.*competitive|[ \t]*\n(?:[ \t]*-.*\n)*?[ \t]*-[ \t]*['\"]?competitive)", fm, re.M) and uts < th_decay:
             print(f"DECAY\t{d}/{slug} ({uval})")
 PYEOF
 )

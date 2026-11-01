@@ -23,7 +23,6 @@ REQUIRED_FRONTMATTER = {"title", "created", "updated", "type", "tags", "sources"
 WIKI_DIRS = ["entities", "concepts", "comparisons", "queries"]
 WIKILINK_RE = re.compile(r"\[\[([^\]|#]+)(?:[|#][^\]]*)?\]\]")
 FRONTMATTER_RE = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
-TAG_LINE_RE = re.compile(r"tags:\s*\[(.*?)\]")
 TAXONOMY_TAG_RE = re.compile(r"^- `([a-z0-9\-]+)`", re.MULTILINE)
 INLINE_PROVENANCE_RE = re.compile(r"\[source:", re.IGNORECASE)
 
@@ -52,13 +51,8 @@ def parse_frontmatter(text):
     return fm
 
 
-def extract_tags(fm):
-    if not fm or "tags" not in fm:
-        return []
-    m = TAG_LINE_RE.search(f"tags: {fm['tags']}")
-    if not m:
-        return []
-    return [t.strip().strip("'\"") for t in m.group(1).split(",") if t.strip()]
+def extract_tags(text):
+    return extract_list(text, "tags")
 
 
 def load_taxonomy(schema_path):
@@ -131,15 +125,19 @@ def get_superseded_by(fm):
 
 
 def extract_sources(text):
-    """Return source entries from frontmatter, handling both inline
-    `sources: [a, b]` and the multiline `sources:\\n  - a\\n  - b` YAML forms."""
+    return extract_list(text, "sources")
+
+
+def extract_list(text, key):
+    """Return list entries for `key` from frontmatter, handling both inline
+    `key: [a, b]` and the multiline `key:\\n  - a\\n  - b` YAML forms."""
     m = FRONTMATTER_RE.match(text)
     if not m:
         return []
     lines = m.group(1).splitlines()
     out = []
     for i, line in enumerate(lines):
-        if re.match(r"^sources:", line):
+        if re.match(rf"^{key}:", line):
             _, _, rest = line.partition(":")
             rest = rest.strip()
             if rest.startswith("["):
@@ -245,7 +243,7 @@ def main():
             shareable_pages.append(str(p.relative_to(wiki)))
 
         # tags
-        tags = extract_tags(fm)
+        tags = extract_tags(text)
         for t in tags:
             tag_usage[t] += 1
             if taxonomy and t not in taxonomy:

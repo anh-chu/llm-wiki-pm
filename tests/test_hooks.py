@@ -384,6 +384,27 @@ class TestSessionStart:
         status = (wiki / "_status.md").read_text()
         assert "Decay" in status or "decay" in status.lower()
 
+    def test_detects_confidence_decay_block_style_tags(self, tmp_path):
+        """Block-style `tags:` lists are matched too (#9)."""
+        wiki = make_wiki(tmp_path)
+        old_date = (datetime.now() - timedelta(days=75)).date()
+        (wiki / "entities" / "old-rival.md").write_text(
+            f"---\ntitle: old-rival\ncreated: 2024-01-01\nupdated: {old_date}\n"
+            "type: entity\ntags:\n  - company\n  - competitive\nsources: []\n---\n# old-rival\n"
+        )
+
+        run_hook(
+            SESSION_START,
+            session_start_payload(),
+            {
+                "CLAUDE_PLUGIN_OPTION_WIKI_PATH": str(wiki),
+            },
+        )
+
+        status = (wiki / "_status.md").read_text()
+        decay = status.split("## Confidence Decay Candidates")[1].split("## Stale Pages")[0]
+        assert "old-rival" in decay
+
     def test_no_decay_for_recent_competitive_page(self, tmp_path):
         """Competitive page updated recently: no decay flag."""
         wiki = make_wiki(tmp_path)
@@ -957,6 +978,20 @@ class TestLint:
         report = run_lint(wiki)
         err_section = report.split("🟡")[1] if "🟡" in report else report
         assert "digest" in err_section  # under warnings, not errors
+
+
+    def test_block_style_tags_checked_against_taxonomy(self, tmp_path):
+        """Block-style `tags:` lists are parsed, not silently dropped (#9)."""
+        wiki = make_wiki(tmp_path)
+        p = wiki / "entities" / "blocktags.md"
+        p.write_text(
+            f"---\ntitle: t\ncreated: 2024-01-01\nupdated: {date.today()}\n"
+            "type: entity\ntags:\n  - company\n  - not-a-real-tag\n"
+            "sources: [raw/articles/x.md]\n---\n# t\n"
+        )
+        report = run_lint(wiki)
+        assert "tag 'not-a-real-tag' not in SCHEMA.md taxonomy" in report
+        assert "tag 'company' not in" not in report
 
 
 class TestPreWrite:
