@@ -30,6 +30,13 @@ Versions follow [Semantic Versioning](https://semver.org/).
   or two away; claims that something does not exist need coverage or the wording
   "not found in <searches run>".
 - **Prompt recall labels pages as leads**, not facts to repeat.
+- **Maintain by default; report after.** Agents keep the wiki current without
+  asking when a primary source or the user's own statement supports a change, fix
+  a page they found stale before sending, and list every page changed. They ask
+  first only for strategy changes, contradicting the user without a source,
+  delete/supersede, 10+ pages, or `shareable: true`.
+- **Session lock warning** no longer tells parallel sessions to hold back; it
+  says to re-read a page right before editing it.
 
 ### Fixed
 
