@@ -47,10 +47,10 @@ and laundered secondhand claims.
   or internal-only strategy, leave the resulting wiki pages unflagged — they are
   private by default; never add `shareable: true` to them (see privacy-guide).
 
-## ② Surface takeaways to user BEFORE writing wiki pages
+## ② Note takeaways
 
 What's interesting? What matters for the PM domain? Which entities/concepts does
-this touch? (Skip in automated/batch contexts.)
+this touch? Put them in the report after writing; don't stop to wait for a reply.
 
 ## ③ Check existing pages
 
@@ -143,8 +143,8 @@ entity pages back to it.
 
 Scan pages you just created or updated for named people, companies, and products
 described with 3+ attributes (role, style, concerns, position, history, etc.).
-- If found in a concept page: prompt user, "X entities in [[page]] meet the entity
-  threshold. Create individual entity pages?"
-- Don't silently promote. Always confirm.
+- If found in a concept page: create the entity pages and report them ("Promoted
+  X and Y from [[page]] to their own pages").
+- Don't silently promote: list every promotion in the report.
 - After splitting, update the concept page to link out: `[[entity-slug]]` instead
   of the inline prose.

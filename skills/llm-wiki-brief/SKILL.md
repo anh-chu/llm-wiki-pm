@@ -149,7 +149,7 @@ it, every daily brief permanently inflates the orphan metric.
 - (from _status.md)
 ```
 
-⑧ Offer to file as `queries/weekly-brief-YYYY-MM-DD.md`. If yes, run full orient per AGENTS.md before writing.
+⑧ File as `queries/weekly-brief-YYYY-MM-DD.md` after a full orient per AGENTS.md, and say so.
 
 **Log:** `## [YYYY-MM-DD] brief | weekly | last 7 days | filed: yes/no` — only if filing.
 
@@ -195,7 +195,7 @@ N pages tagged [tag]
 - [[slug]]: stub — gaps: X, Y
 ```
 
-⑦ Offer to file as `queries/[tag]-digest-YYYY-MM-DD.md`. If yes, full orient before writing.
+⑦ File as `queries/[tag]-digest-YYYY-MM-DD.md` after a full orient, and say so.
 
 **Log:** `## [YYYY-MM-DD] digest | tag: <tag> | N pages | filed: yes/no` — only if filing.
 

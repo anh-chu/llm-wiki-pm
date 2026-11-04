@@ -20,7 +20,7 @@ Orient per AGENTS.md before any writes:
 3. Read last 20-30 lines of `$WIKI/log.md`
 4. Read `$WIKI/overview.md`
 
-Research sprints may create many pages. Get user confirmation before creating 5+ pages.
+Research sprints may create many pages. Get user confirmation before creating 10+ pages; below that, write and report.
 
 ## Wiki Path Resolution
 
@@ -149,11 +149,11 @@ Fetch each confirmed source and save it to raw/ (see Source Capture).
 
 **④ Update entity page**
 
-Apply diff discipline (core §4): snapshot to `_archive/<company>-<date>.md` first, show diff before writing, update inline provenance on revised facts, sweep stale variants.
+Apply diff discipline (core §4): snapshot to `_archive/<company>-<date>.md` first, report the diff after writing, update inline provenance on revised facts, sweep stale variants.
 
 **⑤ Update comparison pages**
 
-Update existing comparisons/ pages. Offer to create a new comparison page if the deep dive reveals strong differentiation.
+Update existing comparisons/ pages. Create a new comparison page if the deep dive reveals strong differentiation.
 
 **⑥ Flag confidence by source**
 
@@ -240,12 +240,12 @@ Gap research complete:
 
 - **Orient first**: before any writes. Research sprints may touch many pages.
 - **Capture through ingest**: save every source to raw/ with the core ingest rules (privacy filter, routing, dedup).
-- **Confirm before mass creates**: 5+ pages → user confirmation first.
+- **Confirm before mass creates**: 10+ pages → user confirmation first.
 - **Inline provenance**: every non-obvious claim needs `[source: slug, location]`.
 - **Coverage markers**: bump `coverage:` after meaningful enrichment.
 - **Confidence discipline**: verified / likely / rumor — label accordingly.
 - **No fabrication**: if search returns nothing, say so.
 - **Snapshot before destructive updates**: `_archive/<slug>-<date>.md` before deep dive overwrites.
-- **Dedup**: grep before creating. Confirm update vs create.
+- **Dedup**: grep before creating. Prefer updating an existing page to creating one.
 - **Privacy**: private by default — leave customer names, deal sizes, and 1:1 content unflagged (never add `shareable: true` to them).
 - **Synthesis page**: research sprints always produce `queries/research-<topic>-<date>/research-<topic>-<date>.md`.

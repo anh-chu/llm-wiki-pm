@@ -44,9 +44,9 @@ Don't update one page and leave stale variants. If the claim appears in:
 
 ...all three need the update.
 
-### 2. Show diff before writing
+### 2. Write, then report the diff
 
-Present to user:
+After writing, report to the user:
 
 ```
 ## Page: entities/competitor-x.md
@@ -62,10 +62,14 @@ NEW:
   Competitor X priced ~1.4x our product (from 2x per earlier note).
 ```
 
-Confirm before writing. Mandatory for:
-- Changes touching 5+ pages
-- Changes to stated strategy or bets
-- Changes contradicting prior user assertions
+Ask before writing only when the change would:
+- Touch 10+ pages
+- Change stated strategy, bets or an earlier decision
+- Contradict something the user said, with no primary source to settle it
+- Delete, archive or supersede a page, or add `shareable: true`
+
+Everything else is written without asking. The report is the review: the user can
+undo any change from the `_archive/` snapshot.
 
 ### 3. Cite the source in the page body
 
@@ -144,7 +148,7 @@ Use `supersedes:` / `superseded_by:` when one claim replaces another.
 - **Silent overwrite**: old claim deleted, no trace. Breaks trust.
 - **Update one page, miss three**: wiki becomes internally inconsistent.
 - **Uncited update**: nobody can verify 6 months later.
-- **Batch update without diffs**: user can't catch over-corrections.
+- **Batch update without a reported diff**: user can't catch over-corrections.
 - **Update through Ingest flow**: loses the discipline. Use the right tool.
 
 ## Mass updates (10+ pages)

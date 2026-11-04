@@ -5,7 +5,7 @@ Read it before running a Learn pass — it defines the dedup gate and the
 classification buckets, and skipping it produces duplicate facts and unclassified
 captures.
 
-Trigger: user accepts Proactive Behavior #7 offer, or explicitly says "what did we
+Trigger: the self-audit after a substantive task (Proactive Behavior B), or the user says "what did we
 learn?", "capture learnings", "record what we found", "save what we discussed".
 
 ## ① Scan conversation
@@ -30,9 +30,9 @@ Bucket each surviving learning:
 - `open-question`: factual question raised but unanswered → log under queries/
 - `contradiction`: conflicts with existing wiki content → flag with both claims
 
-## ④ Propose changes
+## ④ List changes
 
-Show user a compact list before writing anything:
+Build a compact list; it becomes the report after you write:
 
 ```
 Learnings from this task:
@@ -42,12 +42,14 @@ Learnings from this task:
 • Open question: what's competitor Y's enterprise pricing?
 ```
 
-If 10+ changes, get explicit sign-off per pitfalls.
+If 10+ pages would change, or a change hits another ask-first case in the core
+skill's **Maintain by default**, show the list and get sign-off first. Otherwise
+write without asking.
 
 ## ⑤ Execute
 
-On approval, apply changes using existing flows:
-- Entity/concept updates: use §4 Update (show diffs, sweep stale variants)
+Apply changes using existing flows, then report the list:
+- Entity/concept updates: use §4 Update (report diffs, sweep stale variants)
 - New entities: use §2 Ingest conventions (frontmatter, cross-refs, provenance)
 - Decisions: use the Decision Journaling format (Proactive Behavior §5)
 - Open questions: use the Open Question Backlog format (Proactive Behavior §4)

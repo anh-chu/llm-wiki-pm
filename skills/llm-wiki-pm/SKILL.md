@@ -46,7 +46,8 @@ sub-skill (you can still run maintenance steps manually via core ingest/brief/li
 Fire whenever the skill is loaded. Append notes briefly *after* your answer, never
 before. Searches: wiki-search `search_text` preferred, grep fallback.
 **Limits:** max 1 suggestion per turn; skip during code/debug tasks; PM-domain
-facts not already addressed; never auto-write.
+facts not already addressed. Writes follow **Maintain by default** (Session
+Defaults): don't ask "want me to update the wiki?" for a case it covers.
 
 **A. Entity-aware recall & contradiction.** When the user mentions a named
 company/person/product (not just in passing), search the wiki; if a page exists,
@@ -56,15 +57,16 @@ caution." If the user's statement conflicts with the page, note it: "This may
 conflict with [[page]] from YYYY-MM-DD. Which is current?" For a named person,
 fold in 1-2 relevant traits from `entities/<name>-persona.md` if present.
 
-**B. Capture offer (facts, decisions, open questions).** When the user states a
-wikifiable PM fact, a decision ("we decided", "going with X"), or asks a factual
-question the wiki can't answer, offer to capture it — *after* a mandatory **dedup
-search** of the statement's key noun phrases. If a page already holds the claim,
-offer an update, don't duplicate: "Already in [[page]] (updated YYYY-MM-DD). Update
-it?" Decisions → a `decision`-tagged page (who, when, rationale). Unanswerable
-questions → a `question`-tagged page under `queries/`. After a substantive PM task
-(research, ingest, briefing, strategy), self-audit once for uncaptured items and
-offer §13 Learn. Skip casual chat, hypotheticals, and anything already captured.
+**B. Capture (facts, decisions, open questions, stale pages).** When the user
+states a wikifiable PM fact or a decision ("we decided", "going with X"), when a
+check this session proves a page stale or wrong, or when a factual question has no
+answer in the wiki, capture it — *after* a mandatory **dedup search** of the key
+noun phrases. If a page already holds the claim, update it; don't duplicate.
+Decisions → a `decision`-tagged page (who, when, rationale). Unanswerable questions
+→ a `question`-tagged page under `queries/`. After a substantive PM task (research,
+ingest, briefing, strategy), self-audit once for uncaptured items and run §13
+Learn. Report in one line after the answer: "Wiki: updated [[page]] (what changed,
+source)". Skip casual chat, hypotheticals, and anything already captured.
 
 *(Tool-discovery suggestions live in `references/recommended-tools.md` — surface
 one only when a query would clearly be richer with an unconnected tool.)*
@@ -86,8 +88,8 @@ The SessionStart hook states the active path each session.
 
 **Wiki-first protocol:** Before answering a PM knowledge question, search the wiki
 with connected tools. Don't synthesize from training data when wiki pages exist.
-Cite explicitly: "Per [[page]]...". If no page exists, say so and offer to create
-one or log an open question. Before asking the user a fact about people, teams,
+Cite explicitly: "Per [[page]]...". If no page exists, say so, then create one if
+it meets the thresholds or log an open question. Before asking the user a fact about people, teams,
 ownership, customers, roadmap or process, search the wiki first, including during
 code or GitHub work.
 
@@ -128,7 +130,21 @@ is largely enforced by the `pre-write.sh` freshness gate and `lint.py`
   ("no reply", "not shipped", "no activity") needs coverage: two query forms, every
   page and thread read, window and identity checked; otherwise say "not found in
   <searches run>". When the user has to ask for a check or corrects a fact, fix the
-  claim first; propose a new Claim Checks rule only when the same failure repeats.
+  claim first; add a Claim Checks rule only when the same failure repeats, and report it.
+
+**Maintain by default; report after.** The wiki evolves through use, so keep it
+current without asking. Write when a primary source read this session, or the
+user's own statement, supports the change: new facts, stale or wrong claims (and
+their variants on other pages), decisions, open questions, pages that meet the
+thresholds, links and the index. Then report every page changed (what, source).
+Ask first only when a write would: change a stated strategy, bet or earlier
+decision; contradict the user with no primary source to settle it; delete,
+archive or supersede a page; touch 10+ pages; or add `shareable: true`. Never write
+a claim whose only support is wiki prose or memory; log it as a gap. If your answer
+would call a page stale or wrong and you hold the primary source, fix the page
+before you send; don't just report it. Dated records (briefs, `log.md`, `raw/`,
+`_archive/`) stay as written. Snapshots (pre-write hook), `log.md` and the report
+make every write easy to undo.
 
 **Session trust model:** Trust `.wiki-path` for location, `SCHEMA.md` for taxonomy
 (new tags go there first), `log.md` for recent activity. Deviate only with explicit
@@ -236,7 +252,7 @@ page thresholds, inline provenance, privacy filter, crystallize, entity-promotio
 In brief:
 ① **Capture raw** to `raw/` (immutable), behind the privacy filter. Pages are
    private by default; add `shareable: true` only to genuinely public-safe pages.
-② **Surface takeaways** before writing (skip in batch contexts).
+② **Note takeaways** for the report; don't stop to wait for a reply.
 ③ **Check existing pages** — decide create vs update.
 ④ **Apply page thresholds** (2+ sources or central) and **enrich from connected
    tools BEFORE writing** (Freshness-first) — never build a page from other pages' prose.
@@ -248,7 +264,7 @@ In brief:
 ⑩ Report every file touched; confirm before mass-updating (10+ pages).
 ⑪ **Crystallize** transcripts/research chains into a `queries/` digest (`references/crystallize-guide.md`).
 ⑫ **Entity promotion scan** — promote people/companies/products with 3+ attributes
-   to their own page (confirm first).
+   to their own page, and report it.
 
 ### 3. Query
 ① **Search first**: `search_text` → `search_regex`/grep → file read.
@@ -277,8 +293,9 @@ copies the current page to `_archive/<slug>-<date>.md` before an overwrite
 ① **Identify all affected pages** — three-way search: `backlinks.py` (structural),
    `search_text` with rephrased terms (paraphrases), `grep -r` (exact tokens). Don't
    fix one page and leave three with the stale claim.
-② **Show diff BEFORE writing**: old text, new text, reason. Confirm for any claim
-   touching 5+ pages or changing stated strategy.
+② **Write, then report the diff**: per page, old text, new text and source, after
+   the answer. Ask first only for the cases in **Maintain by default** (strategy,
+   contradicting the user without a source, delete/supersede, 10+ pages, shareable).
 ③ **Cite source**: every update names the raw source justifying it, in the body and log.
 ④ **Stale-claim sweep**: after the update, re-search and fix all instances in the same pass.
 ⑤ **Bump `updated:`** on every page touched.
@@ -331,23 +348,23 @@ questions; surface `_status.md` warnings and the 2-3 most active areas. Log:
 ### 11. Tag Digest
 `llm-wiki-brief` handles this richer — route there when installed. Fallback: grep
 frontmatter for the tag → read matches newest-first → synthesize (key players,
-recent changes, open questions, patterns) → offer to file as a query page. Log:
+recent changes, open questions, patterns) → file it as a query page. Log:
 `## [date] digest | tag: <tag> | X pages`.
 
 ### 12. Coverage Audit
 Trigger: "what am I missing?", "blind spots?", "coverage gaps?". (`llm-wiki-brief`
 Coverage Brief is richer.) Scan `coverage:` across entities/concepts/comparisons
 (count stub/partial/comprehensive); collect `gaps:`; read open `question` pages;
-any entity in 3+ pages without its own page is a gap. Offer to create stubs. Log:
+any entity in 3+ pages without its own page is a gap; create stubs for them. Log:
 `## [date] coverage-audit | stubs: N | gaps: N | open-questions: N`.
 
 ### 13. Learn (Post-Task Capture)
-Trigger: user accepts Proactive Behavior B, or "capture learnings" / "what did we
+Trigger: the self-audit after a substantive task (Proactive Behavior B), or "capture learnings" / "what did we
 learn?". **Read `references/learn-guide.md` first** (dedup gate + classification
 buckets). In brief: scan the conversation for uncaptured PM-domain
 facts/decisions/questions/contradictions → dedup against the wiki → classify
 (entity-update, new-entity, concept-update, decision, open-question, contradiction)
-→ propose a compact change list (sign-off if 10+) → execute via §2/§4 → log:
+→ execute via §2/§4 (sign-off first only if 10+ pages) → report the change list → log:
 `## [date] learn | <task> | captured: N | updated: N | new: N`.
 
 ## Multi-Device Access
@@ -356,7 +373,7 @@ work. Headless sync: `references/obsidian-sync.md`.
 
 ## Pitfalls
 - **Never touch `raw/`**: sources are immutable; corrections live in wiki pages.
-- **Update ≠ ingest**: use §4 for revising claims. Show diffs. Sweep stale variants.
+- **Update ≠ ingest**: use §4 for revising claims. Report diffs. Sweep stale variants.
 - **Thresholds prevent bloat**: one mention ≠ an entity page (2+ sources or central).
 - **Tag taxonomy**: add tags to SCHEMA.md first, then use. No freeform.
 - **Contradictions explicit**: both claims, dates, sources, frontmatter flag.
@@ -376,8 +393,9 @@ work. Headless sync: `references/obsidian-sync.md`.
   `superseded_by:` fields; the old page is archived, not deleted.
 - **Coverage markers**: set `coverage:` and `gaps:` on entity/concept pages (lint
   warns when missing) so the user can tell a trustworthy page from a stub.
-- **Session lock**: `.wiki-lock` prevents concurrent-session corruption
-  (session-start writes it, session-stop removes it; stale locks >2h auto-clear).
+- **Session lock**: `.wiki-lock` flags another live session (session-start writes
+  it, session-stop removes it; stale locks >2h auto-clear). It is not a reason to
+  skip maintenance: re-read a page right before editing it.
 - **Don't launder wiki prose into insight**: a recalled claim is a hypothesis until
   re-derived from a primary source (Session Defaults → Source discipline).
 

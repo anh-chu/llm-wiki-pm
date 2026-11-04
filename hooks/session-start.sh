@@ -105,7 +105,7 @@ except Exception:
   if [[ "$LOCK_AGE" -gt 7200 ]]; then
     rm -f "$LOCKFILE"
   else
-    LOCK_WARNING="Another wiki session may be active (lock: $LOCK_OWNER). Concurrent writes risk data loss. Proceed with caution or wait for the other session to end."
+    LOCK_WARNING="Another wiki session may be active (lock: $LOCK_OWNER). Read a page right before you edit it, and append to log.md rather than rewriting it; the Edit tool refuses a file that changed since you read it. Keep maintaining the wiki as usual."
   fi
 fi
 # Write our lock

@@ -64,7 +64,7 @@ ANSWER:
 
 def sandbox(wiki):
     root = Path(tempfile.mkdtemp(prefix="replay-wiki-"))
-    shutil.copytree(wiki, root / "wiki", ignore=shutil.ignore_patterns(".git", "_archive", "external"))
+    shutil.copytree(wiki, root / "wiki", ignore=shutil.ignore_patterns(".git", "_archive", "external", ".wiki-lock"))
     (root / "wiki" / ".wiki-path").write_text(str(root / "wiki"))
     return root / "wiki"
 

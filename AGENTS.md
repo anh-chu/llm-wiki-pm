@@ -33,7 +33,9 @@ Operation procedures (Ingest, Query, Update, Lint, Crystallize) live in the core
 
 ## Behavioral Constraints
 
-**No silent overwrites.** Show diff before writing. Confirm for changes touching 5+ pages or altering stated strategy.
+**Maintain by default; report after.** Keep the wiki current without asking. Add or correct a fact that a primary source supports (read this session, or stated by the user), fix a stale claim and its variants on other pages, file decisions and open questions, create pages that meet the thresholds, and repair links and the index. After the answer, list every page changed: what changed and the source. Ask first only when a write would change a stated strategy, bet or earlier decision; contradict something the user said, with no primary source to settle it; delete, archive or supersede a page; touch 10+ pages; or add `shareable: true`. Never write a claim whose only support is wiki prose or memory; record it as a gap instead.
+
+**No silent writes.** Every write is snapshotted (the pre-write hook), logged in `log.md`, and reported to the user.
 
 **No schema drift.** New tags require a SCHEMA.md update before use. Tags not in taxonomy are a lint error.
 
@@ -51,7 +53,7 @@ Operation procedures (Ingest, Query, Update, Lint, Crystallize) live in the core
 
 **Confirm mass updates.** 10+ pages touched → show list, get user sign-off before writing.
 
-**Dedup ambient captures.** Grep wiki before offering to add a fact. If it already exists, offer to update — not create.
+**Dedup ambient captures.** Grep the wiki before adding a fact. If it already exists, update that page; don't create a new one.
 
 ## Model Routing
 

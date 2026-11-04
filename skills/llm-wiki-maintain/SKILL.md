@@ -24,8 +24,9 @@ confirmations, post-task offers) assume a human is watching. In a scheduled or
 autonomous run nobody answers them — they stall or force a guess. So classify
 the run before doing anything:
 
-- **Interactive** — a human invoked this in a live chat. Normal behavior:
-  surface takeaways, ask before mass updates (10+ pages), offer follow-ups.
+- **Interactive** — a human invoked this in a live chat. Act on the clear cases
+  as in autonomous mode (core **Maintain by default**), then report; ask only for
+  its ask-first cases, such as mass updates (10+ pages).
 - **Autonomous** — a scheduled/cron/loop run with no human in the loop (no one
   to answer a prompt). Then:
   - **Suppress interactive prompts.** Do not ask "want me to add this?" or wait

@@ -283,7 +283,7 @@ See `references/obsidian-sync.md` for obsidian-headless + systemd setup.
 Batch updates, one log entry, refresh overview.md.
 
 **Pre-meeting prep**: query "what do we know about <customer>?" → Claude
-reads `entities/<customer>.md` + recent log → offer to file post-meeting update.
+reads `entities/<customer>.md` + recent log; after the meeting it files the update and reports it.
 
 **Monthly 1:1 follow-up**: ingest transcript → extract decisions/themes →
 update relevant concept pages → link from person page.
