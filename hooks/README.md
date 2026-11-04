@@ -23,6 +23,12 @@ listed first. Other pages need a BM25 score of at least `THRESHOLD` (title and
 file name count 3×). Prompts with fewer than 3 content words only get file-name
 matches. Slash commands, `<…>` hook envelopes and sessions without a wiki get
 nothing. It never prints page bodies and exits 0 silently on any error.
+It also reads the `## Claim Checks` list in `MY-INTEGRATIONS.md`. Each item
+names the source that settles a kind of claim and carries `when:` patterns
+(case-insensitive regexes in backticks). Items whose pattern matches the prompt
+are added after the pages (at most 3 rules, 2,400 bytes), with an instruction to
+run the checks rather than offer them. You write the rules; the hook only selects
+them. No section means no rules.
 
 **post-write.sh**
 Runs after every file write inside the wiki directory. It reads the file path from stdin JSON (`tool_input.file_path`), then scans the written file for broken `[[wikilinks]]` against the wiki page directories. Results are appended to `_status.md`. The hook always exits 0 so it never blocks a write.

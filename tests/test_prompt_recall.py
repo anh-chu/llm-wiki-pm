@@ -60,7 +60,8 @@ class TestMatching:
 
     def test_name_match_line_shape(self):
         ctx = context(run(prompt("how is Acme Corp doing")))
-        assert ctx.startswith("Wiki pages that may be relevant (read before asking the user for facts):\n")
+        assert ctx.startswith("Wiki pages that may be relevant (leads, not proof: check claims against their source; "
+                              "read before asking the user for facts):\n")
         assert "- entities/acme-corp.md — Acme Corp (updated 2026-09-30, verified)" in ctx
 
     def test_title_head_match(self):
@@ -91,6 +92,52 @@ class TestMatching:
 
     def test_malformed_frontmatter_uses_file_name(self):
         assert "- entities/hooli.md — hooli\n" in context(run(prompt("tell me about Hooli and their QA team"))) + "\n"
+
+
+RULES = """# My Integrations
+
+## Claim Checks
+
+- **Shipped?** when: `\\bship(ped)?\\b`, `released?` — Settle with merged PRs, not the issue state.
+- **Slack activity** when: `#[a-z0-9-]+`, `slack` — Read thread replies; a channel read omits them.
+- **Broken** when: `([` — never matches, bad regex is skipped.
+- no when clause here, so this item is ignored
+
+## Sweep Registry
+
+- **Not a rule** when: `ship` — outside the section.
+"""
+
+
+def rules_wiki(tmp_path):
+    wiki = tmp_path / "wiki"
+    shutil.copytree(WIKI, wiki)
+    (wiki / "MY-INTEGRATIONS.md").write_text(RULES)
+    return wiki
+
+
+class TestClaimChecks:
+    def test_matching_rule_added_after_pages(self, tmp_path):
+        ctx = context(run(prompt("has the Globex export shipped yet?"), wiki=rules_wiki(tmp_path)))
+        pages_block, rules_block = ctx.split("\n\n")
+        assert pages_block.startswith("Wiki pages that may be relevant")
+        lines = rules_block.splitlines()
+        assert lines[0].startswith("Claim checks from MY-INTEGRATIONS.md")
+        assert lines[1:] == ["- **Shipped?** when: `\\bship(ped)?\\b`, `released?` — "
+                             "Settle with merged PRs, not the issue state."]
+
+    def test_rules_alone_when_no_page_matches(self, tmp_path):
+        ctx = context(run(prompt("anything new in #team-chat today"), wiki=rules_wiki(tmp_path)))
+        assert ctx.startswith("Claim checks from MY-INTEGRATIONS.md")
+        assert "Slack activity" in ctx and "Shipped?" not in ctx
+
+    def test_rules_outside_section_and_bad_regex_ignored(self, tmp_path):
+        ctx = context(run(prompt("did it ship? ([ "), wiki=rules_wiki(tmp_path)))
+        assert "Not a rule" not in ctx and "Broken" not in ctx
+
+    def test_no_section_no_rules(self):
+        out = run(prompt("has the Globex export shipped yet?"))
+        assert "Claim checks" not in context(out)
 
 
 class TestSilent:

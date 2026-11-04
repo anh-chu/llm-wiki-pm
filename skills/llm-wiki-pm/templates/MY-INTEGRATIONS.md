@@ -24,6 +24,18 @@ that will be silently skipped, so keep it complete.
      e.g.: | GitHub | yes | issues assigned/mentioning me, recent PRs | high signal |
      e.g.: | Gmail | yes | PM/ label, last 2 days | | -->
 
+## Claim Checks
+
+Which source settles each kind of claim, how deep to read it, and the traps. The
+prompt-recall hook adds a rule to the prompt when one of its `when:` patterns
+(case-insensitive regex in backticks) matches, at most three rules, in this order.
+Add a rule when the same kind of check failure happens twice.
+
+<!-- e.g.:
+- **Shipped or released?** when: `\bship(ped)?\b`, `\breleased?\b` — Settle with the merged PRs and the issue's milestone. Pass: name repo#PR, merge date and release. Traps: a closed issue is not proof it shipped.
+- **Slack: was it answered?** when: `slack`, `#[a-z][a-z0-9-]+` — Settle with a channel search, then read each thread. Pass: thread replies were read. Traps: channel reads omit thread replies.
+-->
+
 ## Active Sources
 
 | Source | Type | Last used | Times ingested | Notes |

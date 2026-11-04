@@ -9,6 +9,28 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Claim Checks: your own rules for checking claims.** A new `## Claim Checks`
+  list in `MY-INTEGRATIONS.md` names, per kind of claim, the source that settles
+  it, what counts as checked, and the traps. Each rule has `when:` regex
+  patterns; the prompt-recall hook adds the rules that match a prompt (at most 3)
+  with an instruction to run them before answering. The plugin selects rules; the
+  user writes them. The template gains an empty section with two examples.
+- **`tests/verification-replay/`**: replays past verification failures against a
+  headless `claude -p` in a throwaway copy of the wiki, and grades whether the
+  agent checked an outside source and answered correctly (majority of 3 judges,
+  repeated runs). Cases hold private facts, so they live outside the repo; see
+  `example-cases.json`.
+
+### Changed
+
+- **SKILL.md: check, don't offer.** A wiki page is a lead, not proof. Status,
+  dates, people, numbers and absence claims get checked when the check is a call
+  or two away; claims that something does not exist need coverage or the wording
+  "not found in <searches run>".
+- **Prompt recall labels pages as leads**, not facts to repeat.
+
 ### Fixed
 
 - **Block-style `tags:` lists were ignored** (#9). `lint.py` only read inline

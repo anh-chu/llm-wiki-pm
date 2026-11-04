@@ -117,6 +117,18 @@ is largely enforced by the `pre-write.sh` freshness gate and `lint.py`
   targeting/pipeline/quantitative questions to the primary system (CRM, warehouse,
   Gong), not wiki prose. Before exec-facing synthesis, run a falsification pass:
   name and run the query that would disprove each headline claim.
+- **Check, don't offer.** A wiki page is a lead, not proof. Before stating a fact
+  about status, dates, people, numbers or absence, run the read-only check that
+  settles it when it is a call or two away, using the user's rules in
+  `$WIKI/MY-INTEGRATIONS.md` → `## Claim Checks` (the prompt-recall hook adds the
+  rules that match each prompt). Before you send, reread your "not checked" list:
+  run every item that is a read-only call away and drop it from the list. Offer a
+  check instead of running it only when access is blocked or it is costly, and
+  say which. A claim that nothing exists
+  ("no reply", "not shipped", "no activity") needs coverage: two query forms, every
+  page and thread read, window and identity checked; otherwise say "not found in
+  <searches run>". When the user has to ask for a check or corrects a fact, fix the
+  claim first; propose a new Claim Checks rule only when the same failure repeats.
 
 **Session trust model:** Trust `.wiki-path` for location, `SCHEMA.md` for taxonomy
 (new tags go there first), `log.md` for recent activity. Deviate only with explicit

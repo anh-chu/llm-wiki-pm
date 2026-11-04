@@ -45,7 +45,7 @@ installed separately.
 - **Bundled wiki-search**: ranked keyword, regex, tag and backlink search over your whole wiki, via [obsidian-mcp](https://github.com/lstpsche/obsidian-mcp) (auto-indexes on startup)
 - **ChatGPT access via [wiki-mcp](server/README.md)**: a remote MCP server behind Cloudflare Access. It is included in the repo but not installed by the plugin; you run it yourself. Read tools by default; with `WIKI_WRITE=1` it adds create, edit, append, archive, supersede, and raw capture, each validated against `SCHEMA.md`, snapshotted, and logged the same way Claude Code writes are
 - **Obsidian-compatible**: works as a vault out of the box
-- **Prompt recall**: each prompt that names a page, or matches pages closely, lists up to 3 of them in context, so the agent reads the wiki before asking you
+- **Prompt recall**: each prompt that names a page, or matches pages closely, lists up to 3 of them in context, so the agent reads the wiki before asking you, plus your matching `## Claim Checks` rules from `MY-INTEGRATIONS.md`, so it checks the sources you trust before it answers
 - **Sub-skills** (optional, install as needed):
   - `llm-wiki-brief` — daily/weekly briefs, tag digests, coverage brief
   - `llm-wiki-research` — research sprints, competitive deep dives, stub enrichment

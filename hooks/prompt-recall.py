@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 """prompt-recall.py — UserPromptSubmit hook: point the model at wiki pages that
-match the user's prompt, so it reads them instead of asking for facts the wiki holds.
+match the user's prompt, so it reads them instead of asking for facts the wiki holds,
+and at the user's own claim-check rules, so it checks the sources they trust.
 
 Two tiers, at most MAX_PAGES pages and MAX_BYTES bytes, name matches first:
   1. name match: the page's file slug or title head appears as a phrase in the prompt
   2. ranked match: BM25 over entities/ concepts/ comparisons/ queries/, title and
      file name weighted 3x, included only above THRESHOLD
 Prints only paths, titles, updated dates and confidence; never page bodies.
+
+Claim checks: list items under `## Claim Checks` in MY-INTEGRATIONS.md, each with
+`when: `regex`, `regex` —`. A rule whose pattern matches the prompt is printed whole,
+at most MAX_RULES rules and MAX_RULE_BYTES bytes. The user writes the rules; the
+hook only selects them.
 Every failure exits 0 with no output. Stdlib only.
 """
 import json
@@ -24,7 +30,12 @@ MIN_WORDS = 3  # content words needed for the ranked tier
 THRESHOLD = 10.0  # BM25 score; tuned on a 30-prompt eval of a real wiki (247 pages)
 TITLE_WEIGHT = 3
 K1, B = 1.2, 0.75
-HEADER = "Wiki pages that may be relevant (read before asking the user for facts):"
+HEADER = "Wiki pages that may be relevant (leads, not proof: check claims against their source; read before asking the user for facts):"
+MAX_RULES = 3
+MAX_RULE_BYTES = 2400
+RULES_HEADER = ("Claim checks from MY-INTEGRATIONS.md that apply here. Run them before you answer. "
+                "Then reread what you were about to call unchecked: run every item that is a "
+                "read-only call away, and list only what is blocked, with what blocked it:")
 STOP = set("""
 a an the and or but not no nor so if then than that this these those there their them they
 it its is are was were be been being am do does did done has have had having will would shall
@@ -144,6 +155,46 @@ def recall(wiki, prompt):
     return [(r, docs[r][0]) for r in (named + ranked)[:MAX_PAGES]]
 
 
+def claim_rules(wiki):
+    """[(patterns, text)] from the list items under '## Claim Checks'."""
+    try:
+        text = read(wiki, "MY-INTEGRATIONS.md")
+    except OSError:
+        return []
+    m = re.search(r"^## Claim Checks[ \t]*\n(.*?)(?=^## |\Z)", text, re.M | re.S)
+    if not m:
+        return []
+    rules = []
+    for item in re.split(r"\n(?=[-*] )", m.group(1)):
+        item = item.strip()
+        when = re.search(r"when:(.*?)(?:—|$)", item, re.M)
+        if not item.startswith(("- ", "* ")) or not when:
+            continue
+        pats = []
+        for raw in re.findall(r"`([^`]+)`", when.group(1)):
+            try:
+                pats.append(re.compile(raw, re.I))
+            except re.error:
+                pass
+        if pats:
+            rules.append((pats, " ".join(item.split())))
+    return rules
+
+
+def match_rules(rules, prompt):
+    hits = [text for pats, text in rules if any(p.search(prompt) for p in pats)]
+    return hits[:MAX_RULES]
+
+
+def render_rules(texts):
+    lines = [RULES_HEADER]
+    for t in texts:
+        if len("\n".join(lines + [t]).encode()) > MAX_RULE_BYTES:
+            break
+        lines.append(t)
+    return "\n".join(lines) if len(lines) > 1 else ""
+
+
 def render(pages):
     lines = [HEADER]
     for rel, fm in pages:
@@ -169,7 +220,8 @@ def main():
     wiki = resolve_wiki()
     if not wiki or not os.path.isdir(wiki):
         return
-    ctx = render(recall(wiki, prompt))
+    blocks = [render(recall(wiki, prompt)), render_rules(match_rules(claim_rules(wiki), prompt))]
+    ctx = "\n\n".join(b for b in blocks if b)
     if ctx:
         print(json.dumps({"hookSpecificOutput": {"hookEventName": "UserPromptSubmit",
                                                  "additionalContext": ctx}}))

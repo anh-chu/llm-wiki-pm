@@ -1,0 +1,16 @@
+[
+  {
+    "id": "example-shipped",
+    "kind": "shipped-status",
+    "prompt": "Did the CSV export feature (acme/app #123) ship? Which release?",
+    "truth": "Yes. acme/app PR #130 merged 2026-05-02 and the issue closed in milestone Release 2026-05-06. A first PR (#125) was closed unmerged; that does not mean the feature did not ship.",
+    "evidence": ["\\b(123|130)\\b"]
+  },
+  {
+    "id": "example-absence",
+    "kind": "absence",
+    "prompt": "Was there any activity in #team-channel on 14 Oct 2026?",
+    "truth": "Yes. A thread at 19:06 about the API scope. A channel read without thread replies shows nothing.",
+    "evidence": ["team-channel"]
+  }
+]
