@@ -34,7 +34,8 @@ The user can also name one in the request ("review with codex"); that wins for t
 | `REVIEWER` | How to run it |
 |---|---|
 | `claude` (default) | Agent tool, `general-purpose` subagent, prompt = the filled reviewer prompt. Never review in your own context. |
-| `codex` | `codex exec --sandbox read-only --skip-git-repo-check --ephemeral -C "$WIKI" -o "$OUT" "$(cat "$PROMPT")"` |
+| `claude:haiku`, `claude:sonnet`, `claude:opus` | A separate read-only Claude process on that model: `(cd "$WIKI" && WIKI_REVIEW_RUNNING=1 claude -p --model "${REVIEWER#claude:}" --setting-sources project --allowedTools "Read,Grep,Glob" < "$PROMPT" > "$OUT")`. Run it exactly like this; do not swap in a subagent. |
+| `codex` | `codex exec --sandbox read-only --skip-git-repo-check --ephemeral -C "$WIKI" -o "$OUT" "$(cat "$PROMPT")" < /dev/null` |
 | anything else | a shell command: `sh -c "$REVIEWER" < "$PROMPT" > "$OUT"` (prompt on stdin, review on stdout) |
 
 `PROMPT` and `OUT` are temp files outside the wiki. If the chosen reviewer fails (not installed, error, empty output), say so and fall back to `claude`; never skip the review silently.

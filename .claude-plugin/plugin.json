@@ -49,7 +49,7 @@
 		"reviewer": {
 			"type": "string",
 			"title": "Reviewer",
-			"description": "Who reviews wiki answers before you see them: \"claude\" (a fresh subagent, default), \"codex\" (Codex CLI), or a shell command that reads the review prompt on stdin and prints the review",
+			"description": "Who reviews wiki answers before you see them: \"claude\" (a fresh subagent, default; \"claude:haiku\", \"claude:sonnet\" or \"claude:opus\" picks its model), \"codex\" (Codex CLI), or a shell command that reads the review prompt on stdin and prints the review",
 			"sensitive": false
 		},
 		"wiki_domain": {

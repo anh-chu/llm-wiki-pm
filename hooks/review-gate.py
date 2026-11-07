@@ -9,7 +9,8 @@ blocks the stop once with a reason that tells the agent to run the review.
 
 Lets the stop through when: stop_hook_active is set (already blocked once this
 turn), the prompt says "no review" or "skip review", no wiki is configured, or the
-turn did not touch the wiki. Every failure exits 0 with no output. Stdlib only.
+turn did not touch the wiki, or the session is itself a reviewer
+(WIKI_REVIEW_RUNNING is set by the llm-wiki-review skill). Every failure exits 0 with no output. Stdlib only.
 """
 import json
 import os
@@ -86,7 +87,7 @@ def strings(value):
 def touches_wiki(name, args, wiki, inside):
     if "wiki-search" in name:
         return True
-    if inside and name in FILE_TOOLS:
+    if inside and (name in FILE_TOOLS or name == "Bash"):
         return True
     home = os.path.expanduser("~")
     for s in strings(args):
@@ -103,7 +104,7 @@ def reviewed(name, args):
 
 
 def decide(payload):
-    if payload.get("stop_hook_active"):
+    if payload.get("stop_hook_active") or os.environ.get("WIKI_REVIEW_RUNNING"):
         return None
     path = payload.get("transcript_path")
     if not path or not os.path.exists(path):

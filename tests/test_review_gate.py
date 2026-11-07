@@ -113,6 +113,22 @@ def test_relative_paths_count_inside_the_wiki(tmp_path):
     assert blocked(run(tmp_path, events, cwd=wiki))
 
 
+def test_relative_bash_counts_inside_the_wiki(tmp_path):
+    wiki = tmp_path / "wiki"
+    wiki.mkdir()
+    events = [prompt("what did customer A ask for?"),
+              *tool("Bash", {"command": "grep -rli customer-a --include=*.md ."}), answer()]
+    assert blocked(run(tmp_path, events, cwd=wiki))
+
+
+def test_reviewer_session_is_not_gated(tmp_path, monkeypatch):
+    monkeypatch.setenv("WIKI_REVIEW_RUNNING", "1")
+    wiki = tmp_path / "wiki"
+    events = [prompt("review this draft"),
+              *tool("Read", {"file_path": f"{wiki}/entities/customer-a.md"}), answer()]
+    assert run(tmp_path, events) is None
+
+
 def test_only_the_latest_turn_counts(tmp_path):
     wiki = tmp_path / "wiki"
     events = [prompt("what did customer A ask for?"),
