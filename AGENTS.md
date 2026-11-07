@@ -35,6 +35,8 @@ Operation procedures (Ingest, Query, Update, Lint, Crystallize) live in the core
 
 **Maintain by default; report after.** Keep the wiki current without asking. Add or correct a fact that a primary source supports (read this session, or stated by the user), fix a stale claim and its variants on other pages, file decisions and open questions, create pages that meet the thresholds, and repair links and the index. After the answer, list every page changed: what changed and the source. Ask first only when a write would change a stated strategy, bet or earlier decision; contradict something the user said, with no primary source to settle it; delete, archive or supersede a page; touch 10+ pages; or add `shareable: true`. Never write a claim whose only support is wiki prose or memory; record it as a gap instead.
 
+**Review before reporting.** Every answer or page built from the wiki goes through the `llm-wiki-review` sub-skill (a separate reviewer checks each statement against its sources and searches for what is missing) before the user sees it. The review-gate Stop hook enforces this; the user can say "no review" to skip it for one turn.
+
 **No silent writes.** Every write is snapshotted (the pre-write hook), logged in `log.md`, and reported to the user.
 
 **No schema drift.** New tags require a SCHEMA.md update before use. Tags not in taxonomy are a lint error.

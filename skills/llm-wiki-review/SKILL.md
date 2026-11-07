@@ -1,0 +1,60 @@
+---
+name: llm-wiki-review
+description: Independent review of every answer or page built from the wiki, before it reaches the user. A separate reviewer (a fresh Claude subagent, Codex CLI, or a command the user sets) checks each statement against its sources, searches for what the answer left out, and checks the reasoning; then you revise. Run it before reporting any wiki-based answer, page write, brief or analysis.
+when_to_use: Run before you report anything that states facts or conclusions drawn from the wiki or its raw/ sources - a query answer ("what did customer A ask for in Q4"), an ingest or update, a brief, a research finding, an analysis or synthesis. The review-gate Stop hook blocks the end of a turn that read or wrote the wiki without it. Skip only when the user says "no review" or "skip review", or the turn only navigated (listed files, opened a page for the user to read) and stated nothing.
+allowed-tools: Read Grep Write Bash Agent
+---
+
+# LLM Wiki Review
+
+Sub-skill of llm-wiki-pm. A wrong fact in a PM answer is expensive: "customer A asked for X in Q4" gets repeated in roadmaps and customer calls. Tests on product memos showed a separate reviewer followed by a revision cut errors by about three quarters; a self-check by the author gained less. So the reviewer is always a separate context, never you re-reading your own draft.
+
+## 1. Write the draft down
+
+Write your draft answer or page, exactly as you would send it, to a temp file outside the wiki:
+
+```bash
+DRAFT=$(mktemp /tmp/wiki-review-draft.XXXXXX.md)
+```
+
+Put the user's question on the first line as `Question: ...`, then the draft. Keep every `[source: ...]` marker and `[[wikilink]]`: the reviewer checks against them. A page write is reviewed before you report it; if you already wrote it, the review may still change it.
+
+## 2. Pick the reviewer
+
+```bash
+WIKI=$(cat .wiki-path 2>/dev/null | tr -d '[:space:]')
+CONF='${user_config.wiki_path}'; case "$CONF" in '${'*) CONF= ;; esac
+WIKI=${WIKI:-${CONF:-${WIKI_PATH:-}}}
+REVIEWER='${user_config.reviewer}'; case "$REVIEWER" in '${'*) REVIEWER= ;; esac
+REVIEWER=${REVIEWER:-${WIKI_REVIEWER:-claude}}
+```
+
+The user can also name one in the request ("review with codex"); that wins for this turn.
+
+| `REVIEWER` | How to run it |
+|---|---|
+| `claude` (default) | Agent tool, `general-purpose` subagent, prompt = the filled reviewer prompt. Never review in your own context. |
+| `codex` | `codex exec --sandbox read-only --skip-git-repo-check --ephemeral -C "$WIKI" -o "$OUT" "$(cat "$PROMPT")"` |
+| anything else | a shell command: `sh -c "$REVIEWER" < "$PROMPT" > "$OUT"` (prompt on stdin, review on stdout) |
+
+`PROMPT` and `OUT` are temp files outside the wiki. If the chosen reviewer fails (not installed, error, empty output), say so and fall back to `claude`; never skip the review silently.
+
+## 3. Fill the reviewer prompt
+
+Copy `reviewer-prompt.md` (next to this file) into `$PROMPT`, replacing `{{WIKI}}` with the wiki path and `{{DRAFT}}` with the draft file path. The reviewer reads the draft, the pages and `raw/` sources it cites, and searches the wiki itself.
+
+## 4. Revise
+
+For each point the reviewer raises, decide: **accept** (fix the draft) or **reject** (the reviewer is wrong; say why in one line). Do not accept a point just because a reviewer made it: check it against the source yourself. Reviewers are usually right, but not always. If a point is about something missing and the missing fact is real, add it with its source.
+
+If you change a statement, the source must support the new text. Never resolve a point by softening wording until it is unfalsifiable.
+
+## 5. Report
+
+Send the revised answer. End it with one line:
+
+`Reviewed by <reviewer>: <n> points, <a> fixed, <r> rejected.` followed by anything still open (an unverified claim, a source the reviewer could not reach, a gap only the user can fill).
+
+For a page write, also append to `log.md`: `## [YYYY-MM-DD] review | <page> | <reviewer>: <n> points, <a> fixed, <r> rejected`.
+
+Delete the temp files.

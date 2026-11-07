@@ -236,6 +236,10 @@ Gap research complete:
 
 ---
 
+## Review before reporting
+
+Before you report findings or a brief, run the `llm-wiki-review` sub-skill on it: a separate reviewer checks every statement against its sources and searches for what is missing; you revise and end with the "Reviewed by" line.
+
 ## Pitfalls
 
 - **Orient first**: before any writes. Research sprints may touch many pages.

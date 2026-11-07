@@ -56,6 +56,10 @@ When a brief is asked to pull from external sources (whatever the user's connect
 
 ---
 
+## Review before reporting
+
+Before you report findings or a brief, run the `llm-wiki-review` sub-skill on it: a separate reviewer checks every statement against its sources and searches for what is missing; you revise and end with the "Reviewed by" line.
+
 ## Operations
 
 ### 1. Daily Brief

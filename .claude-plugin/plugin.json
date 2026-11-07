@@ -1,6 +1,6 @@
 {
 	"name": "llm-wiki-pm",
-	"version": "3.1.0",
+	"version": "3.2.0",
 	"description": "PM knowledge base skill implementing Karpathy's LLM Wiki pattern. Ingest sources, query a compounding markdown wiki, supersede with auto-link rewrite, crystallize transcripts into decision digests. Bundles wiki search (obsidian-mcp).",
 	"author": {
 		"name": "Anh Chu",
@@ -26,10 +26,10 @@
 		"briefs"
 	],
 	"metadata": {
-		"skillCount": 4,
+		"skillCount": 5,
 		"supportedAgents": ["claude-code"],
-		"skillArchitecture": "core (llm-wiki-pm) + 3 sub-skills (brief, research, maintain) + set-wiki-path utility",
-		"directoryLayout": "skills/llm-wiki-{pm,brief,research,maintain}/ | hooks/ | server/ (wiki-mcp, installed separately)"
+		"skillArchitecture": "core (llm-wiki-pm) + 4 sub-skills (brief, research, maintain, review) + set-wiki-path utility",
+		"directoryLayout": "skills/llm-wiki-{pm,brief,research,maintain,review}/ | hooks/ | server/ (wiki-mcp, installed separately)"
 	},
 	"mcpServers": {
 		"wiki-search": {
@@ -44,6 +44,12 @@
 			"type": "directory",
 			"title": "Wiki directory",
 			"description": "Where to store your wiki (e.g. ~/my-wiki or ~/Documents/pm-wiki)",
+			"sensitive": false
+		},
+		"reviewer": {
+			"type": "string",
+			"title": "Reviewer",
+			"description": "Who reviews wiki answers before you see them: \"claude\" (a fresh subagent, default), \"codex\" (Codex CLI), or a shell command that reads the review prompt on stdin and prints the review",
 			"sensitive": false
 		},
 		"wiki_domain": {

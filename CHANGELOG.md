@@ -7,6 +7,28 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [3.2.0] - 2026-11-07
+
+### Added
+
+- **`llm-wiki-review`: independent review before you see an answer.** Every
+  answer or page built from the wiki goes to a separate reviewer before it is
+  reported. The reviewer checks each statement against its cited page or raw
+  source (unsupported, contradicted, misattributed, wrong period or number,
+  overstated, stale), searches the wiki and raw/ itself for facts the answer
+  left out, and checks any reasoning. The agent then accepts or rejects each
+  point with a reason, revises, and ends with a "Reviewed by" line. In a test on
+  a real customer page with 5 planted errors and 2 planted omissions, the Claude
+  reviewer caught 7 of 7 and Codex 6 of 7; both also found a newer escalation
+  the draft had missed.
+- **Reviewer option.** New `reviewer` plugin option: `claude` (a fresh
+  subagent, default), `codex` (Codex CLI, read-only sandbox), or any shell
+  command that reads the prompt on stdin and prints the review. A request can
+  name one for a single turn ("review with codex").
+- **review-gate Stop hook.** A turn that read or wrote the wiki and did not run
+  the review is blocked once with an instruction to run it. "no review" or
+  "skip review" in the prompt skips it.
+
 ## [3.1.0] - 2026-11-04
 
 ### Added

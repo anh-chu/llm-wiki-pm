@@ -46,9 +46,11 @@ installed separately.
 - **ChatGPT access via [wiki-mcp](server/README.md)**: a remote MCP server behind Cloudflare Access. It is included in the repo but not installed by the plugin; you run it yourself. Read tools by default; with `WIKI_WRITE=1` it adds create, edit, append, archive, supersede, and raw capture, each validated against `SCHEMA.md`, snapshotted, and logged the same way Claude Code writes are
 - **Obsidian-compatible**: works as a vault out of the box
 - **Prompt recall**: each prompt that names a page, or matches pages closely, lists up to 3 of them in context, so the agent reads the wiki before asking you, plus your matching `## Claim Checks` rules from `MY-INTEGRATIONS.md`, so it checks the sources you trust before it answers
+- **Review before you see it**: every answer or page built from the wiki goes to a separate reviewer (a fresh Claude subagent, Codex CLI, or your own command; set with the `reviewer` option) that checks each statement against its source and looks for what was left out; the agent revises before it answers. A Stop hook enforces it; say "no review" to skip it for one turn
 - **Sub-skills** (optional, install as needed):
   - `llm-wiki-brief` — daily/weekly briefs, tag digests, coverage brief
   - `llm-wiki-research` — research sprints, competitive deep dives, stub enrichment
+  - `llm-wiki-review` — independent review of any wiki-based answer or write
   - `llm-wiki-maintain` — the daily-maintenance loop (registry-driven sweep → ingest → brief → tidy → health check), with interactive vs autonomous modes
 - **MY-INTEGRATIONS.md**: learned source routing — auto-populated from actual ingest activity
 - **Next.js embed path** for platform deployments
@@ -73,9 +75,10 @@ Install individual sub-skills the same way:
 ```bash
 npx skills add anh-chu/llm-wiki-pm --skill llm-wiki-research -a claude-code -g
 npx skills add anh-chu/llm-wiki-pm --skill llm-wiki-brief -a claude-code -g
+npx skills add anh-chu/llm-wiki-pm --skill llm-wiki-review -a claude-code -g
 ```
 
-This installs the skill with all its scripts, templates, and references. **What you don't get** without the full plugin: session hooks (auto-scaffold, prompt recall, wikilink validation, log rotation) and the bundled wiki-search. Core wiki operations (ingest, query, update, lint) work fine — you just need to create the wiki directory structure manually on first use.
+This installs the skill with all its scripts, templates, and references. **What you don't get** without the full plugin: session hooks (auto-scaffold, prompt recall, wikilink validation, log rotation, review gate) and the bundled wiki-search. Core wiki operations (ingest, query, update, lint) work fine — you just need to create the wiki directory structure manually on first use.
 
 ### Option C: Symlink from a clone
 

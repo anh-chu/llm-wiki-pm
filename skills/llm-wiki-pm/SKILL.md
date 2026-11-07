@@ -36,6 +36,7 @@ Route to these — including **mid-flow** when a core operation surfaces the nee
 | Daily/weekly briefs, tag digests, coverage briefs | `llm-wiki-brief` | "daily/weekly brief", "catch me up", "[tag] digest" |
 | Research sprints, competitive deep dives, stub enrichment | `llm-wiki-research` | "research [topic]", "deep dive", "auto-research [entity]" |
 | Daily-maintenance loop (sweep all sources → ingest → brief → tidy), incl. scheduled runs | `llm-wiki-maintain` | "daily maintenance", "morning sweep", "ingest all sources and brief", "do the daily run" |
+| Independent review of any wiki-based answer or write, before reporting | `llm-wiki-review` | every answer or page built from the wiki; the review-gate Stop hook enforces it; skipped on "no review" |
 
 If a sub-skill isn't installed, the core skill's matching fallback handles it where
 one exists (§10/§11/§12); research and maintain require their
@@ -275,7 +276,9 @@ In brief:
    (Session Defaults → Source discipline → Provenance-tier guard): tier each claim,
    upgrade recalled claims against a primary source, and route
    targeting/pipeline/quantitative questions to the primary system (CRM, warehouse,
-   Gong), not wiki prose. For a casual lookup, cite pages and answer.
+   Gong), not wiki prose. For a casual lookup, cite pages and answer. **Then run
+   `llm-wiki-review` on the draft before you send it**, casual lookups included: a
+   wrong "who asked for what, when" is the costliest wiki error.
 ⑤ **Select output format**: inline markdown for most; a `queries/<slug>/<slug>.md`
    page for substantial syntheses; add artifacts (Marp/matplotlib/CSV/Mermaid) when
    warranted (`references/output-formats.md`).

@@ -1,5 +1,5 @@
 {
-	"description": "Wiki health check, prompt recall, wikilink validation, freshness gate, and log rotation hooks for llm-wiki-pm",
+	"description": "Wiki health check, prompt recall, wikilink validation, freshness gate, log rotation, and review gate hooks for llm-wiki-pm",
 	"hooks": {
 		"PreToolUse": [
 			{
@@ -52,6 +52,17 @@
 					{
 						"type": "command",
 						"command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-stop.sh"
+					}
+				]
+			}
+		],
+		"Stop": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/review-gate.py",
+						"timeout": 5
 					}
 				]
 			}
