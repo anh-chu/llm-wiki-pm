@@ -21,16 +21,17 @@ Put the user's question on the first line as `Question: ...`, then the draft. Ke
 
 ## 2. Run the review script
 
-Run the script next to this file (its path is this skill's base directory), passing the draft and the configured reviewer:
+Run the script next to this file (its path is this skill's base directory). Copy this line exactly; the script picks the configured reviewer itself:
 
 ```bash
-REVIEWER='${user_config.reviewer}'
-"<this skill's directory>/run-review.sh" "$DRAFT" "$REVIEWER"
+WIKI_REVIEWER_OPTION='${user_config.reviewer}' "<this skill's directory>/run-review.sh" "$DRAFT"
 ```
+
+Add a second argument only when the user named a reviewer in this request ("review with codex" → `"$DRAFT" codex`). Never pass a reviewer otherwise, not even `claude`.
 
 The script resolves the wiki, fills `reviewer-prompt.md`, runs the reviewer and prints the review. Always use it: do not review in your own context or start your own subagent instead, and do not choose a different model. The review-gate hook only accepts a turn that ran this script.
 
-Reviewer values (plugin option `reviewer`, else `WIKI_REVIEWER`, else `claude`):
+Reviewer values (the user's choice for this turn, else `WIKI_REVIEWER`, else the plugin option `reviewer`, else `claude`):
 
 | Value | Reviewer |
 |---|---|
@@ -39,7 +40,7 @@ Reviewer values (plugin option `reviewer`, else `WIKI_REVIEWER`, else `claude`):
 | `codex` | Codex CLI in a read-only sandbox |
 | anything else | a shell command that reads the prompt on stdin and prints the review |
 
-If the user names a reviewer in the request ("review with codex"), pass that instead. If the script fails, say so and run it again with `claude`; never skip the review silently.
+If the script fails, say so and run it again with `claude`; never skip the review silently.
 
 ## 3. Revise
 

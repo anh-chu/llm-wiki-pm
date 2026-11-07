@@ -2,17 +2,20 @@
 # run-review.sh DRAFT [REVIEWER] — run the configured reviewer on a draft, print the review.
 #
 # REVIEWER: claude (default model), claude:haiku|sonnet|opus, codex, or any shell
-# command that reads the prompt on stdin and prints the review. Order: argument
-# (unless it is an unsubstituted ${...}) > WIKI_REVIEWER > claude.
+# command that reads the prompt on stdin and prints the review. Order: the
+# argument (only when the user named a reviewer for this turn) > WIKI_REVIEWER >
+# WIKI_REVIEWER_OPTION (the plugin option, set by the skill) > claude. A value
+# that is still an unsubstituted ${...} is ignored.
 # Claude reviewers run as a separate read-only `claude -p` in the wiki directory,
 # with WIKI_REVIEW_RUNNING=1 so the review-gate hook does not gate the reviewer.
 # Exits non-zero with a message on stderr when the review fails or is empty.
 set -uo pipefail
 
 draft="${1:?usage: run-review.sh DRAFT [REVIEWER]}"
-reviewer="${2:-}"
-case "$reviewer" in '${'*) reviewer= ;; esac
-reviewer="${reviewer:-${WIKI_REVIEWER:-claude}}"
+unset_literal() { case "$1" in '${'*) echo "" ;; *) echo "$1" ;; esac; }
+reviewer=$(unset_literal "${2:-}")
+option=$(unset_literal "${WIKI_REVIEWER_OPTION:-}")
+reviewer="${reviewer:-${WIKI_REVIEWER:-${option:-claude}}}"
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 wiki=$(sh "$here/../../hooks/resolve-wiki.sh")
