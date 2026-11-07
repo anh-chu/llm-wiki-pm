@@ -126,6 +126,17 @@ def test_only_the_latest_turn_counts(tmp_path):
     assert blocked(run(tmp_path, events))
 
 
+def test_background_task_notification_is_not_a_new_prompt(tmp_path):
+    wiki = tmp_path / "wiki"
+    events = [prompt("what did customer A ask for?"),
+              *tool("Read", {"file_path": f"{wiki}/entities/customer-a.md"}, 1),
+              *tool("Agent", {"description": "fact-check", "run_in_background": True}, 2),
+              answer("waiting for the check"),
+              prompt("<task-notification>\n<task-id>a1</task-id>\n</task-notification>"),
+              answer()]
+    assert blocked(run(tmp_path, events))
+
+
 def test_bad_input_is_silent(tmp_path):
     out = subprocess.run(["python3", str(HOOK)], input="not json", capture_output=True, text=True)
     assert out.returncode == 0 and out.stdout == ""

@@ -17,12 +17,15 @@ import re
 import subprocess
 import sys
 
+INJECTED = re.compile(r"^\s*<(task-notification|system-reminder|local-command|command-)")
 SKIP = re.compile(r"\b(no|skip|without)[ -]review\b", re.I)
 FILE_TOOLS = {"Read", "Grep", "Glob", "Write", "Edit", "MultiEdit", "NotebookEdit"}
 REASON = ("This turn used the wiki, so run the llm-wiki-review skill before you finish: "
           "write your draft answer to a temp file, have the configured reviewer check every "
           "statement against its sources and search for what is missing, revise, and end "
-          "with the 'Reviewed by' line. The user can say 'no review' to skip it.")
+          "with the 'Reviewed by' line. A check you ran another way (your own subagent or "
+          "prompt) does not count: invoke the llm-wiki-review skill. The user can say "
+          "'no review' to skip it.")
 
 
 def resolve_wiki(cwd):
@@ -50,8 +53,11 @@ def is_prompt(event):
     """A real user prompt, not a tool result fed back to the model."""
     if event.get("type") != "user" or event.get("isMeta"):
         return False
-    return any(b.get("type") == "text" for b in content(event)) and not any(
-        b.get("type") == "tool_result" for b in content(event))
+    blocks = content(event)
+    if any(b.get("type") == "tool_result" for b in blocks):
+        return False
+    texts = [b.get("text", "") for b in blocks if b.get("type") == "text"]
+    return bool(texts) and not all(INJECTED.match(t) for t in texts)
 
 
 def prompt_text(event):
