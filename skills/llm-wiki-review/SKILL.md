@@ -2,7 +2,7 @@
 name: llm-wiki-review
 description: Independent review of every answer or page built from the wiki, before it reaches the user. A separate reviewer (a fresh Claude subagent, Codex CLI, or a command the user sets) checks each statement against its sources, searches for what the answer left out, and checks the reasoning; then you revise. Run it before reporting any wiki-based answer, page write, brief or analysis.
 when_to_use: Run before you report anything that states facts or conclusions drawn from the wiki or its raw/ sources - a query answer ("what did customer A ask for in Q4"), an ingest or update, a brief, a research finding, an analysis or synthesis. The review-gate Stop hook blocks the end of a turn that read or wrote the wiki without it. Skip only when the user says "no review" or "skip review", or the turn only navigated (listed files, opened a page for the user to read) and stated nothing.
-allowed-tools: Read Grep Write Bash Agent
+allowed-tools: Read Grep Write Bash
 ---
 
 # LLM Wiki Review
@@ -19,38 +19,35 @@ DRAFT=$(mktemp /tmp/wiki-review-draft.XXXXXX.md)
 
 Put the user's question on the first line as `Question: ...`, then the draft. Keep every `[source: ...]` marker and `[[wikilink]]`: the reviewer checks against them. A page write is reviewed before you report it; if you already wrote it, the review may still change it.
 
-## 2. Pick the reviewer
+## 2. Run the review script
+
+Run the script next to this file (its path is this skill's base directory), passing the draft and the configured reviewer:
 
 ```bash
-WIKI=$(cat .wiki-path 2>/dev/null | tr -d '[:space:]')
-CONF='${user_config.wiki_path}'; case "$CONF" in '${'*) CONF= ;; esac
-WIKI=${WIKI:-${CONF:-${WIKI_PATH:-}}}
-REVIEWER='${user_config.reviewer}'; case "$REVIEWER" in '${'*) REVIEWER= ;; esac
-REVIEWER=${REVIEWER:-${WIKI_REVIEWER:-claude}}
+REVIEWER='${user_config.reviewer}'
+"<this skill's directory>/run-review.sh" "$DRAFT" "$REVIEWER"
 ```
 
-The user can also name one in the request ("review with codex"); that wins for this turn.
+The script resolves the wiki, fills `reviewer-prompt.md`, runs the reviewer and prints the review. Always use it: do not review in your own context or start your own subagent instead, and do not choose a different model. The review-gate hook only accepts a turn that ran this script.
 
-| `REVIEWER` | How to run it |
+Reviewer values (plugin option `reviewer`, else `WIKI_REVIEWER`, else `claude`):
+
+| Value | Reviewer |
 |---|---|
-| `claude` (default) | Agent tool, `general-purpose` subagent, prompt = the filled reviewer prompt. Never review in your own context. |
-| `claude:haiku`, `claude:sonnet`, `claude:opus` | A separate read-only Claude process on that model: `(cd "$WIKI" && WIKI_REVIEW_RUNNING=1 claude -p --model "${REVIEWER#claude:}" --setting-sources project --allowedTools "Read,Grep,Glob" < "$PROMPT" > "$OUT")`. Run it exactly like this; do not swap in a subagent. |
-| `codex` | `codex exec --sandbox read-only --skip-git-repo-check --ephemeral -C "$WIKI" -o "$OUT" "$(cat "$PROMPT")" < /dev/null` |
-| anything else | a shell command: `sh -c "$REVIEWER" < "$PROMPT" > "$OUT"` (prompt on stdin, review on stdout) |
+| `claude` | a separate read-only Claude process, default model |
+| `claude:haiku`, `claude:sonnet`, `claude:opus` | the same on that model |
+| `codex` | Codex CLI in a read-only sandbox |
+| anything else | a shell command that reads the prompt on stdin and prints the review |
 
-`PROMPT` and `OUT` are temp files outside the wiki. If the chosen reviewer fails (not installed, error, empty output), say so and fall back to `claude`; never skip the review silently.
+If the user names a reviewer in the request ("review with codex"), pass that instead. If the script fails, say so and run it again with `claude`; never skip the review silently.
 
-## 3. Fill the reviewer prompt
-
-Copy `reviewer-prompt.md` (next to this file) into `$PROMPT`, replacing `{{WIKI}}` with the wiki path and `{{DRAFT}}` with the draft file path. The reviewer reads the draft, the pages and `raw/` sources it cites, and searches the wiki itself.
-
-## 4. Revise
+## 3. Revise
 
 For each point the reviewer raises, decide: **accept** (fix the draft) or **reject** (the reviewer is wrong; say why in one line). Do not accept a point just because a reviewer made it: check it against the source yourself. Reviewers are usually right, but not always. If a point is about something missing and the missing fact is real, add it with its source.
 
 If you change a statement, the source must support the new text. Never resolve a point by softening wording until it is unfalsifiable.
 
-## 5. Report
+## 4. Report
 
 Send the revised answer. End it with one line:
 
@@ -58,4 +55,4 @@ Send the revised answer. End it with one line:
 
 For a page write, also append to `log.md`: `## [YYYY-MM-DD] review | <page> | <reviewer>: <n> points, <a> fixed, <r> rejected`.
 
-Delete the temp files.
+Delete the draft file.

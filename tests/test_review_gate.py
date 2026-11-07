@@ -63,8 +63,17 @@ def test_review_skill_lets_stop_through(tmp_path):
     wiki = tmp_path / "wiki"
     events = [prompt("what did customer A ask for in Q4?"),
               *tool("Read", {"file_path": f"{wiki}/entities/customer-a.md"}, 1),
-              *tool("Skill", {"skill": "llm-wiki-pm:llm-wiki-review"}, 2), answer()]
+              *tool("Bash", {"command": "/p/skills/llm-wiki-review/run-review.sh /tmp/d.md claude"}, 2), answer()]
     assert run(tmp_path, events) is None
+
+
+def test_skill_without_the_script_still_blocks(tmp_path):
+    wiki = tmp_path / "wiki"
+    events = [prompt("what did customer A ask for in Q4?"),
+              *tool("Read", {"file_path": f"{wiki}/entities/customer-a.md"}, 1),
+              *tool("Skill", {"skill": "llm-wiki-pm:llm-wiki-review"}, 2),
+              *tool("Agent", {"description": "my own fact-check"}, 3), answer()]
+    assert blocked(run(tmp_path, events))
 
 
 def test_second_stop_in_same_turn_is_allowed(tmp_path):
@@ -133,7 +142,7 @@ def test_only_the_latest_turn_counts(tmp_path):
     wiki = tmp_path / "wiki"
     events = [prompt("what did customer A ask for?"),
               *tool("Read", {"file_path": f"{wiki}/entities/customer-a.md"}, 1),
-              *tool("Skill", {"skill": "llm-wiki-review"}, 2), answer(),
+              *tool("Bash", {"command": "run-review.sh /tmp/d.md"}, 2), answer(),
               prompt("thanks, now fix the build"),
               *tool("Read", {"file_path": "/etc/hosts"}, 3), answer("done")]
     assert run(tmp_path, events) is None

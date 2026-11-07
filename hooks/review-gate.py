@@ -25,7 +25,7 @@ REASON = ("This turn used the wiki, so run the llm-wiki-review skill before you 
           "write your draft answer to a temp file, have the configured reviewer check every "
           "statement against its sources and search for what is missing, revise, and end "
           "with the 'Reviewed by' line. A check you ran another way (your own subagent or "
-          "prompt) does not count: invoke the llm-wiki-review skill. The user can say "
+          "prompt) does not count: run the skill's run-review.sh script. The user can say "
           "'no review' to skip it.")
 
 
@@ -98,9 +98,8 @@ def touches_wiki(name, args, wiki, inside):
 
 
 def reviewed(name, args):
-    if name == "Skill":
-        return "llm-wiki-review" in str(args.get("skill", ""))
-    return False
+    """The review script ran. Invoking the skill alone is not enough."""
+    return name == "Bash" and "run-review.sh" in str(args.get("command", ""))
 
 
 def decide(payload):
