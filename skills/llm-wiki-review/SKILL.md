@@ -1,6 +1,6 @@
 ---
 name: llm-wiki-review
-description: Independent review of every answer or page built from the wiki, before it reaches the user. A separate reviewer (a fresh Claude subagent, Codex CLI, or a command the user sets) checks each statement against its sources, searches for what the answer left out, and checks the reasoning; then you revise. Run it before reporting any wiki-based answer, page write, brief or analysis.
+description: Independent review of every answer or page built from the wiki, before it reaches the user. A separate reviewer (Claude Opus by default, another Claude model, Codex CLI, or a command the user sets) checks each statement against its sources, searches for what the answer left out, and checks the reasoning; then you revise. Run it before reporting any wiki-based answer, page write, brief or analysis.
 when_to_use: Run before you report anything that states facts or conclusions drawn from the wiki or its raw/ sources - a query answer ("what did customer A ask for in Q4"), an ingest or update, a brief, a research finding, an analysis or synthesis. The review-gate Stop hook blocks the end of a turn that read or wrote the wiki without it. Skip only when the user says "no review" or "skip review", or the turn only navigated (listed files, opened a page for the user to read) and stated nothing.
 allowed-tools: Read Grep Write Bash
 ---
@@ -31,16 +31,16 @@ Add a second argument only when the user named a reviewer in this request ("revi
 
 The script resolves the wiki, fills `reviewer-prompt.md`, runs the reviewer and prints the review. Always use it: do not review in your own context or start your own subagent instead, and do not choose a different model. The review-gate hook only accepts a turn that ran this script.
 
-Reviewer values (the user's choice for this turn, else `WIKI_REVIEWER`, else the plugin option `reviewer`, else `claude`):
+Reviewer values (the user's choice for this turn, else `WIKI_REVIEWER`, else the plugin option `reviewer`, else `claude:opus`):
 
 | Value | Reviewer |
 |---|---|
-| `claude` | a separate read-only Claude process, default model |
-| `claude:haiku`, `claude:sonnet`, `claude:opus` | the same on that model |
+| `claude` | a separate read-only Claude process, account default model |
+| `claude:haiku`, `claude:sonnet`, `claude:opus` | the same on that model (`claude:opus` is the default) |
 | `codex` | Codex CLI in a read-only sandbox |
 | anything else | a shell command that reads the prompt on stdin and prints the review |
 
-If the script fails, say so and run it again with `claude`; never skip the review silently.
+If the script fails, say so and run it again with `claude:opus`; never skip the review silently.
 
 ## 3. Revise
 

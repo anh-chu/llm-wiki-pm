@@ -21,12 +21,18 @@ Versions follow [Semantic Versioning](https://semver.org/).
   a real customer page with 5 planted errors and 2 planted omissions, the Claude
   reviewer caught 7 of 7 and Codex 6 of 7; both also found a newer escalation
   the draft had missed.
-- **Reviewer option.** New `reviewer` plugin option: `claude` (a fresh
-  subagent, default), `codex` (Codex CLI, read-only sandbox), or any shell
-  command that reads the prompt on stdin and prints the review. A request can
-  name one for a single turn ("review with codex").
-- **review-gate Stop hook.** A turn that read or wrote the wiki and did not run
-  the review is blocked once with an instruction to run it. "no review" or
+- **Reviewer option.** New `reviewer` plugin option: `claude:opus` (default),
+  `claude:sonnet`, `claude:haiku`, `claude` (account default model), `codex`
+  (Codex CLI, read-only sandbox), or any shell command that reads the prompt on
+  stdin and prints the review. A request can name one for a single turn ("review
+  with codex"). Claude reviewers run as a separate read-only `claude -p`
+  process through `run-review.sh`, so the reviewer model is fixed by
+  configuration, not chosen by the answering agent. In a test on two customer
+  questions against a frozen wiki, Sonnet answers reviewed by Opus scored
+  highest (accuracy 8.75/10); Opus answers reviewed by Opus scored 7/10.
+- **review-gate Stop hook.** A turn that read or wrote the wiki (file tools, Bash
+  inside the wiki, or wiki-search) and did not run `run-review.sh` is blocked
+  once with an instruction to run it. "no review" or
   "skip review" in the prompt skips it.
 
 ## [3.1.0] - 2026-11-04
