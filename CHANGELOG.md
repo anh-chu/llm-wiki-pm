@@ -7,6 +7,21 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **`llm-wiki-review`: the gate fires on wiki content only.** Inside the wiki,
+  the review-gate Stop hook used to count any file or Bash call, so reading
+  `CLAUDE.md` or `log.md`, or running `gh` or `ls`, forced a review. It now
+  blocks only when a turn reads or writes wiki content (pages, `raw/` sources,
+  wiki search). Bookkeeping files (`CLAUDE.md`, `index.md`, `log*.md`,
+  `_status.md`, `channels.md`, `SCHEMA.md`, `meta/`, `prompts/`) no longer
+  count. The skill also says to run the review once per turn. Replayed over a
+  day of real sessions, the gate fired on 84 of 147 turns instead of 110.
+
+---
+
 ## [3.2.0] - 2026-11-07
 
 ### Added

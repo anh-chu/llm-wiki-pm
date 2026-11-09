@@ -130,6 +130,36 @@ def test_relative_bash_counts_inside_the_wiki(tmp_path):
     assert blocked(run(tmp_path, events, cwd=wiki))
 
 
+def test_bookkeeping_files_inside_the_wiki_pass(tmp_path):
+    wiki = tmp_path / "wiki"
+    wiki.mkdir()
+    for call in (("Read", {"file_path": "CLAUDE.md"}),
+                 ("Read", {"file_path": f"{wiki}/_status.md"}),
+                 ("Bash", {"command": f"cat >> {wiki}/log.md <<'EOF'\nentry\nEOF"}),
+                 ("Bash", {"command": "gh api repos/acme/app/issues/1"}),
+                 ("Bash", {"command": "ls /tmp | grep draft"}),
+                 ("Write", {"file_path": "/tmp/notes.md", "content": "x"})):
+        events = [prompt("post the reply"), *tool(*call), answer("posted")]
+        assert run(tmp_path, events, cwd=wiki) is None, call
+
+
+def test_content_paths_inside_the_wiki_block(tmp_path):
+    wiki = tmp_path / "wiki"
+    wiki.mkdir()
+    for call in (("Read", {"file_path": "entities/customer-a.md"}),
+                 ("Read", {"file_path": f"{wiki}/raw/internal/ingest.md"}),
+                 ("Grep", {"pattern": "SSO"}),
+                 ("Bash", {"command": "cd raw && cat internal/ingest.md"}),
+                 ("Bash", {"command": "cat people.md"})):
+        events = [prompt("what did customer A ask for?"), *tool(*call), answer()]
+        assert blocked(run(tmp_path, events, cwd=wiki)), call
+
+
+def test_one_review_per_turn_in_skill(tmp_path):
+    skill = (REPO_ROOT / "skills" / "llm-wiki-review" / "SKILL.md").read_text()
+    assert "once per turn" in skill
+
+
 def test_reviewer_session_is_not_gated(tmp_path, monkeypatch):
     monkeypatch.setenv("WIKI_REVIEW_RUNNING", "1")
     wiki = tmp_path / "wiki"
