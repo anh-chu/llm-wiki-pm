@@ -84,15 +84,40 @@ def strings(value):
             yield from strings(v)
 
 
-def touches_wiki(name, args, wiki, inside):
+# Wiki files a turn can touch without reading content: bookkeeping and config.
+META_TOP = re.compile(r"^(CLAUDE|index|SCHEMA|_status|channels|MY-INTEGRATIONS)(\.md)?(\.orig)?$"
+                      r"|^log(-.*)?\.md$|^\.wiki-path$|^(meta|prompts)$")
+# A relative path or search inside the wiki that names content.
+RELATIVE_CONTENT = re.compile(
+    r"(?:^|[\s\"'=/])(?:\./)?(?:raw|entities|concepts|comparisons|queries|briefings|drafts|exports|_archive)(?:/|\s|$)"
+    r"|\b(?:people|overview)\.md\b|\b(?:grep|rg|find)\b[^|;&]*\s\.(?:\s|$)")
+PATH_KEYS = ("file_path", "path", "notebook_path")
+
+
+def is_content(rel):
+    """rel is a path inside the wiki; the wiki root itself counts as content."""
+    first = rel.strip("/").split("/")[0]
+    return first in ("", ".") or not META_TOP.match(first)
+
+
+def touches_wiki(name, args, wiki, inside, cwd=""):
+    """The tool call read or wrote wiki content (not just bookkeeping files)."""
     if "wiki-search" in name:
         return True
-    if inside and (name in FILE_TOOLS or name == "Bash"):
-        return True
     home = os.path.expanduser("~")
+    if inside and name in FILE_TOOLS:
+        paths = [args[k] for k in PATH_KEYS if isinstance(args.get(k), str)] or [cwd]
+        for p in paths:
+            full = os.path.realpath(os.path.join(cwd, os.path.expanduser(p)))
+            if full == wiki or full.startswith(wiki + os.sep):
+                if is_content(os.path.relpath(full, wiki)):
+                    return True
     for s in strings(args):
         s = s.replace("~", home)
-        if wiki in s or (s.startswith("/") and os.path.realpath(s).startswith(wiki)):
+        for m in re.finditer(re.escape(wiki) + r"((?:/[^\s\"'`;|&)<>]*)?)", s):
+            if is_content(m.group(1)):
+                return True
+        if inside and name == "Bash" and RELATIVE_CONTENT.search(s):
             return True
     return False
 
@@ -120,7 +145,7 @@ def decide(payload):
     used = list(tool_uses(all_events[start + 1:]))
     if any(reviewed(n, a) for n, a in used):
         return None
-    if not any(touches_wiki(n, a, wiki, inside) for n, a in used):
+    if not any(touches_wiki(n, a, wiki, inside, cwd) for n, a in used):
         return None
     return {"decision": "block", "reason": REASON}
 
